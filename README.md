@@ -8,9 +8,9 @@ Fork genérico de [ProyectoBase](https://github.com/mestupinanm/ProyectoBase): e
 | Integrante | GitHub | Rol provisional |
 |---|---|---|
 | José Maza | [Jgmaza](https://github.com/Jgmaza) | Docs / entregas / coordinación |
-| Carlos Primo | TBD | Research / producto |
-| Jesús Borrero | TBD | Research / campo |
-| Sergio Mancilla | TBD | Frontend / UX |
+| Carlos Primo | [Carlosprimo](https://github.com/Carlosprimo) | Research / producto |
+| Jesús Borrero | [jesubohr](https://github.com/jesubohr) | Research / campo |
+| Sergio Mancilla | [athomserx](https://github.com/athomserx) | Frontend / UX |
 
 **Canal de coordinación:** por definir (WhatsApp / Discord del bootcamp).
 
@@ -21,7 +21,7 @@ Todo vive en `docs/semana1/`:
 - Propuestas individuales: `JoseMaza.md`, `CarlosPrimo.md`, `JesusBorrero.md`, `SergioMancilla.md`
 - Brief grupal: `ProblemBrief.md` (decisión **provisional**: desembolsos transparentes vía SDP)
 
-Carlos, Jesús y Sergio: cuando tengan usuario de GitHub, actualicen su archivo con un commit propio desde su cuenta.
+Carlos, Jesús y Sergio: actualicen su archivo con un commit propio desde su cuenta.
 
 ## Idea provisional del equipo
 
