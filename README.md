@@ -25,4 +25,4 @@ Carlos, Jesús y Sergio: cuando tengan usuario de GitHub, actualicen su archivo 
 
 ## Idea provisional del equipo
 
-**PagoClaro** — hacer verificables los desembolsos de apoyos/sponsors a beneficiarios locales (Carnaval, fundaciones, programas municipales) usando la Stellar Disbursement Platform.
+**Orilla** — nombre de registro del equipo (genérico; el producto puede cambiar). Decisión provisional: hacer verificables los desembolsos de apoyos/sponsors a beneficiarios locales (Carnaval, fundaciones, programas municipales) usando la Stellar Disbursement Platform.

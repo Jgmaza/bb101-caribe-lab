@@ -36,7 +36,7 @@ Priorizamos un caso con **movimiento real de valor** y varias partes que no se c
 
 > Nombre del proyecto y una frase que describa el problema. Extensión: breve.
 
-**PagoClaro** — Hacer verificables, uno a uno, los desembolsos de apoyos locales a beneficiarios y veedores en el Caribe colombiano.
+**Orilla** — Hacer verificables, uno a uno, los desembolsos de apoyos locales a beneficiarios y veedores en el Caribe colombiano. (Nombre de registro genérico; el producto puede ratificarse después.)
 
 ### Equipo y roles
 
