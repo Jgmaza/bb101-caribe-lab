@@ -22,7 +22,7 @@ Pescadores artesanales y asociaciones del litoral Caribe / Atlántico; también 
 
 > Cómo lo resuelven hoy las personas afectadas y qué les cuesta en dinero, tiempo o esfuerzo.
 
-Venden al intermediario de siempre (a veces con anticipos); márgenes de comercialización reportados en experiencias locales del 30–50% solo por traslado. Cuesta ingreso perdido para el pescador, desconfianza del comprador y cero diferenciación del producto artesanal frente al industrial.
+Venden al intermediario de siempre (a veces con anticipos); márgenes de comercialización reportados en experiencias locales del 30–50% solo por traslado (fuente: [Peskao Caribe — Colombia Visible](https://colombiavisible.com/peskao-caribe-pesca-artesanal-sostenible-caribe-colombiano/)). Cuesta ingreso perdido para el pescador, desconfianza del comprador y cero diferenciación del producto artesanal frente al industrial.
 
 ## ¿Por qué creo que blockchain podría aportar?
 
