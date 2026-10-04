@@ -4,28 +4,26 @@
 
 **Usuario de GitHub:** Jgmaza
 
+> **Actualización (pivot):** la línea SDP se mantiene; el problema pasa de “transparencia de apoyos” a **pagos rápidos para economía informal / eventos**. Ver [`../producto/Orilla-MVP.md`](../producto/Orilla-MVP.md).
+
 ---
 
 ## El problema
 
-> El problema en una sola frase, sin mencionar blockchain.
-
-Cuando una fundación, sponsor o programa local reparte apoyos económicos a muchas personas, beneficiarios y veedores no pueden verificar de forma independiente quién recibió cuánto y cuándo.
+Los trabajadores informales y de eventos (músicos, staff, ferias) esperan días o semanas para cobrar un trabajo ya hecho; el dinero usable llega tarde a su banco.
 
 ## ¿Quién lo sufre?
 
-> Quién tiene el problema y en qué situación lo vive.
-
-Hacedores del Carnaval, emprendedores de programas de inclusión (p. ej. FSD/Hilton), beneficiarios de kits o capital semilla, y veedores o sponsors que financian esos apoyos en Barranquilla y el Atlántico. Lo viven al cobrar “porque el Excel dice que sí”, al dudar si el recurso llegó completo, o al auditar sin poder cruzar pagos uno a uno.
+Músicos que tocan en hoteles/bares y cobran a 15 días; staff de Carnaval, conciertos y ferias que cierra de madrugada; vendedores/proveedores pagados “el lunes”. También el pagador que hoy liquida uno a uno con Excel y reclamos.
 
 ## ¿Cómo se resuelve hoy y qué cuesta?
 
-> Cómo lo resuelven hoy las personas afectadas y qué les cuesta en dinero, tiempo o esfuerzo.
-
-Hoy el operador paga por transferencia bancaria, giro o efectivo, lleva listas en hojas de cálculo y entrega reportes en PDF. Cuesta tiempo de conciliación, riesgo de error o captura, filas y desplazamientos para el beneficiario, y para el sponsor la imposibilidad de comprobar cada peso sin confiar ciegamente en el intermediario operativo.
+Transferencia manual, efectivo o “te aviso cuando salga el giro”. Cuesta tiempo de espera (el trabajador financia al pagador), riesgo de efectivo, errores de lista y discusiones sin comprobante claro.
 
 ## ¿Por qué creo que blockchain podría aportar?
 
-> Hipótesis personal, no certeza, apoyada en al menos un criterio de la Sesión 1: partes que no confían entre sí comparten un registro, histórico inalterable, o eliminar un intermediario que concentra la confianza.
+Hipótesis: si el pagador dispersa un lote en Stellar (SDP u equivalente) y el receptor tiene wallet + flujo “Enviar a Bancolombia”, entonces (1) el pago masivo deja de ser un cuello de botella, (2) hay comprobante compartido que no depende del Excel del hotel, y (3) el trabajador recupera el dinero en el rail que ya usa. Criterio Sesión 1: partes que no se confían entre sí (pagador ≠ trabajador) comparten el mismo registro del pago ejecutado.
 
-Hipótesis: si cada desembolso se registra como pago en un ledger compartido (p. ej. vía Stellar Disbursement Platform), sponsor, operador, beneficiario y veedor consultan el **mismo** histórico inalterable — criterio de partes que no confían entre sí y dejan de depender del Excel del intermediario. Prior art local: proyectos de transparencia de desembolsos sobre Stellar en Colombia (p. ej. Providencia Onchain).
+## MVP que propongo
+
+Demo: hotel/productora lanza lote → músico/staff ve “Te pagaron” → manda a Bancolombia en ≤ 4 taps.
