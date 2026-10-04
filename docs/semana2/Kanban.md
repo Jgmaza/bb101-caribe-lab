@@ -1,6 +1,6 @@
 # Kanban — Orilla MVP (espejo del tablero)
 
-Tablero oficial en GitHub Projects (enlace en `ProductBlueprint.md`).  
+**Tablero oficial:** https://github.com/users/Jgmaza/projects/1  
 Issues: https://github.com/Jgmaza/bb101-caribe-lab/issues?q=is%3Aissue+label%3Aorilla-mvp
 
 ## Ready

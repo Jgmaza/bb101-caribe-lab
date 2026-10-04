@@ -119,12 +119,14 @@ El lienzo cubre: problema, segmentos, propuesta de valor única, solución, cana
 
 > Extensión: enlace al tablero (obligatorio).
 
-**Enlace al tablero (obligatorio):** [Backlog Orilla — Issues Kanban (`orilla-mvp`)](https://github.com/Jgmaza/bb101-caribe-lab/issues?q=is%3Aissue+label%3Aorilla-mvp)
+**Enlace al tablero (obligatorio):** [Tablero Kanban Orilla — GitHub Projects](https://github.com/users/Jgmaza/projects/1)
 
-> Tablero en Issues con labels de columna (`Ready` / `Backlog`) y criterios de aceptación en cada tarjeta (#1–#8). Espejo: [`Kanban.md`](Kanban.md).  
-> **GitHub Projects:** si el equipo publica un Project board, reemplazar este enlace por `https://github.com/users/Jgmaza/projects/N` (mismas 8 tarjetas).
+**Issues del backlog (criterios de aceptación en cada tarjeta):** [Issues label `orilla-mvp`](https://github.com/Jgmaza/bb101-caribe-lab/issues?q=is%3Aissue+label%3Aorilla-mvp)
 
-Columnas del tablero: **Backlog** · **Ready** · **In Progress** · **Done**.
+**Espejo markdown:** [`Kanban.md`](Kanban.md)
+
+Columnas del tablero (Status): **Todo** · **In Progress** · **Done**.  
+Las historias P1 (#1–#4) están listas para empezar; P2 (#5–#8) siguen en cola del mismo board.
 
 Resumen de tarjetas (prioridad = orden del backlog):
 
