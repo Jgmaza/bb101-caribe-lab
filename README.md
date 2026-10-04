@@ -29,6 +29,10 @@ No vendemos “blockchain” ni “SDP” al usuario. Vendemos pago rápido a ec
 
 | Ruta | Qué es |
 |---|---|
+| [`docs/semana2/ProductBlueprint.md`](docs/semana2/ProductBlueprint.md) | **Entregable 2** — Product Blueprint |
+| [`docs/semana2/LeanCanvas.md`](docs/semana2/LeanCanvas.md) | Lean Canvas |
+| [`docs/semana2/Kanban.md`](docs/semana2/Kanban.md) | Espejo del backlog Kanban |
+| `docs/semana2/*Nombre*.md` | Historias de usuario individuales |
 | [`docs/producto/Orilla-MVP.md`](docs/producto/Orilla-MVP.md) | Propósito, flujo, alcance MVP (wallet → Bancolombia) |
 | [`docs/producto/Comparativa-TapToPay.md`](docs/producto/Comparativa-TapToPay.md) | Orilla vs idea cobros PyME + Tap to Pay / Bre-B |
 | [`docs/semana1/ProblemBrief.md`](docs/semana1/ProblemBrief.md) | Brief Entregable 1 + **pivot** de enfoque |
