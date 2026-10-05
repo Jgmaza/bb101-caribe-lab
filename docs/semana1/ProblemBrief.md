@@ -20,7 +20,7 @@ Priorizamos un caso con **movimiento real de valor**, fibra humana clara (“tra
 1. **Transparencia de desembolsos sponsors/apoyos (E1 provisional):** válido, pero suena a herramienta de fundación/Estado y pierde “wow” frente a ideas de cobro cotidiano. La trazabilidad queda como **subproducto**.
 2. **Remesas Atlántico → comercio local** (Carlos Primo): fuerte Stellar; aparcada / posible fase 2 de cash-out.
 3. **Pesca artesanal + liquidación** (Jesús Borrero): alto impacto Caribe; oráculo físico difícil en 5 semanas.
-4. **Transparencia de obras públicas** (Sergio Mancilla): riesgo de dashboard SECOP sin liberación de pagos.
+4. **Pagos entre cooperativas del Caribe y compradores internacionales** (Sergio Mancilla): el anticipo y el saldo condicionado a la entrega añaden un problema de verificación de mercancía; se aparca para concentrarnos en eventos locales.
 
 ### Cómo tomamos la decisión
 
@@ -49,7 +49,7 @@ Canal interno: por definir (chat del bootcamp / WhatsApp del equipo).
 
 **Problema:** en la economía informal y de eventos, el pago llega tarde, opaco y a pedazos — aunque el trabajo ya se hizo.
 
-Un músico puede tocar un viernes en un hotel y esperar hasta dos semanas el giro. Staff de Carnaval, ferias o conciertos cierra de madrugada y cobra en efectivo o “cuando salga la transferencia”. Productoras y hoteles pagan uno a uno (Excel + banco), con errores y reclamos. El patrón se repite cada show, cada noche de evento, cada temporada de Carnaval. El costo no es solo “incomodidad”: es arriendo, mercado y transporte que no pueden esperar. Evidencia de partida: experiencia directa del equipo (músicos / freelancers), observación de pagos a staff de eventos locales, y el volumen de la economía de Carnaval/turismo en Barranquilla como contexto de muchos pagos fragmentados. Alcance MVP: un piloto demo de decenas de receivers (staff/músicos ficticios o reales voluntarios) con cash-out UX a Bancolombia.
+Un músico puede tocar un viernes en un hotel y esperar hasta dos semanas el giro. Staff de Carnaval, ferias o conciertos cierra de madrugada y cobra en efectivo o “cuando salga la transferencia”. Productoras y hoteles pagan uno a uno (Excel + banco), con errores y reclamos. El patrón se repite cada show, cada noche de evento, cada temporada de Carnaval. El costo no es solo “incomodidad”: es arriendo, mercado y transporte que no pueden esperar. Evidencia de partida: Sergio Mancilla contó en el WhatsApp del equipo (4 de octubre de 2026) que, cuando tocaba en bares, había incertidumbre sobre el pago y sobre cuánto recibía cada integrante al repartirlo. Esa experiencia da un caso concreto para empezar; todavía falta conocer los tiempos y montos de otros grupos. Alcance MVP: un piloto demo de decenas de receivers (staff/músicos ficticios o reales voluntarios) con cash-out UX a Bancolombia.
 
 ### Usuario y actores
 
@@ -99,7 +99,7 @@ Pagador y trabajador (y a veces un intermediario de staff) **no se confían entr
 3. El off-ramp puede mostrarse en sandbox/mock en aula y con partner real en fase 2.
 
 **Riesgos / invalidación:**
-- Sin UX de cash-out creíble, el proyecto se percibe como “otra wallet crypto”.
+- Si el pagador no tiene el dinero o decide no pagar, dispersar más rápido no resuelve el atraso. Hay que distinguir esa situación de la demora por hacer transferencias una por una.
 - Compliance bancario bloquea liquidación real en el plazo del bootcamp (mitigar con demo sandbox + roadmap).
 - Si el equipo vuelve a “solo transparencia de ONG”, se pierde la fibra del músico.
 - Competir mal contra Bre-B en cobros (inbound): por eso Orilla se mantiene en **payout**.
