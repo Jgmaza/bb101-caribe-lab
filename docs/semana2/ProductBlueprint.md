@@ -34,9 +34,9 @@ Fuentes: [`JoseMaza.md`](JoseMaza.md), [`CarlosPrimo.md`](CarlosPrimo.md), [`Jes
 | :-------: | ---------------------------------------------------------------------------------------------------------------------------- | :-----------: | ----------------------------------------------- |
 |     1     | Como **músico/staff** quiero **enviar lo de mi wallet a Bancolombia en pocos toques** para **usar la plata en pesos**.       | José / Sergio | Cierra el MVP; sin esto no hay valor percibido. |
 |     2     | Como **músico** quiero **recibir el pago la misma noche** para **no esperar semanas**.                                       |  José / Jesús | Fibra y promesa central del producto.           |
-|     3     | Como **pagador** quiero **cargar una lista y dispersar el lote de una vez** para **cerrar el evento sin 40 transferencias**. | José / Carlos | Motor operativo; sin lote no hay Orilla.        |
+|     3     | Como **productora de eventos** quiero **cargar la lista del staff y pagar los montos acordados en un lote** para **cerrar el evento sin hacer transferencias una por una**. | José / Carlos | Motor operativo; sin lote no hay Orilla.        |
 |     4     | Como **trabajador** quiero **ver “Te pagaron $X” en el celular** para **dejar de perseguir al coordinador**.                 | Sergio / José | Confianza inmediata post-pago.                  |
-|     5     | Como **trabajador** quiero **un SMS/link de invitación** para **entrar al flujo sin fricción**.                              |     Carlos    | Activación del receptor.                        |
+|     5     | Como **trabajador** quiero **recibir un SMS con el enlace al pago de mi evento** para **consultar el monto y su estado desde mi celular**.                              |     Carlos    | Activación del receptor.                        |
 |     6     | Como **pagador** quiero **ver progreso del lote (ok / pendiente / fallido)** para **saber si puedo cerrar**.                 | Sergio / José | Operación y Demo Day.                           |
 |     7     | Como **pagador/trabajador** quiero **comprobante por pago** para **resolver “¿ya me pagaste?”**.                             |  José / Jesús | Pertinencia Stellar / menos reclamos.           |
 |     8     | Como **trabajador** quiero **onboarding ≤ 3 pasos sin jerga crypto** para **cobrar el mismo día**.                           | Sergio / José | Adopción en economía informal.                  |
@@ -70,6 +70,10 @@ En una fase posterior, Orilla también puede permitir que el organizador configu
 ## 3. Flujo de usuario
 
 > Extensión: 150–300 palabras.
+
+**Flujo del MVP:** pagador carga la lista y fondea el lote → autoriza los pagos → trabajador recibe en su wallet → solicita el retiro a Bancolombia (simulado en la demo si no hay integración real).
+
+**El diagrama siguiente corresponde a la extensión de fase 2**, con reserva de fondos y confirmaciones de ambas partes.
 
 ```text
 Pagador                Orilla / Stellar           Trabajador              Bancolombia
@@ -163,9 +167,9 @@ Las historias P1 (#1–#4) están listas para empezar; P2 (#5–#8) siguen en co
 | :-------------------------------------------------------: | ------------------------------- | --------------------------------------------------------- |
 | [#1](https://github.com/Jgmaza/bb101-caribe-lab/issues/1) | US-1 Cash-out a Bancolombia     | ≤ 4 taps; confirma cuenta; muestra estado éxito/pendiente |
 | [#2](https://github.com/Jgmaza/bb101-caribe-lab/issues/2) | US-2 Pago misma noche (promesa) | Lote se ejecuta en minutos en demo; trabajador ve saldo   |
-| [#3](https://github.com/Jgmaza/bb101-caribe-lab/issues/3) | US-3 Dispersión de lote         | CSV/form ≥ 5 receivers; un clic lanza; tx por persona     |
+| [#3](https://github.com/Jgmaza/bb101-caribe-lab/issues/3) | US-3 Dispersión de lote         | Lista ≥ 5; revisa total; fondos suficientes; tx por pago completado     |
 | [#4](https://github.com/Jgmaza/bb101-caribe-lab/issues/4) | US-4 Pantalla “Te pagaron $X”   | Monto, pagador/evento, hora; sin jerga crypto             |
-| [#5](https://github.com/Jgmaza/bb101-caribe-lab/issues/5) | US-5 Invitación SMS/link        | Link profundo; primer uso completa registro               |
+| [#5](https://github.com/Jgmaza/bb101-caribe-lab/issues/5) | US-5 Invitación SMS/link        | Registro por celular; enlace al evento; invitación ≠ pago completado               |
 | [#6](https://github.com/Jgmaza/bb101-caribe-lab/issues/6) | US-6 Dashboard de lote          | Contadores ok/pendiente/fallido; detalle por fila         |
 | [#7](https://github.com/Jgmaza/bb101-caribe-lab/issues/7) | US-7 Comprobante                | Hash o link a explorador Stellar visible                  |
 | [#8](https://github.com/Jgmaza/bb101-caribe-lab/issues/8) | US-8 Onboarding ≤ 3 pasos       | Celular → verificación → listo para cobrar                |

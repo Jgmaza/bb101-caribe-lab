@@ -9,14 +9,14 @@ Issues: https://github.com/Jgmaza/bb101-caribe-lab/issues?q=is%3Aissue+label%3Ao
 | :---: | --- | --- |
 | [#1](https://github.com/Jgmaza/bb101-caribe-lab/issues/1) | US-1 Cash-out Bancolombia | ≤4 taps; estados; sin jerga crypto |
 | [#2](https://github.com/Jgmaza/bb101-caribe-lab/issues/2) | US-2 Pago misma noche | Lote → saldo en minutos (demo) |
-| [#3](https://github.com/Jgmaza/bb101-caribe-lab/issues/3) | US-3 Dispersión lote | CSV ≥5; un clic; tx por persona |
+| [#3](https://github.com/Jgmaza/bb101-caribe-lab/issues/3) | US-3 Dispersión lote | Lista ≥5; revisa total; fondos suficientes; tx por pago completado |
 | [#4](https://github.com/Jgmaza/bb101-caribe-lab/issues/4) | US-4 “Te pagaron $X” | Monto claro + CTA cash-out |
 
 ## Backlog
 
 | Issue | Historia | Criterios |
 | :---: | --- | --- |
-| [#5](https://github.com/Jgmaza/bb101-caribe-lab/issues/5) | US-5 Invitación SMS/link | Deep link + registro celular |
+| [#5](https://github.com/Jgmaza/bb101-caribe-lab/issues/5) | US-5 Invitación SMS/link | Registro por celular; enlace al evento; invitación ≠ pago completado |
 | [#6](https://github.com/Jgmaza/bb101-caribe-lab/issues/6) | US-6 Dashboard lote | ok / pendiente / fallido |
 | [#7](https://github.com/Jgmaza/bb101-caribe-lab/issues/7) | US-7 Comprobante | Hash / explorador Stellar |
 | [#8](https://github.com/Jgmaza/bb101-caribe-lab/issues/8) | US-8 Onboarding ≤3 pasos | Sin seed phrases |
