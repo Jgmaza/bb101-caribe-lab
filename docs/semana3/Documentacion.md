@@ -4,7 +4,8 @@
 **Producto:** Orilla — *Que quien trabaja hoy, cobre hoy.*  
 **Repositorio:** [bb101-caribe-lab](https://github.com/Jgmaza/bb101-caribe-lab)  
 **Front:** carpeta `frontend/` (Next.js + Tailwind, datos mock)  
-**Diseño fuente:** `frontend/orilla.pen` (Pen.dev)
+**Diseño fuente:** `frontend/orilla.pen` (Pen.dev)  
+**Demo en vivo:** [https://orilla-dusky.vercel.app](https://orilla-dusky.vercel.app)
 
 ---
 
@@ -70,7 +71,7 @@ cd frontend && npm install && npm run dev
 
 Abrir `http://localhost:3000`. Staff demo: `/cobrar/laura` con OTP mock `4821`.
 
-Si el proyecto queda hosteado en Vercel, el enlace público se registra en el campo Website de Apex.
+Hosteado en Vercel: [https://orilla-dusky.vercel.app](https://orilla-dusky.vercel.app). Registrar ese enlace en el campo **Website** de Apex.
 
 ### Idea de valor propuesta: donaciones porcentuales (Carnaval SA)
 
