@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #ffffff;
+  --bg-soft: #f4f9f8;
+  --ink: #0f2430;
+  --ink-muted: #5a6f7a;
+  --line: #d7e3e8;
+  --blue: #0b7ba8;
+  --green: #1fa87a;
+  --sand: #e6c34a;
+  --success: #168a5b;
+  --warn: #c4921a;
+  --danger: #c23b3b;
+  --orilla-gradient: linear-gradient(90deg, #0b7ba8 0%, #1fa87a 50%, #e6c34a 100%);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-soft: var(--bg-soft);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-line: var(--line);
+  --color-blue: var(--blue);
+  --color-green: var(--green);
+  --color-sand: var(--sand);
+  --color-success: var(--success);
+  --color-warn: var(--warn);
+  --color-danger: var(--danger);
+  --font-sans: var(--font-dm-sans);
+  --font-display: var(--font-fraunces);
+}
+
+body {
+  background: var(--bg-soft);
+  color: var(--ink);
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+}
+
+.font-display {
+  font-family: var(--font-fraunces), Georgia, serif;
+}
+
+.text-orilla-gradient {
+  background: var(--orilla-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.bg-orilla-gradient {
+  background: var(--orilla-gradient);
+}
