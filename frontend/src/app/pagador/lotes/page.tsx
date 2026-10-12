@@ -8,23 +8,23 @@ export default function LotesPage() {
     <PagadorShell
       breadcrumb="Hotel Dann Carlton · Barranquilla"
       right={
-        <LinkButton href="/pagador/lotes/nuevo">Nuevo lote</LinkButton>
+        <LinkButton href="/pagador/lotes/nuevo">Crear lote de pago</LinkButton>
       }
     >
       <h1 className="font-display text-[32px] font-bold text-ink">
         Lotes de pago
       </h1>
       <p className="mt-2 text-[15px] text-ink-muted">
-        Cierra la noche del show o programa la dispersión de donaciones
-        Carnaval SA.
+        Revisa los destinatarios, el monto total y el estado de cada lote.
+        Prepara los pagos del show o consulta las donaciones de Carnaval SA.
       </p>
 
       <Card className="mt-6 overflow-hidden">
         <div className="hidden grid-cols-[1.6fr_1fr_0.7fr_1fr_0.9fr_0.6fr] gap-3 bg-bg-soft px-5 py-3.5 text-xs font-semibold text-ink-muted md:grid">
           <span>Evento</span>
           <span>Tipo</span>
-          <span>Personas</span>
-          <span>Total COP</span>
+          <span>Destinatarios</span>
+          <span>Total del lote (COP)</span>
           <span>Estado</span>
           <span />
         </div>
@@ -56,7 +56,7 @@ export default function LotesPage() {
                 }
                 className="text-sm font-semibold text-blue"
               >
-                {lote.estado === "Borrador" ? "Editar" : "Ver"}
+                {lote.estado === "Borrador" ? "Editar lote" : "Ver detalle"}
               </Link>
             </li>
           ))}

@@ -125,7 +125,7 @@ La próxima semana se conectará testnet / SDP (o equivalente) detrás del front
 | Integrante | GitHub | Aporte / responsabilidad en el entregable |
 | --- | --- | --- |
 | José Maza | [Jgmaza](https://github.com/Jgmaza) | Coordinación del Functional Proof; diseño en Pen.dev (`orilla.pen`); implementación del front Next.js (flujos pagador y trabajador, mocks, marca); estructura `docs/semana3` y README de ejecución. |
-| Carlos Primo | [Carlosprimo](https://github.com/Carlosprimo) | Producto / research del flujo pagador y copy de operación (lotes, cerrar noche); revisión de coherencia con Blueprint; commit individual de ajuste UX o contenido acordado. |
+| Carlos Primo | [Carlosprimo](https://github.com/Carlosprimo) | Ajuste del copy operativo del panel pagador: acciones y etiquetas de lotes, plantilla CSV descargable con instrucciones y filas de ejemplo, aclaración de la lista de ejemplo y revisión de destinatarios y montos en COP antes de cerrar la noche. |
 | Jesús Borrero | [jesubohr](https://github.com/jesubohr) | Contexto de campo y casos Caribe (hotel / Carnaval); validación del tono “Te pagaron” y onboarding sin jerga; commit individual en docs o pantallas asignadas. |
 | Sergio Mancilla | [athomserx](https://github.com/athomserx) | Frontend / UX: pulido visual, estados de lote, flujo mobile del receptor; commit individual sobre componentes o pantallas del staff. |
 
