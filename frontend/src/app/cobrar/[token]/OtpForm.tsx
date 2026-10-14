@@ -46,6 +46,8 @@ export function OtpForm({ token }: { token: string }) {
         <Input
           className="mt-3"
           inputMode="numeric"
+          autoComplete="one-time-code"
+          pattern="[0-9]*"
           maxLength={4}
           value={otp}
           onChange={(e) => {
@@ -57,7 +59,11 @@ export function OtpForm({ token }: { token: string }) {
         <p className="mt-2 text-xs text-ink-muted">
           Código mock: 4821 · no es un SMS real
         </p>
-        {error ? <p className="mt-1 text-xs text-danger">{error}</p> : null}
+        {error ? (
+          <p className="mt-1 text-xs text-danger" role="alert" aria-live="polite">
+            {error}
+          </p>
+        ) : null}
       </div>
 
       <Button type="submit" className="w-full">

@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
 
 const baseBtn =
-  "inline-flex items-center justify-center gap-2 rounded-[10px] px-5 py-3.5 text-[15px] font-semibold transition active:scale-[0.99] disabled:opacity-50";
+  "inline-flex items-center justify-center gap-2 rounded-[10px] px-5 py-3.5 text-[15px] font-semibold transition active:scale-[0.99] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2";
 
 type ButtonProps = ComponentProps<"button"> & {
   variant?: "primary" | "ghost" | "cta";
@@ -93,7 +93,7 @@ export function Input({
 }: ComponentProps<"input">) {
   return (
     <input
-      className={`w-full rounded-[10px] border border-line bg-bg-soft px-3.5 py-3 text-sm text-ink outline-none focus:border-blue ${className}`}
+      className={`w-full rounded-[10px] border border-line bg-bg-soft px-3.5 py-3 text-sm text-ink outline-none focus:border-blue focus-visible:ring-2 focus-visible:ring-blue/40 ${className}`}
       {...props}
     />
   );
