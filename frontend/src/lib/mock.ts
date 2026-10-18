@@ -152,13 +152,7 @@ export const workerDemo = {
   hash: "a1b29f3e7c4d…8842",
 };
 
-export function formatCop(value: number) {
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
-    maximumFractionDigits: 0,
-  }).format(value);
-}
+export { formatCop } from "@/lib/format";
 
 export function getLote(id: string) {
   return lotes.find((l) => l.id === id);

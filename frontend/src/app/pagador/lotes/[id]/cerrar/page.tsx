@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { Logo } from "@/components/Logo";
-import { LinkButton } from "@/components/ui";
-import { formatCop, getLote } from "@/lib/mock";
+import { getLoteForPagador } from "@/lib/lotes/server";
+import { CerrarNocheClient } from "./CerrarNocheClient";
 
 export default async function CerrarNochePage({
   params,
@@ -9,7 +9,7 @@ export default async function CerrarNochePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const lote = getLote(id);
+  const lote = await getLoteForPagador(id);
   if (!lote || lote.receptores.length === 0) notFound();
 
   return (
@@ -20,32 +20,27 @@ export default async function CerrarNochePage({
           ¿Cerrar la noche?
         </h1>
         <p className="mt-3 text-[15px] leading-relaxed text-ink-muted">
-          Vas a dispersar el lote de {lote.evento} a {lote.receptores.length}{" "}
-          personas. Cada receptor recibirá un SMS con link para cobrar.
+          Vas a crear una dispersión real en SDP (testnet) para{" "}
+          {lote.receptores.length} personas del lote {lote.evento}. Sergio y
+          Laura reclaman después en Demo Wallet — no hace falta que ya tengan
+          wallet Stellar.
         </p>
 
-        <dl className="mt-5 space-y-2.5 rounded-xl bg-bg-soft p-4">
-          {[
-            ["Evento", lote.evento],
-            ["Receptores", String(lote.receptores.length)],
-            ["Total", formatCop(lote.total)],
-            ["Saldo mock", "Suficiente (testnet)"],
-          ].map(([k, v]) => (
-            <div key={k} className="flex justify-between gap-4 text-[13px]">
-              <dt className="text-ink-muted">{k}</dt>
-              <dd className="font-semibold text-ink">{v}</dd>
-            </div>
-          ))}
-        </dl>
+        {!lote.cedulasOk ? (
+          <p className="mt-4 rounded-xl bg-warn/10 px-4 py-3 text-[13px] text-warn">
+            Faltan cédula / DOB / celular en algún receptor. Revisa el seed o la
+            DB antes de cerrar.
+          </p>
+        ) : null}
 
-        <div className="mt-6 flex flex-wrap gap-3">
-          <LinkButton href={`/pagador/lotes/${id}`} variant="ghost">
-            Volver
-          </LinkButton>
-          <LinkButton href={`/pagador/lotes/${id}`} variant="cta">
-            Cerrar la noche
-          </LinkButton>
-        </div>
+        <CerrarNocheClient
+          loteId={lote.id}
+          evento={lote.evento}
+          receptores={lote.receptores.length}
+          total={lote.total}
+          alreadyDisbursed={Boolean(lote.sdpDisbursementId)}
+          sdpDisbursementId={lote.sdpDisbursementId}
+        />
       </div>
     </div>
   );

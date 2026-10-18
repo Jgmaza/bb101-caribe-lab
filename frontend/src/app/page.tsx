@@ -11,9 +11,10 @@ export default function HomePage() {
             Que quien trabaja hoy, cobre hoy.
           </h1>
           <p className="max-w-md text-base leading-relaxed text-ink-muted">
-            Demo del MVP: el pagador cierra la noche, el staff ve{" "}
-            <strong className="font-semibold text-ink">Te pagaron</strong> en
-            su saldo Orilla y manda a Bancolombia. Todo con datos mock.
+            El pagador cierra la noche; el músico/staff ve{" "}
+            <strong className="font-semibold text-ink">Te pagaron</strong> y
+            recibe en wallet Stellar (testnet vía SDP). Cash-out a Bancolombia:
+            fase siguiente.
           </p>
           <div className="h-1.5 w-28 rounded-full bg-orilla-gradient" />
         </section>

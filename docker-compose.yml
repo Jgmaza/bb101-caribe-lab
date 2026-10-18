@@ -1,0 +1,22 @@
+# Orilla — Postgres local (app). SDP trae su propio stack en otro compose.
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: orilla-postgres
+    restart: unless-stopped
+    ports:
+      - "5433:5432" # 5433 en host para no chocar con otros Postgres
+    environment:
+      POSTGRES_USER: orilla
+      POSTGRES_PASSWORD: orilla
+      POSTGRES_DB: orilla
+    volumes:
+      - orilla_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orilla -d orilla"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  orilla_pg_data:

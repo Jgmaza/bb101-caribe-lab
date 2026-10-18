@@ -1,26 +1,34 @@
+import { notFound } from "next/navigation";
 import { Logo } from "@/components/Logo";
 import { MobileShell } from "@/components/MobileShell";
-import { OtpForm } from "./OtpForm";
+import { getClaimView, syncClaimFromSdp } from "@/lib/cobrar/claim";
+import { ClaimClient } from "./ClaimClient";
 
-export default async function CobrarOtpPage({
+export default async function CobrarClaimPage({
   params,
 }: {
   params: Promise<{ token: string }>;
 }) {
   const { token } = await params;
+  // Sync al entrar: si Laura ya cobró en Demo Wallet, traemos el hash
+  let claim = await syncClaimFromSdp(token).catch(() => getClaimView(token));
+  if (!claim) {
+    claim = await getClaimView(token);
+  }
+  if (!claim) notFound();
 
   return (
     <div className="min-h-screen bg-bg-soft sm:py-4">
       <MobileShell>
         <Logo href="/" />
         <h1 className="mt-5 font-display text-[30px] font-bold text-ink">
-          Verifica tu celular
+          Cobra tu pago
         </h1>
         <p className="mt-2 text-sm leading-relaxed text-ink-muted">
-          Paso 1 de 3 · Te enviamos un código para cobrar el show del Dann
-          Carlton. En dos toques más activamos tu cobro — sin saber de crypto.
+          {claim.evento}. Confirma en Demo Wallet (SEP-24) y Orilla muestra el
+          comprobante real en testnet.
         </p>
-        <OtpForm token={token} />
+        <ClaimClient token={token} initial={claim} />
       </MobileShell>
     </div>
   );

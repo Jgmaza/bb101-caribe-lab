@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
 import { MobileShell } from "@/components/MobileShell";
 import { LinkButton } from "@/components/ui";
-import { formatCop, workerDemo } from "@/lib/mock";
+import { getClaimView, syncClaimFromSdp } from "@/lib/cobrar/claim";
+import { formatCop } from "@/lib/format";
 
 export default async function TePagaronPage({
   params,
@@ -9,31 +11,35 @@ export default async function TePagaronPage({
   params: Promise<{ token: string }>;
 }) {
   const { token } = await params;
+  let claim = await syncClaimFromSdp(token).catch(() => getClaimView(token));
+  if (!claim) claim = await getClaimView(token);
+  if (!claim) notFound();
+  if (!claim.paid) redirect(`/cobrar/${token}`);
 
   return (
     <div className="min-h-screen bg-bg-soft sm:py-4">
       <MobileShell showLogo>
         <div className="rounded-[18px] bg-orilla-gradient p-5 text-white">
-          <p className="text-[13px] font-semibold text-white/85">
-            Hotel Dann Carlton
-          </p>
+          <p className="text-[13px] font-semibold text-white/85">{claim.org}</p>
           <h1 className="mt-1 font-display text-[34px] font-bold leading-none">
             Te pagaron
           </h1>
           <p className="mt-2 font-display text-[42px] font-bold leading-none">
-            {formatCop(workerDemo.monto)}
+            {formatCop(claim.montoCop)}
           </p>
           <p className="mt-3 text-[13px] text-white/90">
-            {workerDemo.evento.split("—")[0]?.trim()} · {workerDemo.hora}
+            {claim.evento}
+            {claim.cerradoEn ? ` · ${claim.cerradoEn}` : ""}
           </p>
         </div>
 
         <div className="mt-4 rounded-[14px] bg-bg-soft p-4">
           <dl className="space-y-3 text-[13px]">
             {[
-              ["Rol", workerDemo.rol],
-              ["Pagador", workerDemo.pagador],
-              ["Saldo Orilla", "Disponible para retirar"],
+              ["Receptor", claim.nombre],
+              ["Rol", claim.rol],
+              ["En wallet", `${claim.montoStellar} ${claim.assetCode}`],
+              ["Estado", "SUCCESS · testnet"],
             ].map(([k, v]) => (
               <div key={k} className="flex justify-between gap-3">
                 <dt className="text-ink-muted">{k}</dt>
@@ -44,23 +50,23 @@ export default async function TePagaronPage({
         </div>
 
         <p className="mt-4 text-[13px] leading-relaxed text-ink-muted">
-          El dinero ya está en tu <strong className="text-ink">saldo Orilla</strong>.
-          Envíalo a Bancolombia cuando quieras — sin jerga crypto.
-        </p>
-        <p className="mt-2 text-xs text-ink-muted">
-          Respaldo en red Stellar · puedes ver el comprobante.
+          El XLM ya está en tu Demo Wallet (Stellar testnet). Bancolombia / COP
+          queda para una fase con ancla.
         </p>
 
         <div className="mt-5 flex flex-col gap-3">
-          <LinkButton href={`/cobrar/${token}/banco`} className="w-full">
-            Enviar a Bancolombia
-          </LinkButton>
           <LinkButton
             href={`/cobrar/${token}/comprobante`}
-            variant="ghost"
             className="w-full"
           >
             Ver comprobante
+          </LinkButton>
+          <LinkButton
+            href={`/cobrar/${token}/banco`}
+            variant="ghost"
+            className="w-full"
+          >
+            Enviar a Bancolombia (mock)
           </LinkButton>
         </div>
 

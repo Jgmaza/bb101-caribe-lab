@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Organization {
+  id                      String   @id @default(cuid())
+  name                    String
+  slug                    String   @unique
+  distributionPublicKey   String?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  users                   User[]
+  lotes                   Lote[]
+}
+
+/// Usuarios Orilla: hotel (pagador), músico, staff.
+model User {
+  id             String       @id @default(cuid())
+  email          String       @unique
+  passwordHash   String
+  name           String
+  /// pagador | musico | staff
+  role           String
+  cedula         String       @unique
+  phone          String
+  /// YYYY-MM-DD — verificación SDP (DATE_OF_BIRTH)
+  dateOfBirth    String
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model Lote {
+  id                String       @id @default(cuid())
+  slug              String?      @unique
+  evento            String
+  tipo              String
+  estado            String       @default("Borrador")
+  total             Int          @default(0)
+  personas          Int          @default(0)
+  cerradoEn         String?
+  sdpDisbursementId String?
+  organizationId    String
+  organization      Organization @relation(fields: [organizationId], references: [id])
+  receptores        Receptor[]
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+}
+
+model Receptor {
+  id             String  @id @default(cuid())
+  nombre         String
+  rol            String
+  email          String?
+  celular        String
+  cedula         String?
+  dateOfBirth    String?
+  monto          Int
+  /// Monto en asset Stellar para SDP (XLM), aparte del COP display
+  montoStellar   String  @default("1")
+  estado         String  @default("Pendiente")
+  hash           String?
+  stellarAddress String?
+  loteId         String
+  lote           Lote    @relation(fields: [loteId], references: [id], onDelete: Cascade)
+}

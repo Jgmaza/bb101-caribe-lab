@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { PagadorShell } from "@/components/PagadorShell";
 import { Card, LinkButton, StatusChip } from "@/components/ui";
-import { formatCop, lotes } from "@/lib/mock";
+import { formatCop } from "@/lib/format";
+import { listLotesForPagador } from "@/lib/lotes/server";
 
-export default function LotesPage() {
+export default async function LotesPage() {
+  const lotes = await listLotesForPagador();
+
   return (
     <PagadorShell
       breadcrumb="Hotel Dann Carlton · Barranquilla"
@@ -29,37 +32,41 @@ export default function LotesPage() {
           <span />
         </div>
         <ul>
-          {lotes.map((lote) => (
-            <li
-              key={lote.id}
-              className="grid gap-2 border-t border-line px-5 py-4 md:grid-cols-[1.6fr_1fr_0.7fr_1fr_0.9fr_0.6fr] md:items-center md:gap-3"
-            >
-              <div>
-                <p className="text-sm font-semibold text-ink">{lote.evento}</p>
-                <p className="text-xs text-ink-muted md:hidden">{lote.tipo}</p>
-              </div>
-              <p className="hidden text-[13px] text-ink-muted md:block">
-                {lote.tipo}
-              </p>
-              <p className="text-sm text-ink">{lote.personas}</p>
-              <p className="text-sm font-semibold text-ink">
-                {formatCop(lote.total)}
-              </p>
-              <StatusChip status={lote.estado} />
-              <Link
-                href={
-                  lote.id === "carnaval-donaciones"
-                    ? "/pagador/lotes/carnaval"
-                    : lote.estado === "Borrador"
-                      ? "/pagador/lotes/nuevo"
-                      : `/pagador/lotes/${lote.id}`
-                }
-                className="text-sm font-semibold text-blue"
-              >
-                {lote.estado === "Borrador" ? "Editar lote" : "Ver detalle"}
-              </Link>
+          {lotes.length === 0 ? (
+            <li className="px-5 py-8 text-sm text-ink-muted">
+              No hay lotes en tu organización.
             </li>
-          ))}
+          ) : (
+            lotes.map((lote) => (
+              <li
+                key={lote.id}
+                className="grid gap-2 border-t border-line px-5 py-4 md:grid-cols-[1.6fr_1fr_0.7fr_1fr_0.9fr_0.6fr] md:items-center md:gap-3"
+              >
+                <div>
+                  <p className="text-sm font-semibold text-ink">{lote.evento}</p>
+                  <p className="text-xs text-ink-muted md:hidden">{lote.tipo}</p>
+                </div>
+                <p className="hidden text-[13px] text-ink-muted md:block">
+                  {lote.tipo}
+                </p>
+                <p className="text-sm text-ink">{lote.personas}</p>
+                <p className="text-sm font-semibold text-ink">
+                  {formatCop(lote.total)}
+                </p>
+                <StatusChip status={lote.estado} />
+                <Link
+                  href={
+                    lote.id === "carnaval-donaciones"
+                      ? "/pagador/lotes/carnaval"
+                      : `/pagador/lotes/${lote.id}`
+                  }
+                  className="text-sm font-semibold text-blue"
+                >
+                  {lote.estado === "Borrador" ? "Editar lote" : "Ver detalle"}
+                </Link>
+              </li>
+            ))
+          )}
         </ul>
       </Card>
     </PagadorShell>

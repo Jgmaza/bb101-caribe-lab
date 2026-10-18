@@ -52,12 +52,14 @@ export function LinkButton({
 export function StatusChip({
   status,
 }: {
-  status: "Listo" | "Programado" | "Borrador" | "Ok" | "Pendiente" | "Fallido";
+  status: string;
 }) {
   const map: Record<string, string> = {
     Listo: "bg-[#E6F6EF] text-success",
     Ok: "bg-[#E6F6EF] text-success",
+    Pagado: "bg-[#E6F6EF] text-success",
     Programado: "bg-[#E8F4FA] text-blue",
+    Cerrando: "bg-[#E8F4FA] text-blue",
     Borrador: "bg-[#F4F1E6] text-warn",
     Pendiente: "bg-[#F4F1E6] text-warn",
     Fallido: "bg-[#FCEAEA] text-danger",
@@ -65,7 +67,7 @@ export function StatusChip({
 
   return (
     <span
-      className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${map[status]}`}
+      className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${map[status] ?? "bg-bg-soft text-ink-muted"}`}
     >
       {status}
     </span>

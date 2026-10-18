@@ -1,2 +1,15 @@
 .DS_Store
 **/.DS_Store
+
+# deps / build
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+
+# secrets / env
+frontend/.env
+frontend/.env.local
+frontend/.env*.local
+
+# SDP clone (pesado; clonar con docs/semana4/SDP-setup.md)
+infra/stellar-disbursement-platform-backend/
