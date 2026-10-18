@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { MIN_PASSWORD } from "@/lib/auth";
 import { login, register } from "@/lib/server/auth-actions";
 import { Field, FormError, Input, SubmitButton } from "./ui";
@@ -15,7 +15,14 @@ export function AuthForm({ mode, next }: { mode: "registro" | "ingresar"; next?:
   return (
     <form action={action} className="flex flex-col gap-4">
       {next ? <input type="hidden" name="next" value={next} /> : null}
-      <Field label="Usuario">
+      <Field
+        label="Username"
+        hint={
+          isRegister
+            ? "Es tu identificador único en Orilla: con él te encuentran y te agregan a los proyectos como @username. Usa de 3 a 20 letras sin tildes, números o _."
+            : undefined
+        }
+      >
         <Input
           name="username"
           defaultValue={state.username}
@@ -41,20 +48,24 @@ export function AuthForm({ mode, next }: { mode: "registro" | "ingresar"; next?:
           />
         </Field>
       ) : null}
-      <Field label="Contraseña">
-        <Input
-          name="password"
-          type="password"
-          autoComplete={isRegister ? "new-password" : "current-password"}
-          required
-          minLength={isRegister ? MIN_PASSWORD : 1}
-        />
-      </Field>
+      <PasswordField
+        label="Contraseña"
+        name="password"
+        autoComplete={isRegister ? "new-password" : "current-password"}
+        minLength={isRegister ? MIN_PASSWORD : 1}
+        hint={
+          isRegister
+            ? `Mínimo ${MIN_PASSWORD} caracteres. Guárdala bien: por ahora no se puede recuperar.`
+            : undefined
+        }
+      />
       {isRegister ? (
-        <p className="text-xs text-ink-muted">
-          Usuario: 3 a 20 letras sin tildes, números o _. Contraseña: mínimo {MIN_PASSWORD}{" "}
-          caracteres. Guárdala bien: por ahora no se puede recuperar.
-        </p>
+        <PasswordField
+          label="Confirmar contraseña"
+          name="password_confirm"
+          autoComplete="new-password"
+          minLength={MIN_PASSWORD}
+        />
       ) : null}
 
       <FormError message={state.error} />
@@ -77,5 +88,47 @@ export function AuthForm({ mode, next }: { mode: "registro" | "ingresar"; next?:
         </Link>
       </p>
     </form>
+  );
+}
+
+/** Campo de contraseña con botón para verla u ocultarla. */
+function PasswordField({
+  label,
+  name,
+  autoComplete,
+  minLength,
+  hint,
+}: {
+  label: string;
+  name: string;
+  autoComplete: string;
+  minLength: number;
+  hint?: string;
+}) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <Field label={label} hint={hint}>
+      <div className="relative">
+        <Input
+          name={name}
+          type={visible ? "text" : "password"}
+          autoComplete={autoComplete}
+          autoCapitalize="none"
+          spellCheck={false}
+          required
+          minLength={minLength}
+          className="pr-20"
+        />
+        <button
+          type="button"
+          onClick={() => setVisible((v) => !v)}
+          aria-label={visible ? `Ocultar ${label.toLowerCase()}` : `Ver ${label.toLowerCase()}`}
+          aria-pressed={visible}
+          className="absolute inset-y-0 right-0 cursor-pointer rounded-r-[10px] px-3.5 text-xs font-semibold text-blue hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/40"
+        >
+          {visible ? "Ocultar" : "Ver"}
+        </button>
+      </div>
+    </Field>
   );
 }

@@ -12,7 +12,7 @@ export function normalizeUsername(value: string): string {
 export function usernameError(username: string): string | null {
   return USERNAME_PATTERN.test(username)
     ? null
-    : "El usuario debe tener entre 3 y 20 letras sin tildes, números o _.";
+    : "El username debe tener entre 3 y 20 letras sin tildes, números o _.";
 }
 
 export function passwordError(password: string): string | null {

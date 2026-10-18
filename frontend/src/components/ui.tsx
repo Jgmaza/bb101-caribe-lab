@@ -140,15 +140,18 @@ export function ShareBar({ shares }: { shares: { label: string; bps: number }[] 
 
 export function Field({
   label,
+  hint,
   children,
 }: {
   label: string;
+  hint?: ReactNode;
   children: ReactNode;
 }) {
   return (
     <label className="flex w-full flex-col gap-2">
       <span className="text-xs font-semibold text-ink-muted">{label}</span>
       {children}
+      {hint ? <span className="text-xs text-ink-muted">{hint}</span> : null}
     </label>
   );
 }
