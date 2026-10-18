@@ -52,23 +52,89 @@ export function LinkButton({
 export function StatusChip({
   status,
 }: {
-  status: "Listo" | "Programado" | "Borrador" | "Ok" | "Pendiente" | "Fallido";
+  status: "pending" | "received" | "distributed" | "failed";
 }) {
-  const map: Record<string, string> = {
-    Listo: "bg-[#E6F6EF] text-success",
-    Ok: "bg-[#E6F6EF] text-success",
-    Programado: "bg-[#E8F4FA] text-blue",
-    Borrador: "bg-[#F4F1E6] text-warn",
-    Pendiente: "bg-[#F4F1E6] text-warn",
-    Fallido: "bg-[#FCEAEA] text-danger",
-  };
+  const map = {
+    pending: ["Pendiente", "bg-[#F4F1E6] text-warn"],
+    received: ["Recibido", "bg-[#E8F4FA] text-blue"],
+    distributed: ["Repartido", "bg-[#E6F6EF] text-success"],
+    failed: ["Falló el reparto", "bg-[#FCEAEA] text-danger"],
+  } as const;
+  const [label, style] = map[status];
 
   return (
     <span
-      className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${map[status]}`}
+      className={`inline-flex w-fit rounded-full px-3 py-1 text-xs font-semibold ${style}`}
     >
-      {status}
+      {label}
     </span>
+  );
+}
+
+export function SubmitButton({
+  children,
+  pendingLabel,
+  pending,
+  variant = "primary",
+  className = "",
+}: {
+  children: ReactNode;
+  pendingLabel: string;
+  pending: boolean;
+  variant?: "primary" | "ghost" | "cta";
+  className?: string;
+}) {
+  return (
+    <Button type="submit" variant={variant} disabled={pending} className={className}>
+      {pending ? pendingLabel : children}
+    </Button>
+  );
+}
+
+export function FormError({ message }: { message: string | null }) {
+  if (!message) return null;
+  return (
+    <p
+      role="alert"
+      className="rounded-[10px] border border-danger/30 bg-[#FCEAEA] px-3.5 py-3 text-sm text-danger"
+    >
+      {message}
+    </p>
+  );
+}
+
+export function TxLink({ hash, label }: { hash: string; label?: string }) {
+  return (
+    <a
+      href={`https://stellar.expert/explorer/testnet/tx/${hash}`}
+      target="_blank"
+      rel="noreferrer"
+      className="font-mono text-[13px] font-semibold text-blue hover:underline"
+    >
+      {label ?? `${hash.slice(0, 10)}…${hash.slice(-6)}`}
+    </a>
+  );
+}
+
+const SHARE_COLORS = ["#0b7ba8", "#1fa87a", "#e6c34a", "#5a6f7a", "#7fc4de", "#9ad9be"];
+
+export function shareColor(index: number) {
+  return SHARE_COLORS[index % SHARE_COLORS.length];
+}
+
+/** Barra apilada con el % de cada integrante. */
+export function ShareBar({ shares }: { shares: { label: string; bps: number }[] }) {
+  return (
+    <div className="flex h-3 w-full overflow-hidden rounded-full bg-line" aria-hidden>
+      {shares.map((s, i) => (
+        <div
+          key={`${s.label}-${i}`}
+          title={`${s.label}: ${s.bps / 100}%`}
+          style={{ width: `${Math.min(s.bps, 10_000) / 100}%`, background: shareColor(i) }}
+          className="h-full border-r border-white last:border-r-0"
+        />
+      ))}
+    </div>
   );
 }
 

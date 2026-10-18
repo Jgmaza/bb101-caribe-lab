@@ -1,36 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Orilla — frontend
 
-## Getting Started
+Un grupo (banda, staff de evento) define una vez el % de cada integrante. El
+organizador hace **un solo pago** a la cuenta del proyecto y Orilla lo reparte
+al instante en **Stellar testnet**, con comprobante para todos.
 
-First, run the development server:
+## Requisitos
+
+- Node.js 20 o superior, npm 10 o superior
+- Un proyecto de [Supabase](https://supabase.com) (el tier gratis alcanza)
+
+## Instalación
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cd frontend
+npm install
+cp .env.example .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 1. Cuentas en Stellar testnet
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run stellar:setup
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Crea con friendbot la cuenta *issuer* del activo de prueba `COP`, la cuenta
+*funder* (paga el XLM de cada cuenta custodial) y el *organizador demo* con
+20.000.000 COP de prueba. También genera `ORILLA_ENCRYPTION_KEY`. Copia las
+líneas que imprime en `.env.local`.
 
-## Learn More
+> Si cambias `ORILLA_ENCRYPTION_KEY`, las cuentas ya creadas quedan inaccesibles.
 
-To learn more about Next.js, take a look at the following resources:
+### 2. Base de datos
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Completa `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` y `DATABASE_URL` en
+`.env.local` y aplica el esquema:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run db:apply
+```
 
-## Deploy on Vercel
+Todo el modelo (tablas, restricciones, triggers, RLS y funciones) vive en
+[`../supabase/schema.sql`](../supabase/schema.sql). Es idempotente: se puede
+volver a aplicar, o pegar en el SQL editor de Supabase. **No configures nada a
+mano en el dashboard**: cualquier cambio de esquema va en ese archivo.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Cómo correrlo
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run dev     # http://localhost:3000
+npm test        # pruebas del reparto porcentual
+npm run lint
+npm run build && npm start
+```
+
+## Recorridos
+
+| Quién | Ruta | Qué hace |
+|---|---|---|
+| Grupo | `/proyectos/nuevo` | Crea el proyecto con integrantes y % (deben sumar 100%) |
+| Grupo | `/proyectos/[slug]` | Link de pago, integrantes, pagos y reparto con hash |
+| Organizador | `/pagar/[slug]` | Paga un total; se reparte al instante |
+| Integrante | `/cobrar` → `/cobrar/[id]` | Busca por celular, OTP de prueba `4821`, ve saldo e historial |
+
+## Cómo funciona
+
+1. Al crear un proyecto, una sola transacción Stellar crea la cuenta custodial
+   del proyecto y la de cada integrante (con trustline a `COP`). Las claves se
+   guardan cifradas con AES-256-GCM.
+2. El organizador paga a la cuenta del proyecto.
+3. Orilla reparte con **una transacción de N pagos** (todo o nada). Los montos
+   se calculan en `src/lib/split.ts` (mayor residuo: suman exactamente el total).
+   Si el reparto falla, el pago queda en `failed` y se puede reintentar desde el
+   panel del proyecto.
+
+El reparto está aislado en `distribute()` (`src/lib/server/stellar.ts`) para
+poder cambiarlo por la API de SDP más adelante.
+
+## Fuera del MVP (v2)
+
+Auth real (hoy los proyectos se acceden por link), SMS real, cash-out a
+Bancolombia, pago por adelantado (escrow), entrada de pesos reales, mainnet.
