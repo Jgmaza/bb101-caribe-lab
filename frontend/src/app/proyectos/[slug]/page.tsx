@@ -11,39 +11,37 @@ import {
   TxLink,
   shareColor,
 } from "@/components/ui";
-import { formatBalance, formatCop, formatDateTime, formatPhone, shortKey } from "@/lib/format";
+import { KIND_LABEL, formatBalance, formatCop, formatDateTime, shortKey } from "@/lib/format";
+import { describeChange, diffMembers } from "@/lib/members";
 import { stroopsToCop } from "@/lib/money";
 import { retryDistribution } from "@/lib/server/actions";
 import {
   getBalance,
-  getProjectByAdminToken,
+  getProjectAccess,
   getProjectMembers,
   getProjectPayments,
+  getShareChanges,
 } from "@/lib/server/queries";
+import { requireUser } from "@/lib/server/session";
 import { explorerAccountUrl } from "@/lib/server/stellar";
 import { bpsToPercent } from "@/lib/split";
 
-const KIND_LABEL = { banda: "Banda / grupo musical", staff: "Staff de evento", otro: "Proyecto" };
+export default async function ProyectoPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const user = await requireUser(`/proyectos/${encodeURIComponent(slug)}`);
+  const access = await getProjectAccess(slug, user.id);
+  // Solo integrantes: a los demás no les decimos que el proyecto existe.
+  if (!access?.membership) notFound();
+  const { project, membership } = access;
+  const isAdmin = membership.is_admin;
 
-export default async function PanelPage({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ token: string }>;
-  searchParams: Promise<{ nuevo?: string }>;
-}) {
-  const [{ token }, { nuevo }] = await Promise.all([params, searchParams]);
-  const project = await getProjectByAdminToken(token);
-  if (!project) notFound();
-  const { slug } = project;
-  const panelPath = `/panel/${token}`;
-
-  const [members, payments, balance] = await Promise.all([
+  const [members, payments, changes, balance] = await Promise.all([
     getProjectMembers(project.id),
     getProjectPayments(project.id),
+    getShareChanges(project.id),
     getBalance(project.stellar_public_key),
   ]);
-  const received = payments
+  const distributed = payments
     .filter((p) => p.status === "distributed")
     .reduce((acc, p) => acc + p.amount_cop, 0);
 
@@ -51,33 +49,30 @@ export default async function PanelPage({
     <DesktopShell
       breadcrumb={`Proyectos / ${project.name}`}
       right={
-        <LinkButton href={`${panelPath}/editar`} variant="ghost" className="py-2.5 text-sm">
-          Editar porcentajes
-        </LinkButton>
+        <div className="flex items-center gap-3">
+          <Link href="/inicio" className="text-sm font-semibold text-ink-muted hover:text-blue">
+            Mi inicio
+          </Link>
+          {isAdmin ? (
+            <LinkButton href={`/proyectos/${slug}/editar`} variant="ghost" className="py-2.5 text-sm">
+              Editar proyecto
+            </LinkButton>
+          ) : null}
+        </div>
       }
     >
-      {nuevo ? (
-        <div className="mb-6 rounded-[14px] border border-sand bg-[#FBF6E3] p-5">
-          <h2 className="text-sm font-bold text-ink">Guarda este link: es la llave del proyecto</h2>
-          <p className="mt-1 text-[13px] leading-relaxed text-ink-muted">
-            Con él se ven los pagos y se cambian los porcentajes. No hay usuario ni
-            contraseña: si lo pierden, no se puede recuperar. Compártanlo solo
-            dentro del grupo, nunca con quien les paga.
-          </p>
-          <div className="mt-3">
-            <CopyLink path={panelPath} label="Copiar link de administración" />
-          </div>
-        </div>
-      ) : null}
-
       <p className="text-xs font-semibold tracking-wide text-blue uppercase">
         {KIND_LABEL[project.kind]}
       </p>
       <h1 className="mt-1 font-display text-[32px] font-bold text-ink">{project.name}</h1>
+      <p className="mt-1 text-sm text-ink-muted">
+        Tu parte: <strong className="text-ink">{bpsToPercent(membership.share_bps)}%</strong>
+        {isAdmin ? " · Eres admin" : ""}
+      </p>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-[1.5fr_1fr]">
         <Card className="p-5">
-          <h2 className="text-sm font-bold text-ink">Link de pago para el organizador</h2>
+          <h2 className="text-sm font-bold text-ink">Link de pago</h2>
           <p className="mt-1 text-[13px] text-ink-muted">
             Compártanlo con el bar, hotel o productora. Pagan un total y Orilla lo
             reparte según sus porcentajes.
@@ -95,11 +90,12 @@ export default async function PanelPage({
         <div className="grid grid-cols-2 gap-4">
           <Card className="p-5">
             <p className="text-[13px] text-ink-muted">Repartido</p>
-            <p className="font-display text-2xl font-bold text-success">{formatCop(received)}</p>
+            <p className="font-display text-2xl font-bold text-success">{formatCop(distributed)}</p>
           </Card>
           <Card className="p-5">
             <p className="text-[13px] text-ink-muted">En cuenta del proyecto</p>
-            <p className="font-display text-2xl font-bold text-ink">{balance.cop === null ? formatBalance(null) : `≈ ${formatBalance(balance.cop)}`}
+            <p className="font-display text-2xl font-bold text-ink">
+              {balance.cop === null ? formatBalance(null) : `≈ ${formatBalance(balance.cop)}`}
             </p>
             <a
               href={explorerAccountUrl(project.stellar_public_key)}
@@ -117,45 +113,46 @@ export default async function PanelPage({
         <div className="p-5">
           <h2 className="text-sm font-bold text-ink">Integrantes · {members.length}</h2>
           <div className="mt-3">
-            <ShareBar shares={members.map((m) => ({ label: m.name, bps: m.share_bps }))} />
+            <ShareBar shares={members.map((m) => ({ label: m.user.display_name, bps: m.share_bps }))} />
           </div>
         </div>
-        <div className="hidden grid-cols-[1.4fr_1fr_1fr_0.5fr_1fr] gap-3 bg-bg-soft px-5 py-3 text-xs font-semibold text-ink-muted md:grid">
+        <div className="hidden grid-cols-[1.6fr_1fr_0.5fr_0.5fr] gap-3 bg-bg-soft px-5 py-3 text-xs font-semibold text-ink-muted md:grid">
           <span>Persona</span>
           <span>Rol</span>
-          <span>Celular</span>
           <span>%</span>
-          <span>Link de cobro</span>
+          <span />
         </div>
         <ul>
           {members.map((m, i) => (
             <li
               key={m.id}
-              className="grid gap-1 border-t border-line px-5 py-3.5 md:grid-cols-[1.4fr_1fr_1fr_0.5fr_1fr] md:items-center md:gap-3"
+              className="grid gap-1 border-t border-line px-5 py-3.5 md:grid-cols-[1.6fr_1fr_0.5fr_0.5fr] md:items-center md:gap-3"
             >
-              <p className="flex items-center gap-2 text-sm font-semibold text-ink">
-                <span className="h-2.5 w-2.5 rounded-full" style={{ background: shareColor(i) }} />
-                {m.name}
+              <p className="flex min-w-0 items-center gap-2 text-sm">
+                <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: shareColor(i) }} />
+                <span className="truncate font-semibold text-ink">{m.user.display_name}</span>
+                <span className="truncate text-ink-muted">@{m.user.username}</span>
+                {m.user_id === user.id ? <span className="text-xs text-ink-muted">(tú)</span> : null}
               </p>
               <p className="text-[13px] text-ink-muted">{m.role || "—"}</p>
-              <p className="text-[13px] text-ink">{formatPhone(m.phone)}</p>
               <p className="text-sm font-bold text-blue">{bpsToPercent(m.share_bps)}%</p>
-              <div className="flex items-center gap-3">
-                <Link href={`/cobrar/${m.id}`} target="_blank" rel="noopener noreferrer" className="text-[13px] font-semibold text-blue">
-                  Abrir
-                </Link>
-                <CopyLink path={`/cobrar/${m.id}`} label="Copiar" />
-              </div>
+              <p>
+                {m.is_admin ? (
+                  <span className="inline-flex rounded-full bg-[#E8F4FA] px-2.5 py-0.5 text-xs font-semibold text-blue">
+                    Admin
+                  </span>
+                ) : null}
+              </p>
             </li>
           ))}
         </ul>
       </Card>
 
-      <h2 className="mt-8 font-display text-2xl font-bold text-ink">Pagos recibidos</h2>
+      <h2 className="mt-8 font-display text-2xl font-bold text-ink">Pagos y reparto</h2>
       {payments.length === 0 ? (
         <Card className="mt-4 p-6 text-sm text-ink-muted">
-          Todavía no hay pagos. Cuando el organizador pague con el link, aparecerán
-          aquí con el reparto de cada integrante.
+          Todavía no hay pagos. Cuando alguien pague con el link, aparecerán aquí con
+          lo que recibió cada integrante.
         </Card>
       ) : (
         <ul className="mt-4 flex flex-col gap-4">
@@ -179,7 +176,7 @@ export default async function PanelPage({
                       .map((d) => (
                         <li key={d.id} className="flex justify-between gap-3 border-b border-line pb-1.5">
                           <span className="text-ink-muted">
-                            {d.member.name} · {bpsToPercent(d.share_bps)}%
+                            {d.user.display_name} · {bpsToPercent(d.share_bps)}%
                           </span>
                           <span className="font-semibold text-ink">
                             {formatCop(stroopsToCop(BigInt(d.amount_stroops), p.cop_per_xlm))}
@@ -203,8 +200,8 @@ export default async function PanelPage({
                 </div>
 
                 {p.error ? <p className="mt-3 text-xs text-danger">{p.error}</p> : null}
-                {p.status === "failed" && p.payment_tx_hash ? (
-                  <form action={retryDistribution.bind(null, token, p.id)} className="mt-3">
+                {isAdmin && p.status === "failed" && p.payment_tx_hash ? (
+                  <form action={retryDistribution.bind(null, slug, p.id)} className="mt-3">
                     <Button type="submit" variant="ghost" className="py-2 text-sm">
                       Reintentar reparto
                     </Button>
@@ -215,6 +212,35 @@ export default async function PanelPage({
           ))}
         </ul>
       )}
+
+      <h2 className="mt-8 font-display text-2xl font-bold text-ink">Historial de cambios</h2>
+      <p className="mt-1 text-[13px] text-ink-muted">
+        Quién cambió los porcentajes, los roles o los integrantes. Los pagos ya
+        repartidos conservan el porcentaje que tenían en su momento.
+      </p>
+      <Card className="mt-4">
+        <ul className="divide-y divide-line">
+          {changes.map((c) => {
+            const created = c.before.length === 0;
+            const lines = diffMembers(c.before, c.after).map(describeChange);
+            return (
+              <li key={c.id} className="px-5 py-4">
+                <p className="text-sm text-ink">
+                  <strong>{c.author.display_name}</strong>{" "}
+                  <span className="text-ink-muted">@{c.author.username}</span>{" "}
+                  {created ? "creó el proyecto" : "editó el proyecto"}
+                </p>
+                <p className="text-xs text-ink-muted">{formatDateTime(c.created_at)}</p>
+                <ul className="mt-2 flex flex-col gap-0.5 text-[13px] text-ink-muted">
+                  {lines.map((line) => (
+                    <li key={line}>· {line}</li>
+                  ))}
+                </ul>
+              </li>
+            );
+          })}
+        </ul>
+      </Card>
     </DesktopShell>
   );
 }

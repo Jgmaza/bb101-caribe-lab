@@ -4,7 +4,7 @@ import { requireUser } from "@/lib/server/session";
 import { ProjectForm } from "./ProjectForm";
 
 export default async function NuevoProyectoPage() {
-  await requireUser("/proyectos/nuevo");
+  const user = await requireUser("/proyectos/nuevo");
 
   return (
     <DesktopShell breadcrumb="Proyectos / Nuevo">
@@ -16,7 +16,7 @@ export default async function NuevoProyectoPage() {
         organizador pague al proyecto, Orilla reparte automáticamente.
       </p>
       <Card className="mt-6 p-5 sm:p-7">
-        <ProjectForm />
+        <ProjectForm me={{ username: user.username, displayName: user.display_name }} />
       </Card>
     </DesktopShell>
   );

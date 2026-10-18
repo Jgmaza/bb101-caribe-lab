@@ -3,13 +3,14 @@
 import { randomBytes } from "node:crypto";
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
-import { formatCop, isValidPhone, normalizePhone } from "@/lib/format";
+import { formatCop } from "@/lib/format";
+import { parseMembers, type ParsedMember } from "@/lib/members";
 import { MAX_PAYMENT_COP, copToStroops, parseCop } from "@/lib/money";
-import { TOTAL_BPS, percentToBps, splitAmount } from "@/lib/split";
-import { decryptSecret, encryptSecret, hashAdminToken, newAdminToken } from "./crypto";
-import { db, type MemberRow, type PaymentRow, type ProjectKind, type ProjectRow } from "./db";
+import { splitAmount } from "@/lib/split";
+import { decryptSecret, encryptSecret } from "./crypto";
+import { db, type PaymentRow, type ProjectKind, type ProjectRow } from "./db";
 import { getCopPerXlm } from "./price";
-import { getProjectByAdminToken, isUuid } from "./queries";
+import { getProjectAccess, getUsersByUsername, isUuid } from "./queries";
 import { requireUser } from "./session";
 import {
   createCustodialAccounts,
@@ -19,16 +20,14 @@ import {
   payToProject,
 } from "./stellar";
 
-// Crear proyecto y pagar exigen sesión (requireUser). Mientras se migra a proyectos con
-// admins, la administración sigue por link (/panel/<token>) y el cobro por /cobrar/<uuid>.
-// Validamos todo lo que llega.
+// Todas las acciones exigen sesión (requireUser). Editar un proyecto y reintentar un reparto
+// exigen además ser admin del proyecto. Validamos todo lo que llega.
 
 export type FormState = { error: string | null };
+/** Devuelve lo escrito: React resetea los campos no controlados del formulario tras la acción. */
+export type ProjectFormState = FormState & { name?: string; kind?: string };
 
-const MAX_MEMBERS = 20;
 const KINDS: ProjectKind[] = ["banda", "staff", "otro"];
-
-type MemberInput = { name: string; phone: string; role: string; pct: string };
 
 function parseJsonArray(value: FormDataEntryValue | null): unknown[] | null {
   if (typeof value !== "string") return null;
@@ -55,103 +54,94 @@ function slugify(name: string) {
   return `${base || "proyecto"}-${randomBytes(3).toString("hex")}`;
 }
 
-function sharesError(bps: (number | null)[]): string | null {
-  if (bps.some((b) => b === null || b < 1 || b > TOTAL_BPS)) {
-    return "Cada porcentaje debe ser un número entre 0,01 y 100 (máximo dos decimales).";
+type MemberRpcRow = Omit<ParsedMember, "username"> & { user_id: string };
+
+/** Cambia cada @usuario por su id. Solo personas registradas pueden ser integrantes. */
+async function resolveMembers(
+  members: ParsedMember[],
+): Promise<{ rows: MemberRpcRow[] } | { error: string }> {
+  const users = await getUsersByUsername(members.map((m) => m.username));
+  const ids = new Map(users.map((u) => [u.username, u.id]));
+  const missing = members.filter((m) => !ids.has(m.username)).map((m) => `@${m.username}`);
+  if (missing.length) {
+    return {
+      error: `No encontramos a ${missing.join(", ")}. Cada integrante necesita una cuenta en Orilla.`,
+    };
   }
-  const sum = (bps as number[]).reduce((a, b) => a + b, 0);
-  if (sum !== TOTAL_BPS) {
-    return `Los porcentajes deben sumar 100% (hoy suman ${(sum / 100).toLocaleString("es-CO")}%).`;
-  }
-  return null;
+  return {
+    rows: members.map(({ username, ...m }) => ({ ...m, user_id: ids.get(username)! })),
+  };
 }
 
-export async function createProject(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireUser("/proyectos/nuevo");
+export async function createProject(
+  _prev: ProjectFormState,
+  formData: FormData,
+): Promise<ProjectFormState> {
+  const user = await requireUser("/proyectos/nuevo");
   const name = text(formData.get("name"));
   const kind = text(formData.get("kind")) as ProjectKind;
-  const raw = parseJsonArray(formData.get("members"));
+  const fail = (error: string) => ({ error, name, kind });
 
-  if (name.length < 2) return { error: "Escribe el nombre del proyecto." };
-  if (!KINDS.includes(kind)) return { error: "Elige el tipo de proyecto." };
-  if (!raw || raw.length < 1) return { error: "Agrega al menos un integrante." };
-  if (raw.length > MAX_MEMBERS) return { error: `Máximo ${MAX_MEMBERS} integrantes por proyecto.` };
+  if (name.length < 2) return fail("Escribe el nombre del proyecto.");
+  if (!KINDS.includes(kind)) return fail("Elige el tipo de proyecto.");
 
-  const members = (raw as Partial<MemberInput>[]).map((m) => ({
-    name: text(m.name),
-    phone: normalizePhone(text(m.phone, 30)),
-    role: text(m.role, 60),
-    share_bps: percentToBps(text(m.pct, 10)),
-  }));
-
-  if (members.some((m) => m.name.length < 2)) return { error: "Cada integrante necesita un nombre." };
-  if (members.some((m) => !isValidPhone(m.phone))) {
-    return { error: "Revisa los celulares: deben tener entre 10 y 12 dígitos." };
+  const parsed = parseMembers(parseJsonArray(formData.get("members")));
+  if (!parsed.ok) return fail(parsed.error);
+  if (!parsed.members.some((m) => m.username === user.username && m.is_admin)) {
+    return fail("Tú quedas como integrante y admin del proyecto: no te quites de la lista.");
   }
-  if (new Set(members.map((m) => m.phone)).size !== members.length) {
-    return { error: "Hay celulares repetidos en el proyecto." };
-  }
-  const shareErr = sharesError(members.map((m) => m.share_bps));
-  if (shareErr) return { error: shareErr };
+  const resolved = await resolveMembers(parsed.members);
+  if ("error" in resolved) return fail(resolved.error);
 
   const slug = slugify(name);
-  const adminToken = newAdminToken();
   try {
-    // Una sola transacción Stellar crea la cuenta del proyecto y las de los integrantes.
-    const [projectKp, ...memberKps] = await createCustodialAccounts(members.length + 1);
+    // Solo se crea la cuenta del proyecto: el reparto va a la wallet de cada usuario.
+    const [projectKp] = await createCustodialAccounts(1);
     const { error } = await db().rpc("create_project", {
       p_slug: slug,
       p_name: name,
       p_kind: kind,
       p_stellar_public_key: projectKp.publicKey(),
       p_stellar_secret_enc: encryptSecret(projectKp.secret()),
-      p_admin_token_hash: hashAdminToken(adminToken),
-      p_members: members.map((m, i) => ({
-        ...m,
-        stellar_public_key: memberKps[i].publicKey(),
-        stellar_secret_enc: encryptSecret(memberKps[i].secret()),
-      })),
+      p_created_by: user.id,
+      p_members: resolved.rows,
     });
     if (error) throw new Error(error.message);
   } catch (err) {
-    return { error: `No pudimos crear el proyecto. ${(err as Error).message}` };
+    return fail(`No pudimos crear el proyecto. ${(err as Error).message}`);
   }
 
-  // El token en claro solo existe en este link: el panel avisa que hay que guardarlo.
-  redirect(`/panel/${adminToken}?nuevo=1`);
+  redirect(`/proyectos/${slug}`);
 }
 
-export async function updateMembers(
-  adminToken: string,
+/** Reemplaza integrantes, %, roles y admins. Solo admins; queda en el historial de cambios. */
+export async function updateProjectMembers(
+  slug: string,
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const project = await getProjectByAdminToken(adminToken);
-  if (!project) return { error: "Link de administración inválido." };
+  const user = await requireUser(`/proyectos/${encodeURIComponent(slug)}/editar`);
+  const access = await getProjectAccess(slug, user.id);
+  if (!access?.membership) return { error: "El proyecto no existe." };
+  if (!access.membership.is_admin) return { error: "Solo los admins pueden editar el proyecto." };
 
-  const raw = parseJsonArray(formData.get("members"));
-  if (!raw || raw.length < 1) return { error: "No llegaron integrantes." };
+  const parsed = parseMembers(parseJsonArray(formData.get("members")));
+  if (!parsed.ok) return { error: parsed.error };
+  const resolved = await resolveMembers(parsed.members);
+  if ("error" in resolved) return resolved;
 
-  const members = (raw as { id?: unknown; name?: unknown; role?: unknown; pct?: unknown }[]).map(
-    (m) => ({
-      id: text(m.id, 40),
-      name: text(m.name),
-      role: text(m.role, 60),
-      share_bps: percentToBps(text(m.pct, 10)),
-    }),
-  );
-  if (members.some((m) => !isUuid(m.id))) return { error: "Integrante inválido." };
-  if (members.some((m) => m.name.length < 2)) return { error: "Cada integrante necesita un nombre." };
-  const shareErr = sharesError(members.map((m) => m.share_bps));
-  if (shareErr) return { error: shareErr };
-
-  const { error } = await db().rpc("update_members", {
-    p_project_id: project.id,
-    p_members: members,
+  // La función vuelve a revisar que quien edita sea admin, dentro de la misma transacción.
+  const { error } = await db().rpc("update_project_members", {
+    p_project_id: access.project.id,
+    p_changed_by: user.id,
+    p_members: resolved.rows,
   });
+  if (error?.code === "42501") return { error: "Solo los admins pueden editar el proyecto." };
   if (error) return { error: `No pudimos guardar los cambios. ${error.message}` };
 
-  redirect(`/panel/${adminToken}`);
+  // Si se quitó a sí mismo del proyecto, ya no puede verlo.
+  const stillMember = resolved.rows.some((m) => m.user_id === user.id);
+  redirect(stillMember ? `/proyectos/${slug}` : "/inicio");
 }
 
 export async function payProject(
@@ -226,16 +216,18 @@ export async function payProject(
   redirect(`/pagar/${slug}/recibo/${payment.id}`);
 }
 
-export async function retryDistribution(adminToken: string, paymentId: string): Promise<void> {
+/** Solo admins del proyecto. */
+export async function retryDistribution(slug: string, paymentId: string): Promise<void> {
   if (!isUuid(paymentId)) return;
-  const project = await getProjectByAdminToken(adminToken);
-  if (!project) return;
+  const user = await requireUser(`/proyectos/${encodeURIComponent(slug)}`);
+  const access = await getProjectAccess(slug, user.id);
+  if (!access?.membership?.is_admin) return;
   // Reclama el pago de forma atómica para que dos clics no repartan dos veces.
   const { data: claimed } = await db()
     .from("payments")
     .update({ status: "received", error: null })
     .eq("id", paymentId)
-    .eq("project_id", project.id)
+    .eq("project_id", access.project.id)
     .eq("status", "failed")
     .not("payment_tx_hash", "is", null)
     .select("id, project_id");
@@ -255,22 +247,27 @@ async function runDistribution(paymentId: string) {
       .single<PaymentRow>();
     if (payErr || !payment) throw new Error(payErr?.message ?? "Pago no encontrado");
 
+    // Los % vigentes al momento del reparto; cada parte va a la wallet del usuario.
     const [{ data: project }, { data: members }] = await Promise.all([
       db().from("projects").select("*").eq("id", payment.project_id).single<ProjectRow>(),
-      db().from("members").select("*").eq("project_id", payment.project_id).returns<MemberRow[]>(),
+      db()
+        .from("project_members")
+        .select("user_id, share_bps, user:users(stellar_public_key)")
+        .eq("project_id", payment.project_id)
+        .returns<{ user_id: string; share_bps: number; user: { stellar_public_key: string } }[]>(),
     ]);
     if (!project || !members?.length) throw new Error("Proyecto sin integrantes");
 
     const splits = splitAmount(
       BigInt(payment.amount_stroops),
-      members.map((m) => ({ id: m.id, shareBps: m.share_bps })),
+      members.map((m) => ({ id: m.user_id, shareBps: m.share_bps })),
     );
-    const byId = new Map(members.map((m) => [m.id, m]));
+    const byId = new Map(members.map((m) => [m.user_id, m]));
 
     const hash = (distributedHash = await distribute({
       projectSecret: decryptSecret(project.stellar_secret_enc),
       splits: splits.map((s) => ({
-        publicKey: byId.get(s.id)!.stellar_public_key,
+        publicKey: byId.get(s.id)!.user.stellar_public_key,
         amountStroops: s.amount,
       })),
       memo: memoFor(payment.id),
@@ -280,7 +277,7 @@ async function runDistribution(paymentId: string) {
       p_payment_id: payment.id,
       p_distribution_tx_hash: hash,
       p_rows: splits.map((s) => ({
-        member_id: s.id,
+        user_id: s.id,
         share_bps: s.shareBps,
         amount_stroops: s.amount.toString(),
       })),

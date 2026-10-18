@@ -1,31 +1,32 @@
 import "server-only";
 import { stroopsToCop } from "@/lib/money";
-import { hashAdminToken, isAdminTokenFormat } from "./crypto";
 import {
   db,
   type DistributionRow,
-  type MemberRow,
   type PaymentRow,
+  type ProjectMemberRow,
   type ProjectRow,
+  type ShareChangeRow,
   type TopupRow,
 } from "./db";
 import { tryCopPerXlm } from "./price";
 import { getAvailableStroops } from "./stellar";
 
 // Las columnas *_secret_enc nunca salen de este módulo hacia la UI.
-const PROJECT_PUBLIC = "id, slug, name, kind, stellar_public_key, created_at";
-const MEMBER_PUBLIC = "id, project_id, name, phone, role, share_bps, stellar_public_key, created_at";
+const PROJECT_PUBLIC = "id, slug, name, kind, stellar_public_key, created_by, created_at";
 
 export type Project = Omit<ProjectRow, "stellar_secret_enc">;
-export type Member = Omit<MemberRow, "stellar_secret_enc">;
+export type PersonRef = { id: string; username: string; display_name: string };
+export type ProjectMember = ProjectMemberRow & { user: PersonRef };
 export type Payer = { display_name: string; username: string };
 export type Payment = PaymentRow & { payer: Payer };
 export type PaymentWithSplits = Payment & {
-  distributions: (DistributionRow & { member: Pick<Member, "id" | "name" | "role"> })[];
+  distributions: (DistributionRow & { user: PersonRef })[];
 };
+export type ShareChange = ShareChangeRow & { author: PersonRef };
 
-const PAYMENT_WITH_SPLITS =
-  "*, payer:users!payments_payer_id_fkey(display_name, username), distributions(*, member:members(id, name, role))";
+const PERSON = "id, username, display_name";
+const PAYMENT_WITH_SPLITS = `*, payer:users!payments_payer_id_fkey(display_name, username), distributions(*, user:users(${PERSON}))`;
 
 function orThrow<T>(res: { data: T | null; error: { message: string } | null }): T {
   if (res.error) throw new Error(res.error.message);
@@ -38,27 +39,71 @@ export async function getProjectBySlug(slug: string): Promise<Project | null> {
   );
 }
 
-/** Proyecto al que da acceso un link de administración, o null si el token no es válido. */
-export async function getProjectByAdminToken(token: string): Promise<Project | null> {
-  if (!isAdminTokenFormat(token)) return null;
+export async function getProjectMembers(projectId: string): Promise<ProjectMember[]> {
   return orThrow(
     await db()
-      .from("projects")
-      .select(PROJECT_PUBLIC)
-      .eq("admin_token_hash", hashAdminToken(token))
-      .maybeSingle<Project>(),
-  );
-}
-
-export async function getProjectMembers(projectId: string): Promise<Member[]> {
-  return orThrow(
-    await db()
-      .from("members")
-      .select(MEMBER_PUBLIC)
+      .from("project_members")
+      .select(`*, user:users(${PERSON})`)
       .eq("project_id", projectId)
       .order("share_bps", { ascending: false })
       .order("created_at")
-      .returns<Member[]>(),
+      .returns<ProjectMember[]>(),
+  );
+}
+
+/**
+ * Proyecto y la membresía de `userId` en él. `membership` es null si no es integrante:
+ * las páginas del proyecto responden 404 para no revelar que existe.
+ */
+export async function getProjectAccess(
+  slug: string,
+  userId: string,
+): Promise<{ project: Project; membership: ProjectMemberRow | null } | null> {
+  const project = await getProjectBySlug(slug);
+  if (!project) return null;
+  const membership = orThrow(
+    await db()
+      .from("project_members")
+      .select("*")
+      .eq("project_id", project.id)
+      .eq("user_id", userId)
+      .maybeSingle<ProjectMemberRow>(),
+  );
+  return { project, membership };
+}
+
+export type UserProject = Pick<ProjectMemberRow, "role" | "share_bps" | "is_admin"> & {
+  project: Pick<Project, "id" | "slug" | "name" | "kind">;
+};
+
+export async function getUserProjects(userId: string): Promise<UserProject[]> {
+  return orThrow(
+    await db()
+      .from("project_members")
+      .select("role, share_bps, is_admin, project:projects(id, slug, name, kind)")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .returns<UserProject[]>(),
+  );
+}
+
+export async function getShareChanges(projectId: string, limit = 30): Promise<ShareChange[]> {
+  return orThrow(
+    await db()
+      .from("share_changes")
+      .select(`*, author:users(${PERSON})`)
+      .eq("project_id", projectId)
+      .order("created_at", { ascending: false })
+      .limit(limit)
+      .returns<ShareChange[]>(),
+  );
+}
+
+/** Usuarios por @usuario (ya normalizados). Los que no existen no vienen en el resultado. */
+export async function getUsersByUsername(usernames: string[]): Promise<PersonRef[]> {
+  if (usernames.length === 0) return [];
+  return orThrow(
+    await db().from("users").select(PERSON).in("username", usernames).returns<PersonRef[]>(),
   );
 }
 
@@ -81,39 +126,6 @@ export async function getPayment(paymentId: string): Promise<PaymentWithSplits |
       .select(PAYMENT_WITH_SPLITS)
       .eq("id", paymentId)
       .maybeSingle<PaymentWithSplits>(),
-  );
-}
-
-export type MemberWithProject = Member & { project: Project };
-
-export async function getMember(memberId: string): Promise<MemberWithProject | null> {
-  if (!isUuid(memberId)) return null;
-  return orThrow(
-    await db()
-      .from("members")
-      .select(`${MEMBER_PUBLIC}, project:projects(${PROJECT_PUBLIC})`)
-      .eq("id", memberId)
-      .maybeSingle<MemberWithProject>(),
-  );
-}
-
-export type MemberEarning = DistributionRow & {
-  payment: Pick<
-    Payment,
-    "id" | "payer" | "amount_cop" | "cop_per_xlm" | "distribution_tx_hash" | "created_at"
-  >;
-};
-
-export async function getMemberEarnings(memberId: string): Promise<MemberEarning[]> {
-  return orThrow(
-    await db()
-      .from("distributions")
-      .select(
-        "*, payment:payments(id, amount_cop, cop_per_xlm, distribution_tx_hash, created_at, payer:users!payments_payer_id_fkey(display_name, username))",
-      )
-      .eq("member_id", memberId)
-      .order("created_at", { ascending: false })
-      .returns<MemberEarning[]>(),
   );
 }
 

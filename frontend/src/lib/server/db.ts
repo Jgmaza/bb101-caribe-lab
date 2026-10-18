@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { MemberSnapshot } from "@/lib/members";
 import { env } from "./env";
 
 let client: SupabaseClient | undefined;
@@ -32,18 +33,26 @@ export type ProjectRow = {
   kind: ProjectKind;
   stellar_public_key: string;
   stellar_secret_enc: string;
+  created_by: string;
   created_at: string;
 };
 
-export type MemberRow = {
+export type ProjectMemberRow = {
   id: string;
   project_id: string;
-  name: string;
-  phone: string;
+  user_id: string;
   role: string;
   share_bps: number;
-  stellar_public_key: string;
-  stellar_secret_enc: string;
+  is_admin: boolean;
+  created_at: string;
+};
+
+export type ShareChangeRow = {
+  id: string;
+  project_id: string;
+  changed_by: string;
+  before: MemberSnapshot[];
+  after: MemberSnapshot[];
   created_at: string;
 };
 
@@ -69,7 +78,7 @@ export type PaymentRow = {
 export type DistributionRow = {
   id: string;
   payment_id: string;
-  member_id: string;
+  user_id: string;
   share_bps: number;
   amount_stroops: number;
   created_at: string;

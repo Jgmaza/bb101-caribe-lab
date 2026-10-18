@@ -13,7 +13,10 @@ begin
     from pg_proc p
     join pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public'
-      and p.proname in ('create_project', 'update_members', 'update_project_members', 'record_distribution')
+      and p.proname in (
+        'create_project', 'update_members', 'update_project_members', 'record_distribution',
+        'project_members_snapshot'
+      )
   loop
     execute format('drop function %s', f);
   end loop;

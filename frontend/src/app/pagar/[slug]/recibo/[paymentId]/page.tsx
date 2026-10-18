@@ -55,7 +55,7 @@ export default async function ReciboPage({
               .map((d) => (
                 <li key={d.id} className="flex justify-between gap-4">
                   <span className="text-ink-muted">
-                    {d.member.name} · {bpsToPercent(d.share_bps)}%
+                    {d.user.display_name} · {bpsToPercent(d.share_bps)}%
                   </span>
                   <span className="font-semibold text-ink">
                     {formatCop(stroopsToCop(BigInt(d.amount_stroops), payment.cop_per_xlm))}
@@ -67,7 +67,7 @@ export default async function ReciboPage({
 
         {payment.error ? (
           <p className="mt-4 text-xs text-danger">
-            {payment.error} El grupo puede reintentar el reparto desde su panel.
+            {payment.error} Los admins del grupo pueden reintentar el reparto desde la página del proyecto.
           </p>
         ) : null}
 

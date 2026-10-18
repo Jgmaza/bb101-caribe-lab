@@ -32,7 +32,7 @@ export default async function PagarPage({ params }: { params: Promise<{ slug: st
             balanceCop={balance.cop}
             members={members.map((m) => ({
               id: m.id,
-              name: m.name,
+              name: m.user.display_name,
               role: m.role,
               shareBps: m.share_bps,
             }))}

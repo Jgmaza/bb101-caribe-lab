@@ -1,17 +1,20 @@
 import { Logo } from "@/components/Logo";
 import { MobileShell } from "@/components/MobileShell";
-import { Card, LinkButton, TxLink } from "@/components/ui";
-import { formatBalance, formatCop, formatDateTime } from "@/lib/format";
+import Link from "next/link";
+import { Card, TxLink } from "@/components/ui";
+import { KIND_LABEL, formatBalance, formatCop, formatDateTime } from "@/lib/format";
 import { stroopsToCop } from "@/lib/money";
 import { logout } from "@/lib/server/auth-actions";
-import { getBalance, getUserTopups } from "@/lib/server/queries";
+import { getBalance, getUserProjects, getUserTopups } from "@/lib/server/queries";
+import { bpsToPercent } from "@/lib/split";
 import { requireUser } from "@/lib/server/session";
 import { TopUpForm } from "./TopUpForm";
 
 export default async function InicioPage() {
   const user = await requireUser("/inicio");
-  const [balance, topups] = await Promise.all([
+  const [balance, projects, topups] = await Promise.all([
     getBalance(user.stellar_public_key),
+    getUserProjects(user.id),
     getUserTopups(user.id, 10),
   ]);
 
@@ -44,11 +47,41 @@ export default async function InicioPage() {
         <TopUpForm />
       </div>
 
-      <div className="mt-6">
-        <LinkButton href="/proyectos/nuevo" variant="ghost" className="w-full">
-          Crear proyecto
-        </LinkButton>
+      <div className="mt-8 flex items-center justify-between gap-3">
+        <h2 className="text-sm font-bold text-ink">Mis proyectos</h2>
+        <Link href="/proyectos/nuevo" className="text-sm font-semibold text-blue hover:underline">
+          + Crear proyecto
+        </Link>
       </div>
+      {projects.length === 0 ? (
+        <p className="mt-2 text-[13px] text-ink-muted">
+          Todavía no estás en ningún proyecto. Crea uno o pídele a tu grupo que te
+          agregue con tu usuario @{user.username}.
+        </p>
+      ) : (
+        <ul className="mt-2 flex flex-col gap-2">
+          {projects.map((p) => (
+            <li key={p.project.id}>
+              <Link
+                href={`/proyectos/${p.project.slug}`}
+                className="flex items-center justify-between gap-3 rounded-[14px] border border-line bg-white p-4 transition hover:border-blue"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-ink">{p.project.name}</p>
+                  <p className="text-xs text-ink-muted">
+                    {KIND_LABEL[p.project.kind]}
+                    {p.role ? ` · ${p.role}` : ""}
+                    {p.is_admin ? " · Admin" : ""}
+                  </p>
+                </div>
+                <p className="shrink-0 font-display text-lg font-bold text-blue">
+                  {bpsToPercent(p.share_bps)}%
+                </p>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
 
       {topups.length > 0 ? (
         <>
