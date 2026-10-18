@@ -44,7 +44,7 @@ export function MembersEditor({
   const balanced = valid && sum === TOTAL_BPS;
   const preview = balanced
     ? splitAmount(
-        EXAMPLE_TOTAL,
+        BigInt(EXAMPLE_TOTAL),
         members.map((m, i) => ({ id: m.key, shareBps: bps[i] as number })),
       )
     : null;
@@ -192,7 +192,7 @@ export function MembersEditor({
               {preview.map((p, i) => (
                 <li key={p.id} className="flex justify-between gap-3">
                   <span className="truncate text-ink-muted">{members[i].name || `Integrante ${i + 1}`}</span>
-                  <span className="font-semibold text-ink">{formatCop(p.amount)}</span>
+                  <span className="font-semibold text-ink">{formatCop(Number(p.amount))}</span>
                 </li>
               ))}
             </ul>

@@ -1,39 +1,37 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useState } from "react";
 import { Field, FormError, Input, SubmitButton } from "@/components/ui";
 import { formatCop } from "@/lib/format";
+import { MAX_PAYMENT_COP } from "@/lib/money";
 import { payProject } from "@/lib/server/actions";
-import { MAX_AMOUNT, splitAmount } from "@/lib/split";
+import { splitAmount } from "@/lib/split";
 
 type PreviewMember = { id: string; name: string; role: string; shareBps: number };
 
 export function PayForm({
   slug,
-  payerName,
   members,
-  organizerBalance,
+  balanceCop,
 }: {
   slug: string;
-  payerName: string;
   members: PreviewMember[];
-  organizerBalance: number | null;
+  /** Saldo disponible en pesos (≈, tasa de hoy); null si no se pudo consultar. */
+  balanceCop: number | null;
 }) {
   const [state, action, pending] = useActionState(payProject.bind(null, slug), { error: null });
   const [amountText, setAmountText] = useState("");
 
   const amount = Number(amountText.replace(/\D/g, ""));
-  const validAmount = Number.isSafeInteger(amount) && amount > 0 && amount <= MAX_AMOUNT;
+  const validAmount = Number.isSafeInteger(amount) && amount > 0 && amount <= MAX_PAYMENT_COP;
   const preview = validAmount
-    ? splitAmount(amount, members.map((m) => ({ id: m.id, shareBps: m.shareBps })))
+    ? splitAmount(BigInt(amount), members.map((m) => ({ id: m.id, shareBps: m.shareBps })))
     : null;
-  const insufficient = validAmount && organizerBalance !== null && amount > organizerBalance;
+  const insufficient = validAmount && balanceCop !== null && amount > balanceCop;
 
   return (
     <form action={action} className="flex flex-col gap-5">
-      <Field label="Quién paga">
-        <Input name="payer_name" defaultValue={payerName} placeholder="Bar La Troja" required minLength={2} maxLength={120} />
-      </Field>
       <Field label="Monto total (COP)">
         <Input
           name="amount"
@@ -48,6 +46,9 @@ export function PayForm({
           required
         />
       </Field>
+      {amount > MAX_PAYMENT_COP ? (
+        <p className="text-xs text-warn">El máximo por pago es {formatCop(MAX_PAYMENT_COP)}.</p>
+      ) : null}
 
       <div className="rounded-xl bg-bg-soft p-4">
         <p className="text-xs font-semibold text-ink-muted">Así se reparte</p>
@@ -59,7 +60,7 @@ export function PayForm({
                 {m.role ? ` · ${m.role}` : ""} · {m.shareBps / 100}%
               </span>
               <span className="font-semibold text-ink">
-                {preview ? formatCop(preview[i].amount) : "—"}
+                {preview ? formatCop(Number(preview[i].amount)) : "—"}
               </span>
             </li>
           ))}
@@ -68,8 +69,11 @@ export function PayForm({
 
       {insufficient ? (
         <p className="text-xs text-warn">
-          El saldo del organizador demo ({formatCop(organizerBalance ?? 0)}) no alcanza.
-          Usa “Fondear organizador demo”.
+          Tu saldo (≈ {formatCop(balanceCop ?? 0)}) no alcanza.{" "}
+          <Link href="/inicio" className="font-semibold underline">
+            Recarga desde tu inicio
+          </Link>
+          .
         </p>
       ) : null}
       <FormError message={state.error} />
@@ -77,7 +81,7 @@ export function PayForm({
       <SubmitButton
         variant="cta"
         pending={pending}
-        pendingLabel="Pagando y repartiendo en Stellar…"
+        pendingLabel="Pagando y repartiendo…"
         className="w-full"
       >
         {validAmount ? `Pagar ${formatCop(amount)}` : "Pagar"}

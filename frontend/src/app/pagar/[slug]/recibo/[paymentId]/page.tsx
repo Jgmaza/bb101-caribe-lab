@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { Logo } from "@/components/Logo";
 import { LinkButton, StatusChip, TxLink } from "@/components/ui";
 import { formatCop, formatDateTime } from "@/lib/format";
+import { stroopsToCop } from "@/lib/money";
 import { getPayment, getProjectBySlug } from "@/lib/server/queries";
 import { bpsToPercent } from "@/lib/split";
 
@@ -42,21 +43,23 @@ export default async function ReciboPage({
         </div>
 
         <p className="mt-4 text-[15px] text-ink-muted">
-          {payment.payer_name} pagó{" "}
-          <strong className="text-ink">{formatCop(payment.amount)}</strong> a{" "}
+          {payment.payer.display_name} pagó{" "}
+          <strong className="text-ink">{formatCop(payment.amount_cop)}</strong> a{" "}
           {project.name} · {formatDateTime(payment.created_at)}
         </p>
 
         {payment.distributions.length > 0 ? (
           <ul className="mt-5 space-y-2 rounded-xl bg-bg-soft p-4 text-[13px]">
             {[...payment.distributions]
-              .sort((a, b) => b.amount - a.amount)
+              .sort((a, b) => b.amount_stroops - a.amount_stroops)
               .map((d) => (
                 <li key={d.id} className="flex justify-between gap-4">
                   <span className="text-ink-muted">
                     {d.member.name} · {bpsToPercent(d.share_bps)}%
                   </span>
-                  <span className="font-semibold text-ink">{formatCop(d.amount)}</span>
+                  <span className="font-semibold text-ink">
+                    {formatCop(stroopsToCop(BigInt(d.amount_stroops), payment.cop_per_xlm))}
+                  </span>
                 </li>
               ))}
           </ul>

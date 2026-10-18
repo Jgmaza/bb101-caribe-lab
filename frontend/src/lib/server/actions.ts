@@ -3,19 +3,21 @@
 import { randomBytes } from "node:crypto";
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
-import { isValidPhone, normalizePhone } from "@/lib/format";
-import { MAX_AMOUNT, TOTAL_BPS, percentToBps, splitAmount } from "@/lib/split";
+import { formatCop, isValidPhone, normalizePhone } from "@/lib/format";
+import { MAX_PAYMENT_COP, copToStroops, parseCop } from "@/lib/money";
+import { TOTAL_BPS, percentToBps, splitAmount } from "@/lib/split";
 import { decryptSecret, encryptSecret, hashAdminToken, newAdminToken } from "./crypto";
 import { db, type MemberRow, type PaymentRow, type ProjectKind, type ProjectRow } from "./db";
+import { getCopPerXlm } from "./price";
 import { getProjectByAdminToken, isUuid } from "./queries";
 import { requireUser } from "./session";
 import {
   createCustodialAccounts,
   distribute,
-  fundDemoOrganizer,
+  friendbotTopUp,
+  getAvailableStroops,
   payToProject,
 } from "./stellar";
-import { env } from "./env";
 
 // Crear proyecto y pagar exigen sesión (requireUser). Mientras se migra a proyectos con
 // admins, la administración sigue por link (/panel/<token>) y el cobro por /cobrar/<uuid>.
@@ -157,37 +159,55 @@ export async function payProject(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  await requireUser(`/pagar/${encodeURIComponent(slug)}`);
-  const payerName = text(formData.get("payer_name"));
-  const amount = Number(text(formData.get("amount"), 20).replace(/[.\s$]/g, ""));
-
-  if (payerName.length < 2) return { error: "Escribe quién paga (bar, hotel, organizador)." };
-  if (!Number.isSafeInteger(amount) || amount < 1 || amount > MAX_AMOUNT) {
-    return { error: "Escribe un monto válido en pesos, sin decimales." };
+  const user = await requireUser(`/pagar/${encodeURIComponent(slug)}`);
+  const amountCop = parseCop(text(formData.get("amount"), 20));
+  if (amountCop === null || amountCop > MAX_PAYMENT_COP) {
+    return { error: `Escribe un monto en pesos, sin decimales, hasta ${formatCop(MAX_PAYMENT_COP)}.` };
   }
 
-  const { data: project, error: projectErr } = await db()
-    .from("projects")
-    .select("*")
-    .eq("slug", slug)
-    .maybeSingle<ProjectRow>();
+  const [{ data: project, error: projectErr }, { data: payer, error: payerErr }] = await Promise.all([
+    db().from("projects").select("*").eq("slug", slug).maybeSingle<ProjectRow>(),
+    db().from("users").select("stellar_secret_enc").eq("id", user.id).single<{ stellar_secret_enc: string }>(),
+  ]);
   if (projectErr || !project) return { error: "El proyecto no existe." };
+  if (payerErr || !payer) return { error: "No pudimos leer tu cuenta. Intenta de nuevo." };
+
+  // La tasa se congela aquí: el recibo y el historial muestran siempre estos pesos.
+  let copPerXlm: number;
+  try {
+    copPerXlm = await getCopPerXlm();
+  } catch (err) {
+    return { error: (err as Error).message };
+  }
+  const amountStroops = copToStroops(amountCop, copPerXlm);
+
+  const available = await getAvailableStroops(user.stellar_public_key);
+  if (available === null) return { error: "No pudimos consultar tu saldo. Intenta de nuevo." };
+  if (available < amountStroops) {
+    return { error: "Tu saldo no alcanza para este pago. Recarga desde tu inicio y vuelve a intentarlo." };
+  }
 
   const { data: payment, error: insertErr } = await db()
     .from("payments")
-    .insert({ project_id: project.id, payer_name: payerName, amount })
+    .insert({
+      project_id: project.id,
+      payer_id: user.id,
+      amount_cop: amountCop,
+      amount_stroops: amountStroops.toString(),
+      cop_per_xlm: copPerXlm,
+    })
     .select("*")
     .single<PaymentRow>();
   if (insertErr || !payment) {
     return { error: `No pudimos registrar el pago. ${insertErr?.message ?? ""}` };
   }
 
-  // 1) Organizador → cuenta del proyecto.
+  // 1) Quien paga → cuenta del proyecto.
   try {
     const hash = await payToProject({
-      payerSecret: env("ORGANIZER_DEMO_SECRET"),
+      payerSecret: decryptSecret(payer.stellar_secret_enc),
       projectPublicKey: project.stellar_public_key,
-      amount,
+      amountStroops,
       memo: memoFor(payment.id),
     });
     await db()
@@ -242,21 +262,28 @@ async function runDistribution(paymentId: string) {
     if (!project || !members?.length) throw new Error("Proyecto sin integrantes");
 
     const splits = splitAmount(
-      payment.amount,
+      BigInt(payment.amount_stroops),
       members.map((m) => ({ id: m.id, shareBps: m.share_bps })),
     );
     const byId = new Map(members.map((m) => [m.id, m]));
 
     const hash = (distributedHash = await distribute({
       projectSecret: decryptSecret(project.stellar_secret_enc),
-      splits: splits.map((s) => ({ publicKey: byId.get(s.id)!.stellar_public_key, amount: s.amount })),
+      splits: splits.map((s) => ({
+        publicKey: byId.get(s.id)!.stellar_public_key,
+        amountStroops: s.amount,
+      })),
       memo: memoFor(payment.id),
     }));
 
     const { error } = await db().rpc("record_distribution", {
       p_payment_id: payment.id,
       p_distribution_tx_hash: hash,
-      p_rows: splits.map((s) => ({ member_id: s.id, share_bps: s.shareBps, amount: s.amount })),
+      p_rows: splits.map((s) => ({
+        member_id: s.id,
+        share_bps: s.shareBps,
+        amount_stroops: s.amount.toString(),
+      })),
     });
     if (error) throw new Error(`Repartido en Stellar (${hash}) pero no se pudo registrar: ${error.message}`);
   } catch (err) {
@@ -272,10 +299,30 @@ async function runDistribution(paymentId: string) {
   }
 }
 
-export async function fundOrganizer(): Promise<void> {
-  await requireUser("/inicio");
-  await fundDemoOrganizer(5_000_000);
+/** "Recargar saldo": en testnet, una ronda de friendbot (~10.000 XLM) fusionada en la wallet. */
+export async function topUpBalance(): Promise<FormState> {
+  const user = await requireUser("/inicio");
+  try {
+    const copPerXlm = await getCopPerXlm();
+    const rounds = await friendbotTopUp(user.stellar_public_key);
+    const { error } = await db()
+      .from("topups")
+      .insert(
+        rounds.map((r) => ({
+          user_id: user.id,
+          amount_stroops: r.amountStroops.toString(),
+          cop_per_xlm: copPerXlm,
+          tx_hash: r.txHash,
+          source: "prueba",
+        })),
+      );
+    if (error) throw new Error(`La recarga llegó pero no se pudo registrar: ${error.message}`);
+  } catch (err) {
+    console.error("Recarga fallida:", err);
+    return { error: "No pudimos recargar tu saldo. Intenta de nuevo en un momento." };
+  }
   refresh();
+  return { error: null };
 }
 
 function memoFor(paymentId: string) {

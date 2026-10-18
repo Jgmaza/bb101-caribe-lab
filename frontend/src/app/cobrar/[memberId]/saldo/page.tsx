@@ -3,8 +3,8 @@ import { notFound } from "next/navigation";
 import { MobileShell } from "@/components/MobileShell";
 import { LinkButton } from "@/components/ui";
 import { formatBalance, formatCop, formatDateTime } from "@/lib/format";
-import { getMember, getMemberEarnings } from "@/lib/server/queries";
-import { getCopBalance } from "@/lib/server/stellar";
+import { stroopsToCop } from "@/lib/money";
+import { getBalance, getMember, getMemberEarnings } from "@/lib/server/queries";
 import { bpsToPercent } from "@/lib/split";
 
 export default async function SaldoPage({
@@ -18,9 +18,11 @@ export default async function SaldoPage({
 
   const [earnings, balance] = await Promise.all([
     getMemberEarnings(member.id),
-    getCopBalance(member.stellar_public_key),
+    getBalance(member.stellar_public_key),
   ]);
   const last = earnings[0];
+  const copOf = (e: (typeof earnings)[number]) =>
+    stroopsToCop(BigInt(e.amount_stroops), e.payment.cop_per_xlm);
 
   return (
     <div className="min-h-screen bg-bg-soft sm:py-4">
@@ -33,10 +35,10 @@ export default async function SaldoPage({
                 Te pagaron
               </h1>
               <p className="mt-2 font-display text-[42px] font-bold leading-none">
-                {formatCop(last.amount)}
+                {formatCop(copOf(last))}
               </p>
               <p className="mt-3 text-[13px] text-white/90">
-                {last.payment.payer_name} · {formatDateTime(last.created_at)}
+                {last.payment.payer.display_name} · {formatDateTime(last.created_at)}
               </p>
             </>
           ) : (
@@ -54,7 +56,7 @@ export default async function SaldoPage({
         <div className="mt-4 rounded-[14px] bg-bg-soft p-4">
           <dl className="space-y-3 text-[13px]">
             {[
-              ["Saldo Orilla", formatBalance(balance)],
+              ["Saldo Orilla", balance.cop === null ? formatBalance(null) : `≈ ${formatBalance(balance.cop)}`],
               ["Tu parte", `${bpsToPercent(member.share_bps)}% del proyecto`],
               ["Rol", member.role || "—"],
             ].map(([k, v]) => (
@@ -92,13 +94,13 @@ export default async function SaldoPage({
                     className="flex items-center justify-between gap-3 py-3"
                   >
                     <div>
-                      <p className="text-[13px] font-semibold text-ink">{e.payment.payer_name}</p>
+                      <p className="text-[13px] font-semibold text-ink">{e.payment.payer.display_name}</p>
                       <p className="text-xs text-ink-muted">
                         {formatDateTime(e.created_at)} · {bpsToPercent(e.share_bps)}% de{" "}
-                        {formatCop(e.payment.amount)}
+                        {formatCop(e.payment.amount_cop)}
                       </p>
                     </div>
-                    <p className="text-sm font-semibold text-success">+{formatCop(e.amount)}</p>
+                    <p className="text-sm font-semibold text-success">+{formatCop(copOf(e))}</p>
                   </Link>
                 </li>
               ))}

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { MobileShell } from "@/components/MobileShell";
 import { LinkButton } from "@/components/ui";
 import { formatCop, formatDateTime, shortHash } from "@/lib/format";
+import { stroopsToCop } from "@/lib/money";
 import { getMember, getPayment } from "@/lib/server/queries";
 import { explorerTxUrl } from "@/lib/server/stellar";
 import { bpsToPercent } from "@/lib/split";
@@ -30,15 +31,16 @@ export default async function ComprobantePage({
         <h1 className="font-display text-[28px] font-bold text-ink">Comprobante</h1>
 
         <div className="mt-4 rounded-2xl border border-line bg-bg-soft p-5">
-          <p className="font-display text-[30px] font-bold text-ink">{formatCop(mine.amount)}</p>
+          <p className="font-display text-[30px] font-bold text-ink">{formatCop(stroopsToCop(BigInt(mine.amount_stroops), payment.cop_per_xlm))}
+          </p>
           <p className="mt-1 text-sm text-ink-muted">
-            {bpsToPercent(mine.share_bps)}% de {formatCop(payment.amount)} · {member.project.name}
+            {bpsToPercent(mine.share_bps)}% de {formatCop(payment.amount_cop)} · {member.project.name}
           </p>
 
           <dl className="mt-4 space-y-2.5 text-xs">
             {[
               ["Fecha", formatDateTime(payment.created_at)],
-              ["Pagó", payment.payer_name],
+              ["Pagó", payment.payer.display_name],
               ["Receptor", member.name],
               ["Transacción", shortHash(payment.distribution_tx_hash)],
             ].map(([k, v]) => (

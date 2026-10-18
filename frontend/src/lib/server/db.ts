@@ -47,12 +47,19 @@ export type MemberRow = {
   created_at: string;
 };
 
+// Las columnas bigint de stroops llegan como number desde PostgREST. Son exactas porque los
+// montos están acotados (MAX_PAYMENT_COP, recargas de 10.000 XLM) muy por debajo de 2^53;
+// para operar se convierten con BigInt().
+
 export type PaymentRow = {
   id: string;
   project_id: string;
-  payer_name: string;
-  amount: number;
+  payer_id: string;
+  amount_cop: number;
+  amount_stroops: number;
+  cop_per_xlm: number;
   status: PaymentStatus;
+  topup_tx_hash: string | null;
   payment_tx_hash: string | null;
   distribution_tx_hash: string | null;
   error: string | null;
@@ -64,6 +71,16 @@ export type DistributionRow = {
   payment_id: string;
   member_id: string;
   share_bps: number;
-  amount: number;
+  amount_stroops: number;
+  created_at: string;
+};
+
+export type TopupRow = {
+  id: string;
+  user_id: string;
+  amount_stroops: number;
+  cop_per_xlm: number;
+  tx_hash: string;
+  source: "prueba" | "banco";
   created_at: string;
 };

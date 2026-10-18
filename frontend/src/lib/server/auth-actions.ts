@@ -11,7 +11,7 @@ import {
 import { encryptSecret } from "./crypto";
 import { db } from "./db";
 import { checkCredentials, endSession, hashPassword, startSession } from "./session";
-import { createUserAccount } from "./stellar";
+import { createCustodialAccounts } from "./stellar";
 
 export type AuthFormState = { error: string | null; username?: string; displayName?: string };
 
@@ -35,7 +35,10 @@ export async function register(_prev: AuthFormState, formData: FormData): Promis
 
   let userId: string;
   try {
-    const [passwordHash, account] = await Promise.all([hashPassword(password), createUserAccount()]);
+    const [passwordHash, [account]] = await Promise.all([
+      hashPassword(password),
+      createCustodialAccounts(1),
+    ]);
     const { data, error } = await db()
       .from("users")
       .insert({

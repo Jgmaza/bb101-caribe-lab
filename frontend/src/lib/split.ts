@@ -1,42 +1,35 @@
 export const TOTAL_BPS = 10_000;
-export const MAX_AMOUNT = 100_000_000_000;
 
 export type Share = { id: string; shareBps: number };
-export type Split = { id: string; shareBps: number; amount: number };
+export type Split = { id: string; shareBps: number; amount: bigint };
 
 /**
- * Reparte un monto entero (COP) según puntos básicos con el método de mayor residuo:
- * cada parte se redondea hacia abajo y los pesos sobrantes van a quienes tenían mayor fracción.
- * La suma de las partes es siempre exactamente `total`.
+ * Reparte un monto entero (stroops, o pesos en las vistas previas) según puntos básicos con el
+ * método de mayor residuo: cada parte se redondea hacia abajo y las unidades sobrantes van a
+ * quienes tenían mayor fracción. La suma de las partes es siempre exactamente `total`.
+ * BigInt: en stroops, `total * shareBps` supera 2^53.
  */
-export function splitAmount(total: number, shares: Share[]): Split[] {
-  if (!Number.isSafeInteger(total) || total < 0 || total > MAX_AMOUNT) {
-    throw new Error("El monto debe ser un entero entre 0 y 100.000.000.000");
-  }
+export function splitAmount(total: bigint, shares: Share[]): Split[] {
+  if (total < 0n) throw new Error("El monto no puede ser negativo");
   const sum = shares.reduce((acc, s) => acc + s.shareBps, 0);
-  if (sum !== TOTAL_BPS) {
+  if (sum !== TOTAL_BPS || shares.some((s) => !Number.isInteger(s.shareBps) || s.shareBps < 0)) {
     throw new Error(`Los porcentajes deben sumar 100% (suman ${sum / 100}%)`);
   }
 
+  const bps = BigInt(TOTAL_BPS);
   const parts = shares.map((s, index) => {
-    // total * shareBps ≤ 1e15 < 2^53: aritmética entera exacta.
-    const product = total * s.shareBps;
-    return {
-      ...s,
-      index,
-      amount: Math.floor(product / TOTAL_BPS),
-      remainder: product % TOTAL_BPS,
-    };
+    const product = total * BigInt(s.shareBps);
+    return { ...s, index, amount: product / bps, remainder: product % bps };
   });
 
-  let leftover = total - parts.reduce((acc, p) => acc + p.amount, 0);
-  const byRemainder = [...parts].sort(
-    (a, b) => b.remainder - a.remainder || a.index - b.index,
+  let leftover = total - parts.reduce((acc, p) => acc + p.amount, 0n);
+  const byRemainder = [...parts].sort((a, b) =>
+    a.remainder === b.remainder ? a.index - b.index : a.remainder > b.remainder ? -1 : 1,
   );
   for (const p of byRemainder) {
-    if (leftover === 0) break;
-    p.amount += 1;
-    leftover -= 1;
+    if (leftover === 0n) break;
+    p.amount += 1n;
+    leftover -= 1n;
   }
 
   return parts.map(({ id, shareBps, amount }) => ({ id, shareBps, amount }));

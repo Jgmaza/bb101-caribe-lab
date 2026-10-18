@@ -12,9 +12,15 @@ import {
   shareColor,
 } from "@/components/ui";
 import { formatBalance, formatCop, formatDateTime, formatPhone, shortKey } from "@/lib/format";
+import { stroopsToCop } from "@/lib/money";
 import { retryDistribution } from "@/lib/server/actions";
-import { getProjectByAdminToken, getProjectMembers, getProjectPayments } from "@/lib/server/queries";
-import { explorerAccountUrl, getCopBalance } from "@/lib/server/stellar";
+import {
+  getBalance,
+  getProjectByAdminToken,
+  getProjectMembers,
+  getProjectPayments,
+} from "@/lib/server/queries";
+import { explorerAccountUrl } from "@/lib/server/stellar";
 import { bpsToPercent } from "@/lib/split";
 
 const KIND_LABEL = { banda: "Banda / grupo musical", staff: "Staff de evento", otro: "Proyecto" };
@@ -35,11 +41,11 @@ export default async function PanelPage({
   const [members, payments, balance] = await Promise.all([
     getProjectMembers(project.id),
     getProjectPayments(project.id),
-    getCopBalance(project.stellar_public_key),
+    getBalance(project.stellar_public_key),
   ]);
   const received = payments
     .filter((p) => p.status === "distributed")
-    .reduce((acc, p) => acc + p.amount, 0);
+    .reduce((acc, p) => acc + p.amount_cop, 0);
 
   return (
     <DesktopShell
@@ -93,7 +99,8 @@ export default async function PanelPage({
           </Card>
           <Card className="p-5">
             <p className="text-[13px] text-ink-muted">En cuenta del proyecto</p>
-            <p className="font-display text-2xl font-bold text-ink">{formatBalance(balance)}</p>
+            <p className="font-display text-2xl font-bold text-ink">{balance.cop === null ? formatBalance(null) : `≈ ${formatBalance(balance.cop)}`}
+            </p>
             <a
               href={explorerAccountUrl(project.stellar_public_key)}
               target="_blank"
@@ -157,9 +164,9 @@ export default async function PanelPage({
               <Card className="p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="font-display text-2xl font-bold text-ink">{formatCop(p.amount)}</p>
+                    <p className="font-display text-2xl font-bold text-ink">{formatCop(p.amount_cop)}</p>
                     <p className="text-[13px] text-ink-muted">
-                      {p.payer_name} · {formatDateTime(p.created_at)}
+                      {p.payer.display_name} · {formatDateTime(p.created_at)}
                     </p>
                   </div>
                   <StatusChip status={p.status} />
@@ -168,13 +175,15 @@ export default async function PanelPage({
                 {p.distributions.length > 0 ? (
                   <ul className="mt-4 grid gap-1.5 text-[13px] sm:grid-cols-2">
                     {[...p.distributions]
-                      .sort((a, b) => b.amount - a.amount)
+                      .sort((a, b) => b.amount_stroops - a.amount_stroops)
                       .map((d) => (
                         <li key={d.id} className="flex justify-between gap-3 border-b border-line pb-1.5">
                           <span className="text-ink-muted">
                             {d.member.name} · {bpsToPercent(d.share_bps)}%
                           </span>
-                          <span className="font-semibold text-ink">{formatCop(d.amount)}</span>
+                          <span className="font-semibold text-ink">
+                            {formatCop(stroopsToCop(BigInt(d.amount_stroops), p.cop_per_xlm))}
+                          </span>
                         </li>
                       ))}
                   </ul>

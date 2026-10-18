@@ -1,11 +1,9 @@
 import { notFound } from "next/navigation";
 import { DesktopShell } from "@/components/DesktopShell";
-import { Button, Card } from "@/components/ui";
-import { formatBalance, formatCop, shortKey } from "@/lib/format";
-import { fundOrganizer } from "@/lib/server/actions";
-import { getProjectBySlug, getProjectMembers } from "@/lib/server/queries";
+import { Card, LinkButton } from "@/components/ui";
+import { formatBalance } from "@/lib/format";
+import { getBalance, getProjectBySlug, getProjectMembers } from "@/lib/server/queries";
 import { requireUser } from "@/lib/server/session";
-import { explorerAccountUrl, getCopBalance, organizerPublicKey } from "@/lib/server/stellar";
 import { PayForm } from "./PayForm";
 
 export default async function PagarPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -14,10 +12,9 @@ export default async function PagarPage({ params }: { params: Promise<{ slug: st
   const project = await getProjectBySlug(slug);
   if (!project) notFound();
 
-  const organizer = organizerPublicKey();
-  const [members, organizerBalance] = await Promise.all([
+  const [members, balance] = await Promise.all([
     getProjectMembers(project.id),
-    getCopBalance(organizer),
+    getBalance(user.stellar_public_key),
   ]);
 
   return (
@@ -32,8 +29,7 @@ export default async function PagarPage({ params }: { params: Promise<{ slug: st
           </p>
           <PayForm
             slug={slug}
-            payerName={user.display_name}
-            organizerBalance={organizerBalance}
+            balanceCop={balance.cop}
             members={members.map((m) => ({
               id: m.id,
               name: m.name,
@@ -45,27 +41,14 @@ export default async function PagarPage({ params }: { params: Promise<{ slug: st
 
         <div className="flex flex-col gap-4">
           <Card className="p-5">
-            <p className="text-[13px] font-bold text-ink">Organizador demo (testnet)</p>
-            <p className="mt-1 text-[13px] text-ink-muted">
-              En el MVP pagas desde una cuenta de prueba con COP de testnet. La
-              entrada de pesos reales llega en v2.
+            <p className="text-[13px] font-bold text-ink">Pagas como {user.display_name}</p>
+            <p className="mt-1 text-[13px] text-ink-muted">Saldo disponible hoy</p>
+            <p className="mt-1 font-display text-2xl font-bold text-ink">
+              {balance.cop === null ? formatBalance(null) : `≈ ${formatBalance(balance.cop)}`}
             </p>
-            <p className="mt-3 font-display text-2xl font-bold text-ink">
-              {formatBalance(organizerBalance)}
-            </p>
-            <a
-              href={explorerAccountUrl(organizer)}
-              target="_blank"
-              rel="noreferrer"
-              className="font-mono text-[11px] text-blue hover:underline"
-            >
-              {shortKey(organizer)}
-            </a>
-            <form action={fundOrganizer} className="mt-3">
-              <Button type="submit" variant="ghost" className="w-full py-2.5 text-sm">
-                Fondear organizador demo (+{formatCop(5_000_000)})
-              </Button>
-            </form>
+            <LinkButton href="/inicio" variant="ghost" className="mt-3 w-full py-2.5 text-sm">
+              Recargar saldo
+            </LinkButton>
           </Card>
           <Card className="p-5 text-[13px] leading-relaxed text-ink-muted">
             Cada pago queda registrado en la red Stellar: tú, el grupo y cada
