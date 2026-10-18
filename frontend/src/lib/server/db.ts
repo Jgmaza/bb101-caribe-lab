@@ -1,20 +1,29 @@
 import "server-only";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { MemberSnapshot } from "@/lib/members";
+import type { PaymentState } from "@/lib/payments";
 import { env } from "./env";
 
 let client: SupabaseClient | undefined;
+
+/**
+ * Next memoiza los GET con la misma URL durante un render: leer de nuevo una fila después de
+ * cambiarla (p. ej. al reconciliar un pago) devolvería la respuesta vieja. Una señal propia
+ * por request lo desactiva (ver la sección "Memoization" de la referencia de fetch).
+ */
+const unmemoizedFetch: typeof fetch = (input, init) =>
+  fetch(input, { ...init, signal: init?.signal ?? new AbortController().signal });
 
 /** Cliente con service role: solo se usa en el servidor. RLS bloquea todo lo demás. */
 export function db(): SupabaseClient {
   client ??= createClient(env("SUPABASE_URL"), env("SUPABASE_SERVICE_ROLE_KEY"), {
     auth: { persistSession: false, autoRefreshToken: false },
+    global: { fetch: unmemoizedFetch },
   });
   return client;
 }
 
 export type ProjectKind = "banda" | "staff" | "otro";
-export type PaymentStatus = "pending" | "received" | "distributed" | "failed";
 
 export type UserRow = {
   id: string;
@@ -60,19 +69,16 @@ export type ShareChangeRow = {
 // montos están acotados (MAX_PAYMENT_COP, recargas de 10.000 XLM) muy por debajo de 2^53;
 // para operar se convierten con BigInt().
 
-export type PaymentRow = {
+/** Estados y transiciones: ver src/lib/payments.ts. */
+export type PaymentRow = PaymentState & {
   id: string;
   project_id: string;
   payer_id: string;
   amount_cop: number;
   amount_stroops: number;
   cop_per_xlm: number;
-  status: PaymentStatus;
   topup_tx_hash: string | null;
-  payment_tx_hash: string | null;
-  distribution_tx_hash: string | null;
   error: string | null;
-  created_at: string;
 };
 
 export type DistributionRow = {
@@ -91,5 +97,7 @@ export type TopupRow = {
   cop_per_xlm: number;
   tx_hash: string;
   source: "prueba" | "banco";
+  /** Recarga automática hecha para cubrir este pago; null si fue manual. */
+  payment_id: string | null;
   created_at: string;
 };

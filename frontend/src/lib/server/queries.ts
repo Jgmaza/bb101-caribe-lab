@@ -107,12 +107,17 @@ export async function getUsersByUsername(usernames: string[]): Promise<PersonRef
   );
 }
 
+/**
+ * Pagos que llegaron (o pudieron llegar) a la cuenta del proyecto. Los intentos que nunca
+ * salieron de la cuenta de quien paga no le incumben al grupo: solo los ve quien pagó.
+ */
 export async function getProjectPayments(projectId: string): Promise<PaymentWithSplits[]> {
   return orThrow(
     await db()
       .from("payments")
       .select(PAYMENT_WITH_SPLITS)
       .eq("project_id", projectId)
+      .not("payment_tx_hash", "is", null)
       .order("created_at", { ascending: false })
       .returns<PaymentWithSplits[]>(),
   );
@@ -141,7 +146,19 @@ export async function getUserTopups(userId: string, limit = 20): Promise<TopupRo
   );
 }
 
-export type Balance = { stroops: bigint | null; cop: number | null };
+/** Rondas de la recarga automática hecha para cubrir un pago. */
+export async function getPaymentTopups(paymentId: string): Promise<TopupRow[]> {
+  return orThrow(
+    await db()
+      .from("topups")
+      .select("*")
+      .eq("payment_id", paymentId)
+      .order("created_at")
+      .returns<TopupRow[]>(),
+  );
+}
+
+export type Balance ={ stroops: bigint | null; cop: number | null };
 
 /** Saldo disponible de una cuenta y su equivalente aproximado en pesos con la tasa de hoy. */
 export async function getBalance(publicKey: string): Promise<Balance> {

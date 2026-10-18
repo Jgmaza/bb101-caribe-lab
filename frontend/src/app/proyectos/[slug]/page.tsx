@@ -2,19 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CopyLink } from "@/components/CopyLink";
 import { DesktopShell } from "@/components/DesktopShell";
-import {
-  Button,
-  Card,
-  LinkButton,
-  ShareBar,
-  StatusChip,
-  TxLink,
-  shareColor,
-} from "@/components/ui";
+import { Card, LinkButton, ShareBar, StatusChip, TxLink, shareColor } from "@/components/ui";
 import { KIND_LABEL, formatBalance, formatCop, formatDateTime, shortKey } from "@/lib/format";
 import { describeChange, diffMembers } from "@/lib/members";
 import { stroopsToCop } from "@/lib/money";
-import { retryDistribution } from "@/lib/server/actions";
+import { canRetryDistribution, paymentPhase } from "@/lib/payments";
+import { reconcilePayments } from "@/lib/server/payment-flow";
 import {
   getBalance,
   getProjectAccess,
@@ -25,9 +18,17 @@ import {
 import { requireUser } from "@/lib/server/session";
 import { explorerAccountUrl } from "@/lib/server/stellar";
 import { bpsToPercent } from "@/lib/split";
+import { RetryDistribution } from "./RetryDistribution";
 
-export default async function ProyectoPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function ProyectoPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ repartido?: string | string[] }>;
+}) {
   const { slug } = await params;
+  const { repartido } = await searchParams;
   const user = await requireUser(`/proyectos/${encodeURIComponent(slug)}`);
   const access = await getProjectAccess(slug, user.id);
   // Solo integrantes: a los demás no les decimos que el proyecto existe.
@@ -35,12 +36,19 @@ export default async function ProyectoPage({ params }: { params: Promise<{ slug:
   const { project, membership } = access;
   const isAdmin = membership.is_admin;
 
-  const [members, payments, changes, balance] = await Promise.all([
+  const [members, firstPayments, changes, balance] = await Promise.all([
     getProjectMembers(project.id),
     getProjectPayments(project.id),
     getShareChanges(project.id),
     getBalance(project.stellar_public_key),
   ]);
+  // Pagos que quedaron en vuelo (la red no confirmó a tiempo): se averigua ahora si salieron.
+  const payments = (await reconcilePayments(firstPayments))
+    ? await getProjectPayments(project.id)
+    : firstPayments;
+  const now = new Date();
+  // Aviso tras un reintento exitoso (la acción redirige aquí con ?repartido=<id>).
+  const justDistributed = payments.find((p) => p.id === repartido && p.status === "distributed");
   const distributed = payments
     .filter((p) => p.status === "distributed")
     .reduce((acc, p) => acc + p.amount_cop, 0);
@@ -149,6 +157,12 @@ export default async function ProyectoPage({ params }: { params: Promise<{ slug:
       </Card>
 
       <h2 className="mt-8 font-display text-2xl font-bold text-ink">Pagos y reparto</h2>
+      {justDistributed ? (
+        <p role="status" className="mt-3 rounded-[10px] bg-[#E6F6EF] px-3.5 py-3 text-sm text-success">
+          Listo: el pago de {formatCop(justDistributed.amount_cop)} de {justDistributed.payer.display_name}{" "}
+          quedó repartido.
+        </p>
+      ) : null}
       {payments.length === 0 ? (
         <Card className="mt-4 p-6 text-sm text-ink-muted">
           Todavía no hay pagos. Cuando alguien pague con el link, aparecerán aquí con
@@ -166,10 +180,10 @@ export default async function ProyectoPage({ params }: { params: Promise<{ slug:
                       {p.payer.display_name} · {formatDateTime(p.created_at)}
                     </p>
                   </div>
-                  <StatusChip status={p.status} />
+                  <StatusChip phase={paymentPhase(p)} />
                 </div>
 
-                {p.distributions.length > 0 ? (
+                {p.status === "distributed" ? (
                   <ul className="mt-4 grid gap-1.5 text-[13px] sm:grid-cols-2">
                     {[...p.distributions]
                       .sort((a, b) => b.amount_stroops - a.amount_stroops)
@@ -187,25 +201,29 @@ export default async function ProyectoPage({ params }: { params: Promise<{ slug:
                 ) : null}
 
                 <div className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-xs text-ink-muted">
-                  {p.payment_tx_hash ? (
+                  {p.payment_tx_hash && p.status !== "pending" ? (
                     <span>
                       Pago: <TxLink hash={p.payment_tx_hash} />
                     </span>
                   ) : null}
-                  {p.distribution_tx_hash ? (
+                  {p.distribution_tx_hash && p.status === "distributed" ? (
                     <span>
                       Reparto: <TxLink hash={p.distribution_tx_hash} />
                     </span>
                   ) : null}
                 </div>
 
-                {p.error ? <p className="mt-3 text-xs text-danger">{p.error}</p> : null}
-                {isAdmin && p.status === "failed" && p.payment_tx_hash ? (
-                  <form action={retryDistribution.bind(null, slug, p.id)} className="mt-3">
-                    <Button type="submit" variant="ghost" className="py-2 text-sm">
-                      Reintentar reparto
-                    </Button>
-                  </form>
+                {p.error && p.status !== "distributed" ? (
+                  <p className="mt-3 text-xs text-danger">{p.error}</p>
+                ) : null}
+                {canRetryDistribution(p, now) ? (
+                  isAdmin ? (
+                    <RetryDistribution slug={slug} paymentId={p.id} />
+                  ) : (
+                    <p className="mt-2 text-xs text-ink-muted">
+                      Un admin del proyecto puede reintentar el reparto. No hay que volver a pagar.
+                    </p>
+                  )
                 ) : null}
               </Card>
             </li>

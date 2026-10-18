@@ -11,6 +11,7 @@ import {
   type Transaction,
 } from "@stellar/stellar-sdk";
 import { availableStroops, stroopsToXlm, xlmToStroops } from "@/lib/money";
+import type { TxLookup } from "@/lib/payments";
 import { env } from "./env";
 
 // Toda la interacción con Stellar testnet pasa por aquí.
@@ -39,11 +40,42 @@ export function explorerAccountUrl(publicKey: string) {
 
 type Submitted = { hash: string; fee_charged?: number | string };
 
+/**
+ * Falla al enviar una transacción. `uncertain`: Horizon no dio una respuesta definitiva (red,
+ * timeout 504): la transacción todavía podría entrar hasta su plazo. Si no, Stellar la rechazó
+ * y seguro no se aplicó; `codes` trae los result codes (tx_bad_seq, op_underfunded, …).
+ */
+export class TxError extends Error {
+  constructor(
+    message: string,
+    readonly uncertain: boolean,
+    readonly codes: string[] = [],
+  ) {
+    super(message);
+  }
+}
+
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-/** Error de red (sin respuesta de Horizon): no sabemos si la transacción se aplicó. */
-function isNetworkError(err: unknown): boolean {
-  return !(err as { response?: unknown })?.response && !(err instanceof NotFoundError);
+/** Sin respuesta de Horizon, o un 5xx (504 = enviada pero sin confirmar): no sabemos si se aplicó. */
+function isTransient(err: unknown): boolean {
+  if (err instanceof NotFoundError) return false;
+  const status = (err as { response?: { status?: number } })?.response?.status;
+  return status === undefined || status >= 500;
+}
+
+function txHash(tx: Transaction) {
+  return Buffer.from(tx.hash()).toString("hex");
+}
+
+/** Busca una transacción por hash. "failed" = entró pero sus operaciones no se aplicaron. */
+export async function lookupTransaction(hash: string): Promise<TxLookup> {
+  try {
+    const tx = await horizon().transactions().transaction(hash).call();
+    return tx.successful ? "success" : "failed";
+  } catch (err) {
+    return err instanceof NotFoundError ? "missing" : "unknown";
+  }
 }
 
 async function findTransaction(hash: string): Promise<Submitted | null> {
@@ -61,31 +93,67 @@ async function findTransaction(hash: string): Promise<Submitted | null> {
  * puede duplicar el pago (mismo número de secuencia), a lo sumo Horizon la rechaza.
  */
 async function submit(tx: Transaction): Promise<Submitted> {
-  const hash = Buffer.from(tx.hash()).toString("hex");
+  const hash = txHash(tx);
   let lastErr: unknown;
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
       return await horizon().submitTransaction(tx);
     } catch (err) {
       lastErr = err;
-      if (attempt > 1 || isNetworkError(err)) {
+      if (attempt > 1 || isTransient(err)) {
         await sleep(1000 * attempt);
         const applied = await findTransaction(hash);
         if (applied) return applied;
       }
-      if (!isNetworkError(err)) break;
+      if (!isTransient(err)) break;
     }
   }
-  throw new Error(describeHorizonError(lastErr));
+  throw toTxError(lastErr);
 }
 
-function describeHorizonError(err: unknown): string {
-  const codes = (err as { response?: { data?: { extras?: { result_codes?: unknown } } } })
-    ?.response?.data?.extras?.result_codes;
-  if (codes) return `Stellar rechazó la transacción: ${JSON.stringify(codes)}`;
+function toTxError(err: unknown): TxError {
+  const codes = (
+    err as {
+      response?: { data?: { extras?: { result_codes?: { transaction?: string; operations?: string[] } } } };
+    }
+  )?.response?.data?.extras?.result_codes;
+  if (codes) {
+    const list = [codes.transaction, ...(codes.operations ?? [])].filter(
+      (c): c is string => !!c && c !== "op_success",
+    );
+    return new TxError(`Stellar rechazó la transacción: ${JSON.stringify(codes)}`, false, list);
+  }
   const cause = (err as { cause?: { code?: string; message?: string } })?.cause;
   const base = err instanceof Error ? err.message : String(err);
-  return cause ? `${base} (${cause.code ?? cause.message})` : base;
+  return new TxError(cause ? `${base} (${cause.code ?? cause.message})` : base, isTransient(err));
+}
+
+export type SignedTx = { hash: string; deadline: Date };
+
+/**
+ * Arma, firma y envía una transacción desde `source`. `onSigned` corre con el hash ANTES de
+ * enviarla (para guardarlo); si falla, no se envía nada. Si la secuencia de la cuenta cambió
+ * entre la lectura y el envío (tx_bad_seq: otra transacción de la misma cuenta entró antes), esa
+ * transacción ya no puede entrar nunca: se vuelve a armar con la secuencia nueva.
+ */
+async function buildAndSubmit(
+  source: Keypair,
+  addOperations: (builder: TransactionBuilder) => TransactionBuilder,
+  onSigned?: (tx: SignedTx) => Promise<void>,
+): Promise<string> {
+  for (let attempt = 1; ; attempt++) {
+    const tx = addOperations(await builderFor(source.publicKey()))
+      .setTimeout(TIMEOUT_SECONDS)
+      .build();
+    tx.sign(source);
+    await onSigned?.({ hash: txHash(tx), deadline: new Date(Number(tx.timeBounds!.maxTime) * 1000) });
+    try {
+      return (await submit(tx)).hash;
+    } catch (err) {
+      if (attempt < 3 && err instanceof TxError && err.codes.includes("tx_bad_seq")) continue;
+      throw err;
+    }
+  }
 }
 
 /**
@@ -161,9 +229,14 @@ export type TopupRound = { txHash: string; amountStroops: bigint };
 /**
  * Recarga con friendbot: friendbot solo fondea cuentas que NO existen, así que en cada ronda
  * se crea una cuenta temporal, friendbot la fondea y se fusiona (accountMerge) en `destination`.
- * Repite hasta sumar `minStroops` (al menos una ronda, máximo MAX_TOPUP_ROUNDS).
+ * Repite hasta sumar `minStroops` (al menos una ronda, máximo MAX_TOPUP_ROUNDS). `onRound` corre
+ * al terminar cada ronda: si una ronda posterior falla, las anteriores ya quedaron registradas.
  */
-export async function friendbotTopUp(destination: string, minStroops = 1n): Promise<TopupRound[]> {
+export async function friendbotTopUp(
+  destination: string,
+  minStroops = 1n,
+  onRound?: (round: TopupRound) => Promise<void>,
+): Promise<TopupRound[]> {
   const rounds: TopupRound[] = [];
   let total = 0n;
   while (total < minStroops) {
@@ -182,9 +255,10 @@ export async function friendbotTopUp(destination: string, minStroops = 1n): Prom
     const res = await submit(tx);
     // La comisión cobrada sale del saldo de la temporal; el resto llega al destino.
     const fee = BigInt(res.fee_charged ?? FEE);
-    const amount = balance - fee;
-    rounds.push({ txHash: res.hash, amountStroops: amount });
-    total += amount;
+    const round = { txHash: res.hash, amountStroops: balance - fee };
+    rounds.push(round);
+    total += round.amountStroops;
+    await onRound?.(round);
   }
   return rounds;
 }
@@ -206,15 +280,15 @@ export async function createCustodialAccounts(count: number): Promise<Keypair[]>
   await ensureFunderBalance(funder, BigInt(count) * xlmToStroops(STARTING_XLM));
   const accounts = Array.from({ length: count }, () => Keypair.random());
 
-  const builder = await builderFor(funder.publicKey());
-  for (const kp of accounts) {
-    builder.addOperation(
-      Operation.createAccount({ destination: kp.publicKey(), startingBalance: STARTING_XLM }),
-    );
-  }
-  const tx = builder.setTimeout(TIMEOUT_SECONDS).build();
-  tx.sign(funder);
-  await submit(tx);
+  // Dos registros a la vez usan el funder: buildAndSubmit rearma ante tx_bad_seq.
+  await buildAndSubmit(funder, (builder) => {
+    for (const kp of accounts) {
+      builder.addOperation(
+        Operation.createAccount({ destination: kp.publicKey(), startingBalance: STARTING_XLM }),
+      );
+    }
+    return builder;
+  });
   return accounts;
 }
 
@@ -224,21 +298,22 @@ export async function payToProject(opts: {
   projectPublicKey: string;
   amountStroops: bigint;
   memo: string;
+  onSigned: (tx: SignedTx) => Promise<void>;
 }): Promise<string> {
-  const payer = Keypair.fromSecret(opts.payerSecret);
-  const tx = (await builderFor(payer.publicKey()))
-    .addOperation(
-      Operation.payment({
-        destination: opts.projectPublicKey,
-        asset: Asset.native(),
-        amount: stroopsToXlm(opts.amountStroops),
-      }),
-    )
-    .addMemo(Memo.text(opts.memo))
-    .setTimeout(TIMEOUT_SECONDS)
-    .build();
-  tx.sign(payer);
-  return (await submit(tx)).hash;
+  return buildAndSubmit(
+    Keypair.fromSecret(opts.payerSecret),
+    (builder) =>
+      builder
+        .addOperation(
+          Operation.payment({
+            destination: opts.projectPublicKey,
+            asset: Asset.native(),
+            amount: stroopsToXlm(opts.amountStroops),
+          }),
+        )
+        .addMemo(Memo.text(opts.memo)),
+    opts.onSigned,
+  );
 }
 
 /**
@@ -249,20 +324,23 @@ export async function distribute(opts: {
   projectSecret: string;
   splits: { publicKey: string; amountStroops: bigint }[];
   memo: string;
+  onSigned: (tx: SignedTx) => Promise<void>;
 }): Promise<string> {
-  const project = Keypair.fromSecret(opts.projectSecret);
-  const builder = await builderFor(project.publicKey());
-  for (const s of opts.splits) {
-    if (s.amountStroops <= 0n) continue; // Stellar no acepta pagos de 0
-    builder.addOperation(
-      Operation.payment({
-        destination: s.publicKey,
-        asset: Asset.native(),
-        amount: stroopsToXlm(s.amountStroops),
-      }),
-    );
-  }
-  const tx = builder.addMemo(Memo.text(opts.memo)).setTimeout(TIMEOUT_SECONDS).build();
-  tx.sign(project);
-  return (await submit(tx)).hash;
+  return buildAndSubmit(
+    Keypair.fromSecret(opts.projectSecret),
+    (builder) => {
+      for (const s of opts.splits) {
+        if (s.amountStroops <= 0n) continue; // Stellar no acepta pagos de 0
+        builder.addOperation(
+          Operation.payment({
+            destination: s.publicKey,
+            asset: Asset.native(),
+            amount: stroopsToXlm(s.amountStroops),
+          }),
+        );
+      }
+      return builder.addMemo(Memo.text(opts.memo));
+    },
+    opts.onSigned,
+  );
 }

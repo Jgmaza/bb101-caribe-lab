@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
+import type { PaymentPhase } from "@/lib/payments";
 
 const baseBtn =
   "inline-flex items-center justify-center gap-2 rounded-[10px] px-5 py-3.5 text-[15px] font-semibold cursor-pointer transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2";
@@ -49,18 +50,17 @@ export function LinkButton({
   );
 }
 
-export function StatusChip({
-  status,
-}: {
-  status: "pending" | "received" | "distributed" | "failed";
-}) {
+export function StatusChip({ phase }: { phase: PaymentPhase }) {
   const map = {
-    pending: ["Pendiente", "bg-[#F4F1E6] text-warn"],
-    received: ["Recibido", "bg-[#E8F4FA] text-blue"],
+    processing: ["Procesando", "bg-[#F4F1E6] text-warn"],
+    confirming: ["Confirmando pago", "bg-[#F4F1E6] text-warn"],
+    received: ["Recibido, sin repartir", "bg-[#E8F4FA] text-blue"],
+    distributing: ["Repartiendo", "bg-[#E8F4FA] text-blue"],
     distributed: ["Repartido", "bg-[#E6F6EF] text-success"],
-    failed: ["Falló el reparto", "bg-[#FCEAEA] text-danger"],
+    payment_failed: ["El pago no salió", "bg-[#FCEAEA] text-danger"],
+    distribution_failed: ["Falló el reparto", "bg-[#FCEAEA] text-danger"],
   } as const;
-  const [label, style] = map[status];
+  const [label, style] = map[phase];
 
   return (
     <span

@@ -15,7 +15,7 @@ begin
     where n.nspname = 'public'
       and p.proname in (
         'create_project', 'update_members', 'update_project_members', 'record_distribution',
-        'project_members_snapshot'
+        'begin_distribution', 'cancel_distribution', 'project_members_snapshot'
       )
   loop
     execute format('drop function %s', f);

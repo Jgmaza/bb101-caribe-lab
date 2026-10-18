@@ -90,7 +90,9 @@ export default async function InicioPage() {
             {topups.map((t) => (
               <li key={t.id} className="flex items-center justify-between gap-3 py-3">
                 <div>
-                  <p className="text-[13px] font-semibold text-ink">Recarga de saldo</p>
+                  <p className="text-[13px] font-semibold text-ink">
+                    {t.payment_id ? "Recarga automática al pagar" : "Recarga de saldo"}
+                  </p>
                   <p className="text-xs text-ink-muted">
                     {formatDateTime(t.created_at)} · <TxLink hash={t.tx_hash} label="ver comprobante" />
                   </p>

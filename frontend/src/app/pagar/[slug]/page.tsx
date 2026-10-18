@@ -1,6 +1,7 @@
+import { randomUUID } from "node:crypto";
 import { notFound } from "next/navigation";
 import { DesktopShell } from "@/components/DesktopShell";
-import { Card, LinkButton } from "@/components/ui";
+import { Card } from "@/components/ui";
 import { formatBalance } from "@/lib/format";
 import { getBalance, getProjectBySlug, getProjectMembers } from "@/lib/server/queries";
 import { requireUser } from "@/lib/server/session";
@@ -30,6 +31,7 @@ export default async function PagarPage({ params }: { params: Promise<{ slug: st
           <PayForm
             slug={slug}
             balanceCop={balance.cop}
+            requestId={randomUUID()}
             members={members.map((m) => ({
               id: m.id,
               name: m.user.display_name,
@@ -46,9 +48,9 @@ export default async function PagarPage({ params }: { params: Promise<{ slug: st
             <p className="mt-1 font-display text-2xl font-bold text-ink">
               {balance.cop === null ? formatBalance(null) : `≈ ${formatBalance(balance.cop)}`}
             </p>
-            <LinkButton href="/inicio" variant="ghost" className="mt-3 w-full py-2.5 text-sm">
-              Recargar saldo
-            </LinkButton>
+            <p className="mt-2 text-xs text-ink-muted">
+              Si no alcanza, al pagar recargamos tu saldo de prueba automáticamente.
+            </p>
           </Card>
           <Card className="p-5 text-[13px] leading-relaxed text-ink-muted">
             Cada pago queda registrado en la red Stellar: tú, el grupo y cada

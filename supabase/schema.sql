@@ -20,6 +20,11 @@ begin
 end
 $$;
 
+-- Reparto enviado a Stellar y aún sin confirmar (ver frontend/src/lib/payments.ts).
+-- Solo se usa dentro de funciones plpgsql: un valor nuevo no se puede usar en DDL de la misma
+-- transacción en que se agrega.
+alter type public.payment_status add value if not exists 'distributing' after 'received';
+
 -- ---------------------------------------------------------------------------
 -- Tablas
 -- ---------------------------------------------------------------------------
@@ -110,8 +115,31 @@ create table if not exists public.payments (
   check (status <> 'received' or payment_tx_hash is not null)
 );
 
+-- Hash antes de enviar: payment_tx_hash (y distribution_tx_hash) se guardan al firmar, antes de
+-- mandar la transacción. tx_deadline es su plazo (timebound): pasado ese plazo, si Horizon no
+-- la tiene, ya no puede entrar y el pago se puede revertir sin riesgo de cobrar dos veces.
+alter table public.payments add column if not exists tx_deadline timestamptz;
+
 create index if not exists payments_project_id_idx on public.payments (project_id, created_at desc);
 create index if not exists payments_payer_id_idx on public.payments (payer_id, created_at desc);
+
+-- Un reparto en curso tiene ambos hashes y su plazo. Compara como texto: 'distributing' es un
+-- valor nuevo del enum y no se puede usar como tal en esta misma transacción.
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'payments_distributing_hashes') then
+    alter table public.payments add constraint payments_distributing_hashes check (
+      status::text <> 'distributing'
+      or (payment_tx_hash is not null and distribution_tx_hash is not null and tx_deadline is not null)
+    );
+  end if;
+end
+$$;
+
+-- Un solo pago en curso por persona: dos pagos a la vez (otra pestaña) competirían por el
+-- número de secuencia de su cuenta y por el mismo saldo.
+create unique index if not exists payments_one_pending_per_payer
+  on public.payments (payer_id) where status = 'pending';
 
 -- Lo que recibió cada persona en un pago (stroops). share_bps es la foto del % al momento del
 -- reparto. Apunta al usuario y no a project_members: así se puede sacar del proyecto a alguien
@@ -140,7 +168,12 @@ create table if not exists public.topups (
   created_at timestamptz not null default now()
 );
 
+-- Recarga automática hecha para cubrir un pago (null si fue una recarga manual).
+alter table public.topups
+  add column if not exists payment_id uuid references public.payments (id) on delete set null;
+
 create index if not exists topups_user_id_idx on public.topups (user_id, created_at desc);
+create index if not exists topups_payment_id_idx on public.topups (payment_id) where payment_id is not null;
 
 -- ---------------------------------------------------------------------------
 -- Invariantes (constraint triggers diferidos: se validan al cerrar la transacción)
@@ -399,11 +432,19 @@ begin
 end;
 $$;
 
--- Registra el reparto ejecutado en Stellar y marca el pago como repartido.
+-- Reemplazada por begin_distribution: registraba el reparto DESPUÉS de enviarlo, y si eso
+-- fallaba no quedaba rastro de la transacción.
+drop function if exists public.record_distribution(uuid, text, jsonb);
+
+-- Reclama el pago para repartirlo y escribe el reparto ANTES de enviarlo a Stellar:
+-- received/failed → distributing, con el hash y el plazo de la transacción ya firmada.
+-- Si dos procesos lo intentan a la vez, solo uno lo reclama (el otro recibe 'P0002').
+-- Los triggers de distributions validan la suma y los integrantes antes de mover dinero.
 -- p_rows: [{user_id, share_bps, amount_stroops}] (amount_stroops como texto: no cabe en un double)
-create or replace function public.record_distribution(
+create or replace function public.begin_distribution(
   p_payment_id uuid,
-  p_distribution_tx_hash text,
+  p_tx_hash text,
+  p_tx_deadline timestamptz,
   p_rows jsonb
 )
 returns void
@@ -411,16 +452,34 @@ language plpgsql
 set search_path = public
 as $$
 begin
+  update payments
+  set status = 'distributing', distribution_tx_hash = p_tx_hash, tx_deadline = p_tx_deadline, error = null
+  where id = p_payment_id
+    and status in ('received', 'failed')
+    and payment_tx_hash is not null;
+  if not found then
+    raise exception 'El pago % no está pendiente de reparto', p_payment_id using errcode = 'no_data_found';
+  end if;
+
   insert into distributions (payment_id, user_id, share_bps, amount_stroops)
   select p_payment_id, r.user_id, r.share_bps, r.amount_stroops
   from jsonb_to_recordset(p_rows) as r(user_id uuid, share_bps integer, amount_stroops bigint);
+end;
+$$;
 
+-- El reparto en curso seguro no salió (Stellar lo rechazó, o venció sin entrar): borra el
+-- reparto escrito y deja el pago "failed" para que un admin lo reintente.
+create or replace function public.cancel_distribution(p_payment_id uuid, p_error text)
+returns void
+language plpgsql
+set search_path = public
+as $$
+begin
   update payments
-  set status = 'distributed', distribution_tx_hash = p_distribution_tx_hash, error = null
-  where id = p_payment_id and status in ('received', 'failed');
-
-  if not found then
-    raise exception 'El pago % no está pendiente de reparto', p_payment_id using errcode = 'check_violation';
+  set status = 'failed', distribution_tx_hash = null, tx_deadline = null, error = p_error
+  where id = p_payment_id and status = 'distributing';
+  if found then
+    delete from distributions where payment_id = p_payment_id;
   end if;
 end;
 $$;
@@ -445,7 +504,8 @@ revoke all on public.payments, public.distributions from anon, authenticated;
 revoke execute on function public.project_members_snapshot(uuid) from public, anon, authenticated;
 revoke execute on function public.create_project(text, text, public.project_kind, text, text, uuid, jsonb) from public, anon, authenticated;
 revoke execute on function public.update_project_members(uuid, uuid, jsonb) from public, anon, authenticated;
-revoke execute on function public.record_distribution(uuid, text, jsonb) from public, anon, authenticated;
+revoke execute on function public.begin_distribution(uuid, text, timestamptz, jsonb) from public, anon, authenticated;
+revoke execute on function public.cancel_distribution(uuid, text) from public, anon, authenticated;
 
 grant usage on schema public to service_role;
 grant all on public.users, public.sessions, public.topups to service_role;
@@ -454,4 +514,5 @@ grant all on public.payments, public.distributions to service_role;
 grant execute on function public.project_members_snapshot(uuid) to service_role;
 grant execute on function public.create_project(text, text, public.project_kind, text, text, uuid, jsonb) to service_role;
 grant execute on function public.update_project_members(uuid, uuid, jsonb) to service_role;
-grant execute on function public.record_distribution(uuid, text, jsonb) to service_role;
+grant execute on function public.begin_distribution(uuid, text, timestamptz, jsonb) to service_role;
+grant execute on function public.cancel_distribution(uuid, text) to service_role;
