@@ -2,16 +2,16 @@ import { notFound } from "next/navigation";
 import { DesktopShell } from "@/components/DesktopShell";
 import { Card } from "@/components/ui";
 import { formatPhone } from "@/lib/format";
-import { getProjectBySlug, getProjectMembers } from "@/lib/server/queries";
+import { getProjectByAdminToken, getProjectMembers } from "@/lib/server/queries";
 import { EditMembersForm } from "./EditMembersForm";
 
 export default async function EditarProyectoPage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ token: string }>;
 }) {
-  const { slug } = await params;
-  const project = await getProjectBySlug(slug);
+  const { token } = await params;
+  const project = await getProjectByAdminToken(token);
   if (!project) notFound();
   const members = await getProjectMembers(project.id);
 
@@ -24,7 +24,7 @@ export default async function EditarProyectoPage({
       </p>
       <Card className="mt-6 p-5 sm:p-7">
         <EditMembersForm
-          slug={slug}
+          token={token}
           initial={members.map((m) => ({
             key: m.id,
             id: m.id,

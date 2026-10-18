@@ -1,4 +1,5 @@
 import "server-only";
+import { hashAdminToken, isAdminTokenFormat } from "./crypto";
 import {
   db,
   type DistributionRow,
@@ -26,6 +27,18 @@ function orThrow<T>(res: { data: T | null; error: { message: string } | null }):
 export async function getProjectBySlug(slug: string): Promise<Project | null> {
   return orThrow(
     await db().from("projects").select(PROJECT_PUBLIC).eq("slug", slug).maybeSingle<Project>(),
+  );
+}
+
+/** Proyecto al que da acceso un link de administración, o null si el token no es válido. */
+export async function getProjectByAdminToken(token: string): Promise<Project | null> {
+  if (!isAdminTokenFormat(token)) return null;
+  return orThrow(
+    await db()
+      .from("projects")
+      .select(PROJECT_PUBLIC)
+      .eq("admin_token_hash", hashAdminToken(token))
+      .maybeSingle<Project>(),
   );
 }
 
@@ -73,16 +86,6 @@ export async function getMember(memberId: string): Promise<MemberWithProject | n
       .select(`${MEMBER_PUBLIC}, project:projects(${PROJECT_PUBLIC})`)
       .eq("id", memberId)
       .maybeSingle<MemberWithProject>(),
-  );
-}
-
-export async function findMembersByPhone(phone: string): Promise<MemberWithProject[]> {
-  return orThrow(
-    await db()
-      .from("members")
-      .select(`${MEMBER_PUBLIC}, project:projects(${PROJECT_PUBLIC})`)
-      .eq("phone", phone)
-      .returns<MemberWithProject[]>(),
   );
 }
 

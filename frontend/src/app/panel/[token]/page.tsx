@@ -13,16 +13,24 @@ import {
 } from "@/components/ui";
 import { formatBalance, formatCop, formatDateTime, formatPhone, shortKey } from "@/lib/format";
 import { retryDistribution } from "@/lib/server/actions";
-import { getProjectBySlug, getProjectMembers, getProjectPayments } from "@/lib/server/queries";
+import { getProjectByAdminToken, getProjectMembers, getProjectPayments } from "@/lib/server/queries";
 import { explorerAccountUrl, getCopBalance } from "@/lib/server/stellar";
 import { bpsToPercent } from "@/lib/split";
 
 const KIND_LABEL = { banda: "Banda / grupo musical", staff: "Staff de evento", otro: "Proyecto" };
 
-export default async function ProyectoPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-  const project = await getProjectBySlug(slug);
+export default async function PanelPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ token: string }>;
+  searchParams: Promise<{ nuevo?: string }>;
+}) {
+  const [{ token }, { nuevo }] = await Promise.all([params, searchParams]);
+  const project = await getProjectByAdminToken(token);
   if (!project) notFound();
+  const { slug } = project;
+  const panelPath = `/panel/${token}`;
 
   const [members, payments, balance] = await Promise.all([
     getProjectMembers(project.id),
@@ -37,11 +45,25 @@ export default async function ProyectoPage({ params }: { params: Promise<{ slug:
     <DesktopShell
       breadcrumb={`Proyectos / ${project.name}`}
       right={
-        <LinkButton href={`/proyectos/${slug}/editar`} variant="ghost" className="py-2.5 text-sm">
+        <LinkButton href={`${panelPath}/editar`} variant="ghost" className="py-2.5 text-sm">
           Editar porcentajes
         </LinkButton>
       }
     >
+      {nuevo ? (
+        <div className="mb-6 rounded-[14px] border border-sand bg-[#FBF6E3] p-5">
+          <h2 className="text-sm font-bold text-ink">Guarda este link: es la llave del proyecto</h2>
+          <p className="mt-1 text-[13px] leading-relaxed text-ink-muted">
+            Con él se ven los pagos y se cambian los porcentajes. No hay usuario ni
+            contraseña: si lo pierden, no se puede recuperar. Compártanlo solo
+            dentro del grupo, nunca con quien les paga.
+          </p>
+          <div className="mt-3">
+            <CopyLink path={panelPath} label="Copiar link de administración" />
+          </div>
+        </div>
+      ) : null}
+
       <p className="text-xs font-semibold tracking-wide text-blue uppercase">
         {KIND_LABEL[project.kind]}
       </p>
@@ -173,7 +195,7 @@ export default async function ProyectoPage({ params }: { params: Promise<{ slug:
 
                 {p.error ? <p className="mt-3 text-xs text-danger">{p.error}</p> : null}
                 {p.status === "failed" && p.payment_tx_hash ? (
-                  <form action={retryDistribution.bind(null, p.id)} className="mt-3">
+                  <form action={retryDistribution.bind(null, token, p.id)} className="mt-3">
                     <Button type="submit" variant="ghost" className="py-2 text-sm">
                       Reintentar reparto
                     </Button>

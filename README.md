@@ -25,7 +25,8 @@ Demo en producción: [https://orilla-dusky.vercel.app](https://orilla-dusky.verc
 
 - Grupo: `/proyectos/nuevo` — crea el proyecto con el % de cada integrante
 - Organizador: `/pagar/[slug]` — un solo pago, se reparte al instante en Stellar testnet
-- Integrante (mobile): `/cobrar` — busca por celular, OTP de prueba `4821`
+- Grupo: `/panel/<token>` — panel con link secreto (se muestra al crear el proyecto)
+- Integrante (mobile): `/cobrar/<id>` — link que comparte el grupo, OTP de prueba `4821`
 
 Configuración de Supabase y Stellar: ver [`frontend/README.md`](frontend/README.md).
 

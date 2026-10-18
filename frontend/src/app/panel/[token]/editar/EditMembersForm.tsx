@@ -5,8 +5,8 @@ import { MembersEditor, type MemberDraft } from "@/components/MembersEditor";
 import { FormError, LinkButton, SubmitButton } from "@/components/ui";
 import { updateMembers } from "@/lib/server/actions";
 
-export function EditMembersForm({ slug, initial }: { slug: string; initial: MemberDraft[] }) {
-  const [state, action, pending] = useActionState(updateMembers.bind(null, slug), {
+export function EditMembersForm({ token, initial }: { token: string; initial: MemberDraft[] }) {
+  const [state, action, pending] = useActionState(updateMembers.bind(null, token), {
     error: null,
   });
 
@@ -18,7 +18,7 @@ export function EditMembersForm({ slug, initial }: { slug: string; initial: Memb
         <SubmitButton pending={pending} pendingLabel="Guardando…">
           Guardar porcentajes
         </SubmitButton>
-        <LinkButton href={`/proyectos/${slug}`} variant="ghost">
+        <LinkButton href={`/panel/${token}`} variant="ghost">
           Cancelar
         </LinkButton>
       </div>

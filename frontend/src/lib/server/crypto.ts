@@ -1,5 +1,5 @@
 import "server-only";
-import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
+import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 import { env } from "./env";
 
 // Las claves secretas de las cuentas custodiales se guardan cifradas con AES-256-GCM.
@@ -32,4 +32,19 @@ export function decryptSecret(sealed: string): string {
     decipher.update(Buffer.from(ciphertext, "base64url")),
     decipher.final(),
   ]).toString("utf8");
+}
+
+// Link de administración del proyecto: quien tiene el token administra el proyecto.
+// Solo se guarda su sha256; el token en claro vive únicamente en el link.
+
+export function newAdminToken(): string {
+  return randomBytes(32).toString("base64url");
+}
+
+export function isAdminTokenFormat(token: string): boolean {
+  return /^[A-Za-z0-9_-]{43}$/.test(token);
+}
+
+export function hashAdminToken(token: string): string {
+  return createHash("sha256").update(token).digest("hex");
 }

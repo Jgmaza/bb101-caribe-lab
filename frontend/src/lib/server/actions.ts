@@ -1,13 +1,13 @@
 "use server";
 
 import { randomBytes } from "node:crypto";
-import { refresh, revalidatePath } from "next/cache";
+import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { isValidPhone, normalizePhone } from "@/lib/format";
 import { MAX_AMOUNT, TOTAL_BPS, percentToBps, splitAmount } from "@/lib/split";
-import { decryptSecret, encryptSecret } from "./crypto";
+import { decryptSecret, encryptSecret, hashAdminToken, newAdminToken } from "./crypto";
 import { db, type MemberRow, type PaymentRow, type ProjectKind, type ProjectRow } from "./db";
-import { getProjectBySlug, isUuid } from "./queries";
+import { getProjectByAdminToken, isUuid } from "./queries";
 import {
   createCustodialAccounts,
   distribute,
@@ -16,7 +16,11 @@ import {
 } from "./stellar";
 import { env } from "./env";
 
-// Sin auth en el MVP: los proyectos se acceden por su link. Validamos todo lo que llega.
+// Sin login en el MVP: el acceso es por links.
+// - /panel/<token>: administra el proyecto (token secreto, solo se guarda su hash)
+// - /pagar/<slug>: público, solo permite pagar
+// - /cobrar/<uuid del integrante>: ver lo que cobró
+// Validamos todo lo que llega.
 
 export type FormState = { error: string | null };
 
@@ -89,6 +93,7 @@ export async function createProject(_prev: FormState, formData: FormData): Promi
   if (shareErr) return { error: shareErr };
 
   const slug = slugify(name);
+  const adminToken = newAdminToken();
   try {
     // Una sola transacción Stellar crea la cuenta del proyecto y las de los integrantes.
     const [projectKp, ...memberKps] = await createCustodialAccounts(members.length + 1);
@@ -98,6 +103,7 @@ export async function createProject(_prev: FormState, formData: FormData): Promi
       p_kind: kind,
       p_stellar_public_key: projectKp.publicKey(),
       p_stellar_secret_enc: encryptSecret(projectKp.secret()),
+      p_admin_token_hash: hashAdminToken(adminToken),
       p_members: members.map((m, i) => ({
         ...m,
         stellar_public_key: memberKps[i].publicKey(),
@@ -109,16 +115,17 @@ export async function createProject(_prev: FormState, formData: FormData): Promi
     return { error: `No pudimos crear el proyecto. ${(err as Error).message}` };
   }
 
-  redirect(`/proyectos/${slug}`);
+  // El token en claro solo existe en este link: el panel avisa que hay que guardarlo.
+  redirect(`/panel/${adminToken}?nuevo=1`);
 }
 
 export async function updateMembers(
-  slug: string,
+  adminToken: string,
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const project = await getProjectBySlug(slug);
-  if (!project) return { error: "El proyecto no existe." };
+  const project = await getProjectByAdminToken(adminToken);
+  if (!project) return { error: "Link de administración inválido." };
 
   const raw = parseJsonArray(formData.get("members"));
   if (!raw || raw.length < 1) return { error: "No llegaron integrantes." };
@@ -142,8 +149,7 @@ export async function updateMembers(
   });
   if (error) return { error: `No pudimos guardar los cambios. ${error.message}` };
 
-  revalidatePath(`/proyectos/${slug}`);
-  redirect(`/proyectos/${slug}`);
+  redirect(`/panel/${adminToken}`);
 }
 
 export async function payProject(
@@ -196,17 +202,19 @@ export async function payProject(
   // 2) Cuenta del proyecto → integrantes. Si falla, el pago queda "failed" y se puede reintentar.
   await runDistribution(payment.id);
 
-  revalidatePath(`/proyectos/${slug}`);
   redirect(`/pagar/${slug}/recibo/${payment.id}`);
 }
 
-export async function retryDistribution(paymentId: string): Promise<void> {
+export async function retryDistribution(adminToken: string, paymentId: string): Promise<void> {
   if (!isUuid(paymentId)) return;
+  const project = await getProjectByAdminToken(adminToken);
+  if (!project) return;
   // Reclama el pago de forma atómica para que dos clics no repartan dos veces.
   const { data: claimed } = await db()
     .from("payments")
     .update({ status: "received", error: null })
     .eq("id", paymentId)
+    .eq("project_id", project.id)
     .eq("status", "failed")
     .not("payment_tx_hash", "is", null)
     .select("id, project_id");

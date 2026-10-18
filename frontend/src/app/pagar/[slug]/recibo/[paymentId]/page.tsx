@@ -91,7 +91,6 @@ export default async function ReciboPage({
           <LinkButton href={`/pagar/${slug}`} variant="ghost">
             Hacer otro pago
           </LinkButton>
-          <LinkButton href={`/proyectos/${slug}`}>Ver proyecto</LinkButton>
         </div>
       </div>
     </div>

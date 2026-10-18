@@ -188,7 +188,7 @@ export function MembersEditor({
             <p className="text-xs text-ink-muted">
               Si les pagan {formatCop(EXAMPLE_TOTAL)}, cada uno recibe:
             </p>
-            <ul className="mt-2 grid gap-1 text-[13px] sm:grid-cols-2">
+            <ul className="mt-2 grid gap-1 text-[13px] sm:grid-cols-2 sm:gap-x-10">
               {preview.map((p, i) => (
                 <li key={p.id} className="flex justify-between gap-3">
                   <span className="truncate text-ink-muted">{members[i].name || `Integrante ${i + 1}`}</span>

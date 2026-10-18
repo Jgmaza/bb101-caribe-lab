@@ -25,13 +25,17 @@ export default function HomePage() {
           <LinkButton href="/proyectos/nuevo" variant="cta" className="w-full">
             Crear proyecto · somos un grupo
           </LinkButton>
-          <LinkButton href="/cobrar" variant="primary" className="w-full">
-            Soy integrante · ver lo que me pagaron
-          </LinkButton>
-          <p className="text-xs leading-relaxed text-ink-muted">
-            ¿Vas a pagarle a un grupo? Pídele su link de pago: se ve como{" "}
-            <code className="rounded bg-bg-soft px-1">/pagar/nombre-del-grupo</code>.
-          </p>
+          <ul className="flex flex-col gap-2 text-xs leading-relaxed text-ink-muted">
+            <li>
+              <strong className="text-ink">¿Eres integrante?</strong> Tu grupo te
+              comparte tu link de cobro desde su panel.
+            </li>
+            <li>
+              <strong className="text-ink">¿Vas a pagarle a un grupo?</strong> Pídele
+              su link de pago: se ve como{" "}
+              <code className="rounded bg-bg-soft px-1">/pagar/nombre-del-grupo</code>.
+            </li>
+          </ul>
         </section>
       </div>
     </div>

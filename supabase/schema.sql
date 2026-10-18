@@ -33,8 +33,14 @@ create table if not exists public.projects (
   kind public.project_kind not null default 'banda',
   stellar_public_key text not null unique check (stellar_public_key ~ '^G[A-Z2-7]{55}$'),
   stellar_secret_enc text not null,
+  -- sha256 (hex) del token del link de administración. El token en claro nunca se guarda.
+  admin_token_hash text not null check (admin_token_hash ~ '^[0-9a-f]{64}$'),
   created_at timestamptz not null default now()
 );
+
+-- Para bases creadas antes de que existiera la columna (esas filas quedan sin link de administración).
+alter table public.projects add column if not exists admin_token_hash text;
+create unique index if not exists projects_admin_token_hash_key on public.projects (admin_token_hash);
 
 -- Integrantes con su porcentaje en puntos básicos (10000 = 100%).
 create table if not exists public.members (
@@ -103,7 +109,7 @@ begin
   end if;
   select coalesce(sum(share_bps), 0) into total from members where project_id = pid;
   if total <> 10000 then
-    raise exception 'Los porcentajes del proyecto deben sumar 100%% (suman %)', total / 100.0
+    raise exception 'Los porcentajes del proyecto deben sumar 100%% (suman %%%)', round(total / 100.0, 2)
       using errcode = 'check_violation';
   end if;
   return null;
@@ -195,6 +201,9 @@ create trigger distributions_member
 -- Funciones RPC (cada llamada es una transacción, así los triggers diferidos aplican al conjunto)
 -- ---------------------------------------------------------------------------
 
+-- Versión anterior, sin link de administración.
+drop function if exists public.create_project(text, text, public.project_kind, text, text, jsonb);
+
 -- p_members: [{name, phone, role, share_bps, stellar_public_key, stellar_secret_enc}]
 create or replace function public.create_project(
   p_slug text,
@@ -202,6 +211,7 @@ create or replace function public.create_project(
   p_kind public.project_kind,
   p_stellar_public_key text,
   p_stellar_secret_enc text,
+  p_admin_token_hash text,
   p_members jsonb
 )
 returns uuid
@@ -211,8 +221,8 @@ as $$
 declare
   new_id uuid;
 begin
-  insert into projects (slug, name, kind, stellar_public_key, stellar_secret_enc)
-  values (p_slug, p_name, p_kind, p_stellar_public_key, p_stellar_secret_enc)
+  insert into projects (slug, name, kind, stellar_public_key, stellar_secret_enc, admin_token_hash)
+  values (p_slug, p_name, p_kind, p_stellar_public_key, p_stellar_secret_enc, p_admin_token_hash)
   returning id into new_id;
 
   insert into members (project_id, name, phone, role, share_bps, stellar_public_key, stellar_secret_enc)
@@ -283,12 +293,12 @@ alter table public.distributions enable row level security;
 
 revoke all on public.projects, public.members, public.payments, public.distributions from anon, authenticated;
 
-revoke execute on function public.create_project(text, text, public.project_kind, text, text, jsonb) from public, anon, authenticated;
+revoke execute on function public.create_project(text, text, public.project_kind, text, text, text, jsonb) from public, anon, authenticated;
 revoke execute on function public.update_members(uuid, jsonb) from public, anon, authenticated;
 revoke execute on function public.record_distribution(uuid, text, jsonb) from public, anon, authenticated;
 
 grant usage on schema public to service_role;
 grant all on public.projects, public.members, public.payments, public.distributions to service_role;
-grant execute on function public.create_project(text, text, public.project_kind, text, text, jsonb) to service_role;
+grant execute on function public.create_project(text, text, public.project_kind, text, text, text, jsonb) to service_role;
 grant execute on function public.update_members(uuid, jsonb) to service_role;
 grant execute on function public.record_distribution(uuid, text, jsonb) to service_role;

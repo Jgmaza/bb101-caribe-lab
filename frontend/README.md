@@ -58,9 +58,19 @@ npm run build && npm start
 | Quién | Ruta | Qué hace |
 |---|---|---|
 | Grupo | `/proyectos/nuevo` | Crea el proyecto con integrantes y % (deben sumar 100%) |
-| Grupo | `/proyectos/[slug]` | Link de pago, integrantes, pagos y reparto con hash |
+| Grupo | `/panel/[token]` | Panel de administración (link secreto): link de pago, links de cobro, pagos, editar % |
 | Organizador | `/pagar/[slug]` | Paga un total; se reparte al instante |
-| Integrante | `/cobrar` → `/cobrar/[id]` | Busca por celular, OTP de prueba `4821`, ve saldo e historial |
+| Integrante | `/cobrar/[id]` | Link que le comparte el grupo; OTP de prueba `4821`, ve saldo e historial |
+
+## Acceso sin login (MVP)
+
+No hay usuarios ni contraseñas; cada link da acceso solo a lo suyo:
+
+- **`/panel/<token>`**: administra el proyecto. El token (32 bytes aleatorios) se
+  muestra al crear el proyecto y solo se guarda su sha256: si se pierde, no se
+  recupera. Se comparte solo dentro del grupo.
+- **`/pagar/<slug>`**: público; solo permite pagar. No sirve para administrar.
+- **`/cobrar/<uuid>`**: lo que cobró un integrante.
 
 ## Cómo funciona
 
@@ -78,5 +88,5 @@ poder cambiarlo por la API de SDP más adelante.
 
 ## Fuera del MVP (v2)
 
-Auth real (hoy los proyectos se acceden por link), SMS real, cash-out a
+Auth real (hoy el acceso es por links), SMS real, cash-out a
 Bancolombia, pago por adelantado (escrow), entrada de pesos reales, mainnet.
