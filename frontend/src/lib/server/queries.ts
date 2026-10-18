@@ -8,6 +8,7 @@ import {
   type ProjectRow,
   type ShareChangeRow,
   type TopupRow,
+  type WithdrawalRow,
 } from "./db";
 import { tryCopPerXlm } from "./price";
 import { getAvailableStroops } from "./stellar";
@@ -158,7 +159,123 @@ export async function getPaymentTopups(paymentId: string): Promise<TopupRow[]> {
   );
 }
 
-export type Balance ={ stroops: bigint | null; cop: number | null };
+// Retiros: anchor_url lleva un token de sesión del anchor; solo se muestra a su dueño.
+export async function getWithdrawal(id: string): Promise<WithdrawalRow | null> {
+  if (!isUuid(id)) return null;
+  return orThrow(await db().from("withdrawals").select("*").eq("id", id).maybeSingle<WithdrawalRow>());
+}
+
+export type Movement = {
+  id: string;
+  kind: "cobro" | "pago" | "recarga" | "retiro";
+  title: string;
+  /** En pesos con la tasa congelada de la operación; negativo si salió de tu saldo. */
+  amountCop: number;
+  at: string;
+  href: string | null;
+  txHash: string | null;
+  /** Para lo que no terminó: "Enviando", "No se completó", … */
+  note: string | null;
+};
+
+const WITHDRAWAL_NOTE: Partial<Record<WithdrawalRow["status"], string>> = {
+  interactive: "Falta completar",
+  ready: "Falta confirmar",
+  sending: "Enviando",
+  processing: "En proceso",
+  failed: "No se completó",
+};
+
+type ReceivedRow = {
+  id: string;
+  amount_stroops: number;
+  created_at: string;
+  payment: Pick<PaymentRow, "id" | "cop_per_xlm" | "distribution_tx_hash"> & {
+    project: Pick<Project, "slug" | "name">;
+  };
+};
+type PaidRow = Pick<PaymentRow, "id" | "status" | "amount_cop" | "payment_tx_hash" | "created_at"> & {
+  project: Pick<Project, "slug" | "name">;
+};
+
+/** Historial de /inicio: cobros, pagos, recargas y retiros, del más reciente al más antiguo. */
+export async function getUserMovements(userId: string, limit = 20): Promise<Movement[]> {
+  const [received, paid, topups, withdrawals] = await Promise.all([
+    db()
+      .from("distributions")
+      .select(
+        "id, amount_stroops, created_at, payment:payments!inner(id, cop_per_xlm, distribution_tx_hash, project:projects(slug, name))",
+      )
+      .eq("user_id", userId)
+      .eq("payment.status", "distributed")
+      .order("created_at", { ascending: false })
+      .limit(limit)
+      .returns<ReceivedRow[]>(),
+    db()
+      .from("payments")
+      .select("id, status, amount_cop, payment_tx_hash, created_at, project:projects(slug, name)")
+      .eq("payer_id", userId)
+      .not("payment_tx_hash", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(limit)
+      .returns<PaidRow[]>(),
+    getUserTopups(userId, limit),
+    db()
+      .from("withdrawals")
+      .select("*")
+      .eq("user_id", userId)
+      .neq("status", "cancelled")
+      .order("created_at", { ascending: false })
+      .limit(limit)
+      .returns<WithdrawalRow[]>(),
+  ]);
+
+  const movements: Movement[] = [
+    ...orThrow(received).map((d) => ({
+      id: `cobro-${d.id}`,
+      kind: "cobro" as const,
+      title: `Cobro de ${d.payment.project.name}`,
+      amountCop: stroopsToCop(BigInt(d.amount_stroops), d.payment.cop_per_xlm),
+      at: d.created_at,
+      href: `/pagar/${d.payment.project.slug}/recibo/${d.payment.id}`,
+      txHash: d.payment.distribution_tx_hash,
+      note: null,
+    })),
+    ...orThrow(paid).map((p) => ({
+      id: `pago-${p.id}`,
+      kind: "pago" as const,
+      title: `Pago a ${p.project.name}`,
+      amountCop: -p.amount_cop,
+      at: p.created_at,
+      href: `/pagar/${p.project.slug}/recibo/${p.id}`,
+      txHash: p.status === "pending" ? null : p.payment_tx_hash,
+      note: p.status === "pending" ? "Confirmando" : null,
+    })),
+    ...topups.map((t) => ({
+      id: `recarga-${t.id}`,
+      kind: "recarga" as const,
+      title: t.payment_id ? "Recarga automática al pagar" : "Recarga de saldo",
+      amountCop: stroopsToCop(BigInt(t.amount_stroops), t.cop_per_xlm),
+      at: t.created_at,
+      href: null,
+      txHash: t.tx_hash,
+      note: null,
+    })),
+    ...orThrow(withdrawals).map((w) => ({
+      id: `retiro-${w.id}`,
+      kind: "retiro" as const,
+      title: w.kind === "banco" ? "Retiro a tu banco" : "Retiro a otra cuenta",
+      amountCop: -(w.amount_stroops ? stroopsToCop(BigInt(w.amount_stroops), w.cop_per_xlm) : w.amount_cop),
+      at: w.created_at,
+      href: `/retirar/${w.id}`,
+      txHash: w.status === "processing" || w.status === "completed" ? w.stellar_tx_hash : null,
+      note: WITHDRAWAL_NOTE[w.status] ?? null,
+    })),
+  ];
+  return movements.sort((a, b) => b.at.localeCompare(a.at)).slice(0, limit);
+}
+
+export type Balance = { stroops: bigint | null; cop: number | null };
 
 /** Saldo disponible de una cuenta y su equivalente aproximado en pesos con la tasa de hoy. */
 export async function getBalance(publicKey: string): Promise<Balance> {

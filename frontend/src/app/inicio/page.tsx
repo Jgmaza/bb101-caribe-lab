@@ -1,21 +1,20 @@
 import { Logo } from "@/components/Logo";
 import { MobileShell } from "@/components/MobileShell";
 import Link from "next/link";
-import { Card, TxLink } from "@/components/ui";
+import { Card, LinkButton, TxLink } from "@/components/ui";
 import { KIND_LABEL, formatBalance, formatCop, formatDateTime } from "@/lib/format";
-import { stroopsToCop } from "@/lib/money";
 import { logout } from "@/lib/server/auth-actions";
-import { getBalance, getUserProjects, getUserTopups } from "@/lib/server/queries";
+import { getBalance, getUserMovements, getUserProjects } from "@/lib/server/queries";
 import { bpsToPercent } from "@/lib/split";
 import { requireUser } from "@/lib/server/session";
 import { TopUpForm } from "./TopUpForm";
 
 export default async function InicioPage() {
   const user = await requireUser("/inicio");
-  const [balance, projects, topups] = await Promise.all([
+  const [balance, projects, movements] = await Promise.all([
     getBalance(user.stellar_public_key),
     getUserProjects(user.id),
-    getUserTopups(user.id, 10),
+    getUserMovements(user.id),
   ]);
 
   return (
@@ -43,8 +42,11 @@ export default async function InicioPage() {
         </p>
       </Card>
 
-      <div className="mt-4">
+      <div className="mt-4 flex flex-col gap-3">
         <TopUpForm />
+        <LinkButton href="/retirar" variant="ghost" className="w-full">
+          Retirar
+        </LinkButton>
       </div>
 
       <div className="mt-8 flex items-center justify-between gap-3">
@@ -83,28 +85,44 @@ export default async function InicioPage() {
         </ul>
       )}
 
-      {topups.length > 0 ? (
-        <>
-          <h2 className="mt-8 text-sm font-bold text-ink">Movimientos</h2>
-          <ul className="mt-2 divide-y divide-line">
-            {topups.map((t) => (
-              <li key={t.id} className="flex items-center justify-between gap-3 py-3">
-                <div>
-                  <p className="text-[13px] font-semibold text-ink">
-                    {t.payment_id ? "Recarga automática al pagar" : "Recarga de saldo"}
-                  </p>
-                  <p className="text-xs text-ink-muted">
-                    {formatDateTime(t.created_at)} · <TxLink hash={t.tx_hash} label="ver comprobante" />
-                  </p>
-                </div>
-                <p className="text-sm font-semibold text-success">
-                  +{formatCop(stroopsToCop(BigInt(t.amount_stroops), t.cop_per_xlm))}
+      <h2 className="mt-8 text-sm font-bold text-ink">Movimientos</h2>
+      {movements.length === 0 ? (
+        <p className="mt-2 text-[13px] text-ink-muted">
+          Aquí verás lo que cobres, pagues, recargues y retires.
+        </p>
+      ) : (
+        <ul className="mt-2 divide-y divide-line">
+          {movements.map((m) => (
+            <li key={m.id} className="flex items-center justify-between gap-3 py-3">
+              <div className="min-w-0">
+                <p className="truncate text-[13px] font-semibold text-ink">
+                  {m.href ? (
+                    <Link href={m.href} className="hover:text-blue">
+                      {m.title}
+                    </Link>
+                  ) : (
+                    m.title
+                  )}
                 </p>
-              </li>
-            ))}
-          </ul>
-        </>
-      ) : null}
+                <p className="text-xs text-ink-muted">
+                  {formatDateTime(m.at)}
+                  {m.note ? <span className="font-semibold text-warn"> · {m.note}</span> : null}
+                  {m.txHash ? (
+                    <>
+                      {" · "}
+                      <TxLink hash={m.txHash} label="comprobante" />
+                    </>
+                  ) : null}
+                </p>
+              </div>
+              <p className={`shrink-0 text-sm font-semibold ${m.amountCop >= 0 ? "text-success" : "text-ink"}`}>
+                {m.amountCop >= 0 ? "+" : "−"}
+                {formatCop(Math.abs(m.amountCop))}
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
     </MobileShell>
   );
 }

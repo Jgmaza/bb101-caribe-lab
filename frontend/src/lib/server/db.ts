@@ -2,6 +2,7 @@ import "server-only";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { MemberSnapshot } from "@/lib/members";
 import type { PaymentState } from "@/lib/payments";
+import type { AnchorMemo, WithdrawalKind, WithdrawalStatus } from "@/lib/withdrawals";
 import { env } from "./env";
 
 let client: SupabaseClient | undefined;
@@ -88,6 +89,30 @@ export type DistributionRow = {
   share_bps: number;
   amount_stroops: number;
   created_at: string;
+};
+
+/** Estados y transiciones: ver src/lib/withdrawals.ts. */
+export type WithdrawalRow = {
+  id: string;
+  user_id: string;
+  kind: WithdrawalKind;
+  status: WithdrawalStatus;
+  destination: string | null;
+  memo: string | null;
+  memo_type: AnchorMemo["type"] | null;
+  creates_account: boolean;
+  amount_cop: number;
+  amount_stroops: number | null;
+  fee_stroops: number;
+  cop_per_xlm: number;
+  anchor_tx_id: string | null;
+  anchor_status: string | null;
+  anchor_url: string | null;
+  stellar_tx_hash: string | null;
+  tx_deadline: string | null;
+  error: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export type TopupRow = {

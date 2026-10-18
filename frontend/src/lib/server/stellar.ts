@@ -12,6 +12,7 @@ import {
 } from "@stellar/stellar-sdk";
 import { availableStroops, stroopsToXlm, xlmToStroops } from "@/lib/money";
 import type { TxLookup } from "@/lib/payments";
+import type { AnchorMemo } from "@/lib/withdrawals";
 import { env } from "./env";
 
 // Toda la interacción con Stellar testnet pasa por aquí.
@@ -312,6 +313,54 @@ export async function payToProject(opts: {
           }),
         )
         .addMemo(Memo.text(opts.memo)),
+    opts.onSigned,
+  );
+}
+
+/** true si la cuenta existe; null si Horizon no respondió. */
+export async function accountExists(publicKey: string): Promise<boolean | null> {
+  try {
+    await loadAccount(publicKey);
+    return true;
+  } catch (err) {
+    return err instanceof NotFoundError ? false : null;
+  }
+}
+
+function toMemo(memo: AnchorMemo): Memo {
+  switch (memo.type) {
+    case "id":
+      return Memo.id(memo.value);
+    case "hash":
+      return Memo.hash(Buffer.from(memo.value, "base64").toString("hex"));
+    default:
+      return Memo.text(memo.value);
+  }
+}
+
+/**
+ * Retiro: XLM de la cuenta de una persona a otra cuenta. Si la cuenta de destino no existe se
+ * crea con createAccount (el monto debe cubrir su reserva; lo valida quien llama).
+ */
+export async function sendNative(opts: {
+  sourceSecret: string;
+  destination: string;
+  amountStroops: bigint;
+  createAccount: boolean;
+  memo: AnchorMemo | null;
+  onSigned: (tx: SignedTx) => Promise<void>;
+}): Promise<string> {
+  const amount = stroopsToXlm(opts.amountStroops);
+  return buildAndSubmit(
+    Keypair.fromSecret(opts.sourceSecret),
+    (builder) => {
+      builder.addOperation(
+        opts.createAccount
+          ? Operation.createAccount({ destination: opts.destination, startingBalance: amount })
+          : Operation.payment({ destination: opts.destination, asset: Asset.native(), amount }),
+      );
+      return opts.memo ? builder.addMemo(toMemo(opts.memo)) : builder;
+    },
     opts.onSigned,
   );
 }

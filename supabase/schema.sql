@@ -17,6 +17,14 @@ begin
   if not exists (select 1 from pg_type where typname = 'project_kind') then
     create type public.project_kind as enum ('banda', 'staff', 'otro');
   end if;
+  if not exists (select 1 from pg_type where typname = 'withdrawal_kind') then
+    create type public.withdrawal_kind as enum ('wallet', 'banco');
+  end if;
+  if not exists (select 1 from pg_type where typname = 'withdrawal_status') then
+    create type public.withdrawal_status as enum (
+      'interactive', 'ready', 'sending', 'processing', 'completed', 'failed', 'cancelled'
+    );
+  end if;
 end
 $$;
 
@@ -174,6 +182,48 @@ alter table public.topups
 
 create index if not exists topups_user_id_idx on public.topups (user_id, created_at desc);
 create index if not exists topups_payment_id_idx on public.topups (payment_id) where payment_id is not null;
+
+-- Retiros (estados en frontend/src/lib/withdrawals.ts).
+-- wallet: a otra cuenta Stellar; si no existe se crea con createAccount.
+-- banco: vía anchor SEP-24. destination, memo y amount_stroops los dicta el anchor cuando el
+-- retiro queda 'ready'; antes son null. cop_per_xlm se congela al confirmar el envío.
+-- Como en payments, stellar_tx_hash y tx_deadline se guardan antes de enviar el pago.
+create table if not exists public.withdrawals (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.users (id) on delete restrict,
+  kind public.withdrawal_kind not null,
+  status public.withdrawal_status not null,
+  destination text check (destination ~ '^G[A-Z2-7]{55}$'),
+  memo text,
+  memo_type text check (memo_type in ('text', 'id', 'hash')),
+  creates_account boolean not null default false,
+  -- lo que escribió quien retira; para banco es lo pedido (el monto final lo da el anchor)
+  amount_cop bigint not null check (amount_cop > 0),
+  amount_stroops bigint check (amount_stroops > 0),
+  fee_stroops bigint not null default 0 check (fee_stroops >= 0),
+  cop_per_xlm numeric(20, 6) not null check (cop_per_xlm > 0),
+  anchor_tx_id text unique,
+  anchor_status text,
+  -- página del anchor donde la persona llena los datos de su banco (lleva un token de sesión)
+  anchor_url text,
+  stellar_tx_hash text unique check (stellar_tx_hash ~ '^[0-9a-f]{64}$'),
+  tx_deadline timestamptz,
+  error text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  check ((memo is null) = (memo_type is null)),
+  check (kind <> 'wallet' or (destination is not null and amount_stroops is not null and anchor_tx_id is null)),
+  check (kind <> 'banco' or (anchor_tx_id is not null and not creates_account)),
+  check (status not in ('ready', 'sending', 'processing', 'completed')
+         or (destination is not null and amount_stroops is not null)),
+  check (status not in ('processing', 'completed') or stellar_tx_hash is not null)
+);
+
+create index if not exists withdrawals_user_id_idx on public.withdrawals (user_id, created_at desc);
+
+-- Un solo envío en curso por persona (como payments_one_pending_per_payer).
+create unique index if not exists withdrawals_one_sending_per_user
+  on public.withdrawals (user_id) where status = 'sending';
 
 -- ---------------------------------------------------------------------------
 -- Invariantes (constraint triggers diferidos: se validan al cerrar la transacción)
@@ -496,10 +546,11 @@ alter table public.project_members enable row level security;
 alter table public.share_changes enable row level security;
 alter table public.payments enable row level security;
 alter table public.distributions enable row level security;
+alter table public.withdrawals enable row level security;
 
 revoke all on public.users, public.sessions, public.topups from anon, authenticated;
 revoke all on public.projects, public.project_members, public.share_changes from anon, authenticated;
-revoke all on public.payments, public.distributions from anon, authenticated;
+revoke all on public.payments, public.distributions, public.withdrawals from anon, authenticated;
 
 revoke execute on function public.project_members_snapshot(uuid) from public, anon, authenticated;
 revoke execute on function public.create_project(text, text, public.project_kind, text, text, uuid, jsonb) from public, anon, authenticated;
@@ -510,7 +561,7 @@ revoke execute on function public.cancel_distribution(uuid, text) from public, a
 grant usage on schema public to service_role;
 grant all on public.users, public.sessions, public.topups to service_role;
 grant all on public.projects, public.project_members, public.share_changes to service_role;
-grant all on public.payments, public.distributions to service_role;
+grant all on public.payments, public.distributions, public.withdrawals to service_role;
 grant execute on function public.project_members_snapshot(uuid) to service_role;
 grant execute on function public.create_project(text, text, public.project_kind, text, text, uuid, jsonb) to service_role;
 grant execute on function public.update_project_members(uuid, uuid, jsonb) to service_role;

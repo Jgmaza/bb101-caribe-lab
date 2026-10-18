@@ -145,8 +145,11 @@ export async function updateProjectMembers(
   redirect(stillMember ? `/proyectos/${slug}` : "/inicio");
 }
 
-/** `requestId` es el id que tendrá el pago: hace que reenviar el mismo formulario no pague dos veces. */
-export type PayFormState = FormState & { requestId: string };
+/**
+ * `requestId` es el id que tendrá el pago o retiro: reenviar el mismo formulario (doble clic)
+ * encuentra la fila ya creada en vez de mover dinero dos veces.
+ */
+export type RequestFormState = FormState & { requestId: string };
 
 /**
  * Pagar = (recarga automática si el saldo no alcanza) → pago a la cuenta del proyecto → reparto.
@@ -154,9 +157,9 @@ export type PayFormState = FormState & { requestId: string };
  */
 export async function payProject(
   slug: string,
-  prev: PayFormState,
+  prev: RequestFormState,
   formData: FormData,
-): Promise<PayFormState> {
+): Promise<RequestFormState> {
   const user = await requireUser(`/pagar/${encodeURIComponent(slug)}`);
   const receipt = (id: string) => `/pagar/${slug}/recibo/${id}`;
   // Sin fila creada se puede reusar el id; si ya hay un pago con él, el siguiente intento usa otro.

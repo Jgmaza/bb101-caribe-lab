@@ -84,15 +84,33 @@ export function reconcileDecision(
   p: PaymentState,
   lookup: TxLookup | null,
   now: Date,
-): "confirm" | "revert" | "wait" {
-  const hash = inFlightHash(p);
-  if (!hash) {
+): TxDecision {
+  if (p.status !== "pending" && p.status !== "distributing") return "wait";
+  return inFlightTxDecision(
+    { hash: inFlightHash(p), deadline: p.tx_deadline, since: p.created_at },
+    lookup,
+    now,
+  );
+}
+
+export type TxDecision = "confirm" | "revert" | "wait";
+
+/**
+ * La regla de arriba para cualquier operación en vuelo (pagos, retiros). `hash` null = aún no
+ * se firmó nada; `since` = desde cuándo está en vuelo.
+ */
+export function inFlightTxDecision(
+  tx: { hash: string | null; deadline: string | null; since: string },
+  lookup: TxLookup | null,
+  now: Date,
+): TxDecision {
+  if (!tx.hash) {
     // Sin transacción firmada nunca se envió nada: se puede dar por fallido sin riesgo.
-    return p.status === "pending" && age(p.created_at, now) > UNSIGNED_STALE_MS ? "revert" : "wait";
+    return age(tx.since, now) > UNSIGNED_STALE_MS ? "revert" : "wait";
   }
   if (lookup === "success") return "confirm";
   if (lookup === "failed") return "revert";
-  if (lookup === "missing" && p.tx_deadline && age(p.tx_deadline, now) > DEADLINE_GRACE_MS) {
+  if (lookup === "missing" && tx.deadline && age(tx.deadline, now) > DEADLINE_GRACE_MS) {
     return "revert";
   }
   return "wait";
