@@ -9,11 +9,13 @@
     "lint": "eslint",
     "test": "tsx --test src/lib/*.test.ts",
     "db:apply": "node --env-file=.env.local scripts/db-apply.mjs",
+    "db:reset": "node --env-file=.env.local scripts/db-reset.mjs",
     "stellar:setup": "node --dns-result-order=ipv4first --import tsx scripts/stellar-setup.ts"
   },
   "dependencies": {
     "@stellar/stellar-sdk": "^17.2.1",
     "@supabase/supabase-js": "^2.118.0",
+    "bcryptjs": "^3.0.3",
     "next": "16.4.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",

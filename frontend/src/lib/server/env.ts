@@ -5,9 +5,7 @@ type EnvKey =
   | "SUPABASE_SERVICE_ROLE_KEY"
   | "ORILLA_ENCRYPTION_KEY"
   | "STELLAR_HORIZON_URL"
-  | "COP_ISSUER_SECRET"
-  | "FUNDER_SECRET"
-  | "ORGANIZER_DEMO_SECRET";
+  | "FUNDER_SECRET";
 
 /** Lee una variable obligatoria en tiempo de ejecución (no en build). */
 export function env(key: EnvKey): string {

@@ -19,20 +19,11 @@ export function formatDateTime(iso: string) {
   }).format(new Date(iso));
 }
 
-/** Deja solo dígitos: "300 555-0142" → "3005550142". */
-export function normalizePhone(value: string) {
-  return value.replace(/\D/g, "");
-}
-
-export function isValidPhone(digits: string) {
-  return /^[0-9]{10,12}$/.test(digits);
-}
-
-export function formatPhone(digits: string) {
-  return digits.length === 10
-    ? `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`
-    : digits;
-}
+export const KIND_LABEL = {
+  banda: "Banda / grupo musical",
+  staff: "Staff de evento",
+  otro: "Proyecto",
+} as const;
 
 export function shortHash(hash: string) {
   return `${hash.slice(0, 10)}…${hash.slice(-6)}`;

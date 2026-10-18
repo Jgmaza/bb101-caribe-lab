@@ -57,31 +57,31 @@ npm run build && npm start
 
 | Quién | Ruta | Qué hace |
 |---|---|---|
-| Grupo | `/proyectos/nuevo` | Crea el proyecto con integrantes y % (deben sumar 100%) |
-| Grupo | `/panel/[token]` | Panel de administración (link secreto): link de pago, links de cobro, pagos, editar % |
-| Organizador | `/pagar/[slug]` | Paga un total; se reparte al instante |
-| Integrante | `/cobrar/[id]` | Link que le comparte el grupo; OTP de prueba `4821`, ve saldo e historial |
+| Todos | `/registro`, `/ingresar` | Cuenta con usuario y contraseña; al registrarse se crea su wallet |
+| Logueado | `/inicio` | Saldo, recargar, mis proyectos |
+| Logueado | `/proyectos/nuevo` | Crea el proyecto con integrantes por `@usuario` y % (deben sumar 100%); quien lo crea queda como admin |
+| Integrantes | `/proyectos/[slug]` | %, integrantes, pagos y reparto, historial de cambios, link de pago |
+| Admins | `/proyectos/[slug]/editar` | %, roles, agregar/quitar integrantes, nombrar/quitar admins (siempre queda uno) |
+| Logueado | `/pagar/[slug]` | Paga un total; se reparte al instante |
 
-## Acceso sin login (MVP)
+## Permisos
 
-No hay usuarios ni contraseñas; cada link da acceso solo a lo suyo:
-
-- **`/panel/<token>`**: administra el proyecto. El token (32 bytes aleatorios) se
-  muestra al crear el proyecto y solo se guarda su sha256: si se pierde, no se
-  recupera. Se comparte solo dentro del grupo.
-- **`/pagar/<slug>`**: público; solo permite pagar. No sirve para administrar.
-- **`/cobrar/<uuid>`**: lo que cobró un integrante.
+- Solo usuarios registrados pueden ser integrantes; el reparto llega a la wallet
+  de cada uno (una por persona, aunque esté en varios proyectos).
+- Quien no es integrante recibe 404 en las páginas del proyecto.
+- Solo los admins editan el proyecto y reintentan repartos. Cada cambio queda en
+  `share_changes` (antes/después) y lo ven todos los integrantes.
+- `/pagar/<slug>` solo permite pagar; no sirve para administrar.
 
 ## Cómo funciona
 
-1. Al crear un proyecto, una sola transacción Stellar crea la cuenta custodial
-   del proyecto y la de cada integrante (con trustline a `COP`). Las claves se
-   guardan cifradas con AES-256-GCM.
-2. El organizador paga a la cuenta del proyecto.
-3. Orilla reparte con **una transacción de N pagos** (todo o nada). Los montos
-   se calculan en `src/lib/split.ts` (mayor residuo: suman exactamente el total).
-   Si el reparto falla, el pago queda en `failed` y se puede reintentar desde el
-   panel del proyecto.
+1. Al crear un proyecto, Orilla crea su cuenta custodial en Stellar. Las claves
+   se guardan cifradas con AES-256-GCM.
+2. Quien paga envía XLM (en pantalla, pesos) a la cuenta del proyecto.
+3. Orilla reparte con **una transacción de N pagos** (todo o nada) a la wallet
+   de cada integrante. Los montos se calculan en `src/lib/split.ts` (mayor
+   residuo: suman exactamente el total). Si el reparto falla, el pago queda en
+   `failed` y un admin lo puede reintentar desde la página del proyecto.
 
 El reparto está aislado en `distribute()` (`src/lib/server/stellar.ts`) para
 poder cambiarlo por la API de SDP más adelante.

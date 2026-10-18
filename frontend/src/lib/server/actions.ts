@@ -1,33 +1,34 @@
 "use server";
 
-import { randomBytes } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
-import { isValidPhone, normalizePhone } from "@/lib/format";
-import { MAX_AMOUNT, TOTAL_BPS, percentToBps, splitAmount } from "@/lib/split";
-import { decryptSecret, encryptSecret, hashAdminToken, newAdminToken } from "./crypto";
-import { db, type MemberRow, type PaymentRow, type ProjectKind, type ProjectRow } from "./db";
-import { getProjectByAdminToken, isUuid } from "./queries";
+import { formatCop } from "@/lib/format";
+import { parseMembers, type ParsedMember } from "@/lib/members";
+import { MAX_PAYMENT_COP, copToStroops, parseCop } from "@/lib/money";
+import { canRetryDistribution } from "@/lib/payments";
+import { encryptSecret } from "./crypto";
+import { db, type PaymentRow, type ProjectKind, type ProjectRow } from "./db";
 import {
-  createCustodialAccounts,
-  distribute,
-  fundDemoOrganizer,
-  payToProject,
-} from "./stellar";
-import { env } from "./env";
+  executePayment,
+  reconcilePayment,
+  reconcilePayments,
+  recordTopup,
+  runDistribution,
+} from "./payment-flow";
+import { getCopPerXlm } from "./price";
+import { getPayment, getProjectAccess, getUsersByUsername, isUuid } from "./queries";
+import { requireUser } from "./session";
+import { createCustodialAccounts, friendbotTopUp } from "./stellar";
 
-// Sin login en el MVP: el acceso es por links.
-// - /panel/<token>: administra el proyecto (token secreto, solo se guarda su hash)
-// - /pagar/<slug>: público, solo permite pagar
-// - /cobrar/<uuid del integrante>: ver lo que cobró
-// Validamos todo lo que llega.
+// Todas las acciones exigen sesión (requireUser). Editar un proyecto y reintentar un reparto
+// exigen además ser admin del proyecto. Validamos todo lo que llega.
 
 export type FormState = { error: string | null };
+/** Devuelve lo escrito: React resetea los campos no controlados del formulario tras la acción. */
+export type ProjectFormState = FormState & { name?: string; kind?: string };
 
-const MAX_MEMBERS = 20;
 const KINDS: ProjectKind[] = ["banda", "staff", "otro"];
-
-type MemberInput = { name: string; phone: string; role: string; pct: string };
 
 function parseJsonArray(value: FormDataEntryValue | null): unknown[] | null {
   if (typeof value !== "string") return null;
@@ -54,228 +55,227 @@ function slugify(name: string) {
   return `${base || "proyecto"}-${randomBytes(3).toString("hex")}`;
 }
 
-function sharesError(bps: (number | null)[]): string | null {
-  if (bps.some((b) => b === null || b < 1 || b > TOTAL_BPS)) {
-    return "Cada porcentaje debe ser un número entre 0,01 y 100 (máximo dos decimales).";
+type MemberRpcRow = Omit<ParsedMember, "username"> & { user_id: string };
+
+/** Cambia cada @usuario por su id. Solo personas registradas pueden ser integrantes. */
+async function resolveMembers(
+  members: ParsedMember[],
+): Promise<{ rows: MemberRpcRow[] } | { error: string }> {
+  const users = await getUsersByUsername(members.map((m) => m.username));
+  const ids = new Map(users.map((u) => [u.username, u.id]));
+  const missing = members.filter((m) => !ids.has(m.username)).map((m) => `@${m.username}`);
+  if (missing.length) {
+    return {
+      error: `No encontramos a ${missing.join(", ")}. Cada integrante necesita una cuenta en Orilla.`,
+    };
   }
-  const sum = (bps as number[]).reduce((a, b) => a + b, 0);
-  if (sum !== TOTAL_BPS) {
-    return `Los porcentajes deben sumar 100% (hoy suman ${(sum / 100).toLocaleString("es-CO")}%).`;
-  }
-  return null;
+  return {
+    rows: members.map(({ username, ...m }) => ({ ...m, user_id: ids.get(username)! })),
+  };
 }
 
-export async function createProject(_prev: FormState, formData: FormData): Promise<FormState> {
+export async function createProject(
+  _prev: ProjectFormState,
+  formData: FormData,
+): Promise<ProjectFormState> {
+  const user = await requireUser("/proyectos/nuevo");
   const name = text(formData.get("name"));
   const kind = text(formData.get("kind")) as ProjectKind;
-  const raw = parseJsonArray(formData.get("members"));
+  const fail = (error: string) => ({ error, name, kind });
 
-  if (name.length < 2) return { error: "Escribe el nombre del proyecto." };
-  if (!KINDS.includes(kind)) return { error: "Elige el tipo de proyecto." };
-  if (!raw || raw.length < 1) return { error: "Agrega al menos un integrante." };
-  if (raw.length > MAX_MEMBERS) return { error: `Máximo ${MAX_MEMBERS} integrantes por proyecto.` };
+  if (name.length < 2) return fail("Escribe el nombre del proyecto.");
+  if (!KINDS.includes(kind)) return fail("Elige el tipo de proyecto.");
 
-  const members = (raw as Partial<MemberInput>[]).map((m) => ({
-    name: text(m.name),
-    phone: normalizePhone(text(m.phone, 30)),
-    role: text(m.role, 60),
-    share_bps: percentToBps(text(m.pct, 10)),
-  }));
-
-  if (members.some((m) => m.name.length < 2)) return { error: "Cada integrante necesita un nombre." };
-  if (members.some((m) => !isValidPhone(m.phone))) {
-    return { error: "Revisa los celulares: deben tener entre 10 y 12 dígitos." };
+  const parsed = parseMembers(parseJsonArray(formData.get("members")));
+  if (!parsed.ok) return fail(parsed.error);
+  if (!parsed.members.some((m) => m.username === user.username && m.is_admin)) {
+    return fail("Tú quedas como integrante y admin del proyecto: no te quites de la lista.");
   }
-  if (new Set(members.map((m) => m.phone)).size !== members.length) {
-    return { error: "Hay celulares repetidos en el proyecto." };
-  }
-  const shareErr = sharesError(members.map((m) => m.share_bps));
-  if (shareErr) return { error: shareErr };
+  const resolved = await resolveMembers(parsed.members);
+  if ("error" in resolved) return fail(resolved.error);
 
   const slug = slugify(name);
-  const adminToken = newAdminToken();
   try {
-    // Una sola transacción Stellar crea la cuenta del proyecto y las de los integrantes.
-    const [projectKp, ...memberKps] = await createCustodialAccounts(members.length + 1);
+    // Solo se crea la cuenta del proyecto: el reparto va a la wallet de cada usuario.
+    const [projectKp] = await createCustodialAccounts(1);
     const { error } = await db().rpc("create_project", {
       p_slug: slug,
       p_name: name,
       p_kind: kind,
       p_stellar_public_key: projectKp.publicKey(),
       p_stellar_secret_enc: encryptSecret(projectKp.secret()),
-      p_admin_token_hash: hashAdminToken(adminToken),
-      p_members: members.map((m, i) => ({
-        ...m,
-        stellar_public_key: memberKps[i].publicKey(),
-        stellar_secret_enc: encryptSecret(memberKps[i].secret()),
-      })),
+      p_created_by: user.id,
+      p_members: resolved.rows,
     });
     if (error) throw new Error(error.message);
   } catch (err) {
-    return { error: `No pudimos crear el proyecto. ${(err as Error).message}` };
+    return fail(`No pudimos crear el proyecto. ${(err as Error).message}`);
   }
 
-  // El token en claro solo existe en este link: el panel avisa que hay que guardarlo.
-  redirect(`/panel/${adminToken}?nuevo=1`);
+  redirect(`/proyectos/${slug}`);
 }
 
-export async function updateMembers(
-  adminToken: string,
-  _prev: FormState,
-  formData: FormData,
-): Promise<FormState> {
-  const project = await getProjectByAdminToken(adminToken);
-  if (!project) return { error: "Link de administración inválido." };
-
-  const raw = parseJsonArray(formData.get("members"));
-  if (!raw || raw.length < 1) return { error: "No llegaron integrantes." };
-
-  const members = (raw as { id?: unknown; name?: unknown; role?: unknown; pct?: unknown }[]).map(
-    (m) => ({
-      id: text(m.id, 40),
-      name: text(m.name),
-      role: text(m.role, 60),
-      share_bps: percentToBps(text(m.pct, 10)),
-    }),
-  );
-  if (members.some((m) => !isUuid(m.id))) return { error: "Integrante inválido." };
-  if (members.some((m) => m.name.length < 2)) return { error: "Cada integrante necesita un nombre." };
-  const shareErr = sharesError(members.map((m) => m.share_bps));
-  if (shareErr) return { error: shareErr };
-
-  const { error } = await db().rpc("update_members", {
-    p_project_id: project.id,
-    p_members: members,
-  });
-  if (error) return { error: `No pudimos guardar los cambios. ${error.message}` };
-
-  redirect(`/panel/${adminToken}`);
-}
-
-export async function payProject(
+/** Reemplaza integrantes, %, roles y admins. Solo admins; queda en el historial de cambios. */
+export async function updateProjectMembers(
   slug: string,
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const payerName = text(formData.get("payer_name"));
-  const amount = Number(text(formData.get("amount"), 20).replace(/[.\s$]/g, ""));
+  const user = await requireUser(`/proyectos/${encodeURIComponent(slug)}/editar`);
+  const access = await getProjectAccess(slug, user.id);
+  if (!access?.membership) return { error: "El proyecto no existe." };
+  if (!access.membership.is_admin) return { error: "Solo los admins pueden editar el proyecto." };
 
-  if (payerName.length < 2) return { error: "Escribe quién paga (bar, hotel, organizador)." };
-  if (!Number.isSafeInteger(amount) || amount < 1 || amount > MAX_AMOUNT) {
-    return { error: "Escribe un monto válido en pesos, sin decimales." };
+  const parsed = parseMembers(parseJsonArray(formData.get("members")));
+  if (!parsed.ok) return { error: parsed.error };
+  const resolved = await resolveMembers(parsed.members);
+  if ("error" in resolved) return resolved;
+
+  // La función vuelve a revisar que quien edita sea admin, dentro de la misma transacción.
+  const { error } = await db().rpc("update_project_members", {
+    p_project_id: access.project.id,
+    p_changed_by: user.id,
+    p_members: resolved.rows,
+  });
+  if (error?.code === "42501") return { error: "Solo los admins pueden editar el proyecto." };
+  if (error) return { error: `No pudimos guardar los cambios. ${error.message}` };
+
+  // Si se quitó a sí mismo del proyecto, ya no puede verlo.
+  const stillMember = resolved.rows.some((m) => m.user_id === user.id);
+  redirect(stillMember ? `/proyectos/${slug}` : "/inicio");
+}
+
+/**
+ * `requestId` es el id que tendrá el pago o retiro: reenviar el mismo formulario (doble clic)
+ * encuentra la fila ya creada en vez de mover dinero dos veces.
+ */
+export type RequestFormState = FormState & { requestId: string };
+
+/**
+ * Pagar = (recarga automática si el saldo no alcanza) → pago a la cuenta del proyecto → reparto.
+ * Para quien paga es un solo paso. Ver lib/server/payment-flow.ts.
+ */
+export async function payProject(
+  slug: string,
+  prev: RequestFormState,
+  formData: FormData,
+): Promise<RequestFormState> {
+  const user = await requireUser(`/pagar/${encodeURIComponent(slug)}`);
+  const receipt = (id: string) => `/pagar/${slug}/recibo/${id}`;
+  // Sin fila creada se puede reusar el id; si ya hay un pago con él, el siguiente intento usa otro.
+  const keep = (error: string) => ({ error, requestId: prev.requestId });
+  const fresh = (error: string) => ({ error, requestId: randomUUID() });
+
+  const requestId = text(formData.get("request_id"), 36);
+  if (!isUuid(requestId)) return fresh("Recarga la página e intenta de nuevo.");
+  const amountCop = parseCop(text(formData.get("amount"), 20));
+  if (amountCop === null || amountCop > MAX_PAYMENT_COP) {
+    return keep(`Escribe un monto en pesos, sin decimales, hasta ${formatCop(MAX_PAYMENT_COP)}.`);
   }
 
-  const { data: project, error: projectErr } = await db()
-    .from("projects")
-    .select("*")
-    .eq("slug", slug)
-    .maybeSingle<ProjectRow>();
-  if (projectErr || !project) return { error: "El proyecto no existe." };
+  const [{ data: project, error: projectErr }, { data: payer, error: payerErr }, { data: inFlight }] =
+    await Promise.all([
+      db().from("projects").select("*").eq("slug", slug).maybeSingle<ProjectRow>(),
+      db().from("users").select("stellar_secret_enc").eq("id", user.id).single<{ stellar_secret_enc: string }>(),
+      db().from("payments").select("*").eq("payer_id", user.id).eq("status", "pending").returns<PaymentRow[]>(),
+    ]);
+  if (projectErr || !project) return keep("El proyecto no existe.");
+  if (payerErr || !payer) return keep("No pudimos leer tu cuenta. Intenta de nuevo.");
+  // Un pago que quedó a medias (request cortado) no debe bloquear el siguiente.
+  if (inFlight?.length) await reconcilePayments(inFlight);
+
+  // La tasa se congela aquí: el recibo y el historial muestran siempre estos pesos.
+  let copPerXlm: number;
+  try {
+    copPerXlm = await getCopPerXlm();
+  } catch (err) {
+    return keep((err as Error).message);
+  }
 
   const { data: payment, error: insertErr } = await db()
     .from("payments")
-    .insert({ project_id: project.id, payer_name: payerName, amount })
+    .insert({
+      id: requestId,
+      project_id: project.id,
+      payer_id: user.id,
+      amount_cop: amountCop,
+      amount_stroops: copToStroops(amountCop, copPerXlm).toString(),
+      cop_per_xlm: copPerXlm,
+    })
     .select("*")
     .single<PaymentRow>();
+  if (insertErr?.code === "23505" && insertErr.message.includes("payments_pkey")) {
+    // Doble clic: este mismo formulario ya creó el pago. Se muestra ese, no se paga otro.
+    const { data: existing } = await db()
+      .from("payments")
+      .select("payer_id, project_id")
+      .eq("id", requestId)
+      .maybeSingle<Pick<PaymentRow, "payer_id" | "project_id">>();
+    if (existing?.payer_id === user.id && existing.project_id === project.id) redirect(receipt(requestId));
+    return fresh("Recarga la página e intenta de nuevo.");
+  }
+  if (insertErr?.code === "23505" && insertErr.message.includes("payments_one_pending_per_payer")) {
+    return keep("Ya tienes un pago en curso. Espera a que termine (puede tardar hasta un minuto) y vuelve a intentarlo.");
+  }
   if (insertErr || !payment) {
-    return { error: `No pudimos registrar el pago. ${insertErr?.message ?? ""}` };
+    console.error("No se pudo registrar el pago:", insertErr);
+    return keep("No pudimos registrar el pago. Intenta de nuevo.");
   }
 
-  // 1) Organizador → cuenta del proyecto.
-  try {
-    const hash = await payToProject({
-      payerSecret: env("ORGANIZER_DEMO_SECRET"),
-      projectPublicKey: project.stellar_public_key,
-      amount,
-      memo: memoFor(payment.id),
-    });
-    await db()
-      .from("payments")
-      .update({ status: "received", payment_tx_hash: hash })
-      .eq("id", payment.id);
-  } catch (err) {
-    const message = (err as Error).message;
-    await db().from("payments").update({ status: "failed", error: message }).eq("id", payment.id);
-    return { error: `El pago no salió. ${message}` };
-  }
+  const outcome = await executePayment({
+    payment,
+    payer: { id: user.id, publicKey: user.stellar_public_key, secretEnc: payer.stellar_secret_enc },
+    projectPublicKey: project.stellar_public_key,
+  });
+  if (outcome.kind === "failed") return fresh(outcome.error);
+  // Si el reparto falla, el recibo lo dice y un admin puede reintentarlo.
+  if (outcome.kind === "paid") await runDistribution(payment.id);
 
-  // 2) Cuenta del proyecto → integrantes. Si falla, el pago queda "failed" y se puede reintentar.
-  await runDistribution(payment.id);
-
-  redirect(`/pagar/${slug}/recibo/${payment.id}`);
+  redirect(receipt(payment.id));
 }
 
-export async function retryDistribution(adminToken: string, paymentId: string): Promise<void> {
-  if (!isUuid(paymentId)) return;
-  const project = await getProjectByAdminToken(adminToken);
-  if (!project) return;
-  // Reclama el pago de forma atómica para que dos clics no repartan dos veces.
-  const { data: claimed } = await db()
-    .from("payments")
-    .update({ status: "received", error: null })
-    .eq("id", paymentId)
-    .eq("project_id", project.id)
-    .eq("status", "failed")
-    .not("payment_tx_hash", "is", null)
-    .select("id, project_id");
-  if (!claimed?.length) return;
+/** Solo admins del proyecto. Al terminar vuelve a la página del proyecto con el resultado. */
+export async function retryDistribution(slug: string, paymentId: string): Promise<FormState> {
+  const user = await requireUser(`/proyectos/${encodeURIComponent(slug)}`);
+  const access = await getProjectAccess(slug, user.id);
+  if (!access?.membership?.is_admin) return { error: "Solo los admins pueden reintentar el reparto." };
 
-  await runDistribution(paymentId);
+  let payment = isUuid(paymentId) ? await getPayment(paymentId) : null;
+  if (!payment || payment.project_id !== access.project.id) return { error: "El pago no existe." };
+  // Si había un reparto en vuelo, primero se averigua si salió: nunca se reparte dos veces.
+  if (await reconcilePayment(payment)) {
+    payment = (await getPayment(paymentId)) ?? payment;
+    if (payment.status === "distributed") redirect(`/proyectos/${slug}?repartido=${paymentId}`);
+  }
+  if (payment.status === "distributing") {
+    return { error: "El reparto ya está en curso. Recarga la página en un minuto." };
+  }
+  if (!canRetryDistribution(payment, new Date())) {
+    return { error: "Este pago no está pendiente de reparto. Recarga la página." };
+  }
+
+  // begin_distribution reclama el pago de forma atómica: dos clics no reparten dos veces.
+  const outcome = await runDistribution(paymentId);
+  if (outcome === "distributed") redirect(`/proyectos/${slug}?repartido=${paymentId}`);
   refresh();
-}
-
-async function runDistribution(paymentId: string) {
-  let distributedHash: string | null = null;
-  try {
-    const { data: payment, error: payErr } = await db()
-      .from("payments")
-      .select("*")
-      .eq("id", paymentId)
-      .single<PaymentRow>();
-    if (payErr || !payment) throw new Error(payErr?.message ?? "Pago no encontrado");
-
-    const [{ data: project }, { data: members }] = await Promise.all([
-      db().from("projects").select("*").eq("id", payment.project_id).single<ProjectRow>(),
-      db().from("members").select("*").eq("project_id", payment.project_id).returns<MemberRow[]>(),
-    ]);
-    if (!project || !members?.length) throw new Error("Proyecto sin integrantes");
-
-    const splits = splitAmount(
-      payment.amount,
-      members.map((m) => ({ id: m.id, shareBps: m.share_bps })),
-    );
-    const byId = new Map(members.map((m) => [m.id, m]));
-
-    const hash = (distributedHash = await distribute({
-      projectSecret: decryptSecret(project.stellar_secret_enc),
-      splits: splits.map((s) => ({ publicKey: byId.get(s.id)!.stellar_public_key, amount: s.amount })),
-      memo: memoFor(payment.id),
-    }));
-
-    const { error } = await db().rpc("record_distribution", {
-      p_payment_id: payment.id,
-      p_distribution_tx_hash: hash,
-      p_rows: splits.map((s) => ({ member_id: s.id, share_bps: s.shareBps, amount: s.amount })),
-    });
-    if (error) throw new Error(`Repartido en Stellar (${hash}) pero no se pudo registrar: ${error.message}`);
-  } catch (err) {
-    // Si el reparto ya salió en Stellar, no se marca "failed": reintentar pagaría dos veces.
-    await db()
-      .from("payments")
-      .update(
-        distributedHash
-          ? { error: (err as Error).message }
-          : { status: "failed", error: (err as Error).message },
-      )
-      .eq("id", paymentId);
+  if (outcome === "busy") return { error: "Otro admin ya está repartiendo este pago. Recarga la página en un momento." };
+  if (outcome === "uncertain") {
+    return { error: "Enviamos el reparto pero la red aún no lo confirma. Recarga la página en un minuto." };
   }
+  const failed = await getPayment(paymentId);
+  return { error: failed?.error ?? "No se pudo repartir el pago." };
 }
 
-export async function fundOrganizer(): Promise<void> {
-  await fundDemoOrganizer(5_000_000);
+/** "Recargar saldo": en testnet, una ronda de friendbot (~10.000 XLM) fusionada en la wallet. */
+export async function topUpBalance(): Promise<FormState> {
+  const user = await requireUser("/inicio");
+  try {
+    const copPerXlm = await getCopPerXlm();
+    await friendbotTopUp(user.stellar_public_key, 1n, (round) => recordTopup(user.id, round, copPerXlm));
+  } catch (err) {
+    console.error("Recarga fallida:", err);
+    return { error: "No pudimos recargar tu saldo. Intenta de nuevo en un momento." };
+  }
   refresh();
-}
-
-function memoFor(paymentId: string) {
-  return `orilla ${paymentId.slice(0, 8)}`;
+  return { error: null };
 }

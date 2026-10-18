@@ -1,8 +1,11 @@
 import { DesktopShell } from "@/components/DesktopShell";
 import { Card } from "@/components/ui";
+import { requireUser } from "@/lib/server/session";
 import { ProjectForm } from "./ProjectForm";
 
-export default function NuevoProyectoPage() {
+export default async function NuevoProyectoPage() {
+  const user = await requireUser("/proyectos/nuevo");
+
   return (
     <DesktopShell breadcrumb="Proyectos / Nuevo">
       <h1 className="font-display text-[32px] font-bold text-ink">
@@ -13,7 +16,7 @@ export default function NuevoProyectoPage() {
         organizador pague al proyecto, Orilla reparte automáticamente.
       </p>
       <Card className="mt-6 p-5 sm:p-7">
-        <ProjectForm />
+        <ProjectForm me={{ username: user.username, displayName: user.display_name }} />
       </Card>
     </DesktopShell>
   );

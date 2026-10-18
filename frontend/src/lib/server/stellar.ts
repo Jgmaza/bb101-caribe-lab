@@ -10,24 +10,25 @@ import {
   TransactionBuilder,
   type Transaction,
 } from "@stellar/stellar-sdk";
+import { availableStroops, stroopsToXlm, xlmToStroops } from "@/lib/money";
+import type { TxLookup } from "@/lib/payments";
+import type { AnchorMemo } from "@/lib/withdrawals";
 import { env } from "./env";
 
 // Toda la interacción con Stellar testnet pasa por aquí.
-// Activo: COP de prueba emitido por la cuenta issuer de Orilla (1 token = 1 peso).
+// Activo: XLM nativo. Montos en stroops (BigInt). En pantalla se muestran en pesos.
 
-export const COP_CODE = "COP";
 const FEE = "1000"; // stroops por operación; holgado para testnet
-const STARTING_XLM = "3"; // reservas: cuenta + trustline + comisiones
+const STARTING_XLM = "1.5"; // reserva de la cuenta (1 XLM) + comisiones
 const TIMEOUT_SECONDS = 60;
+const FRIENDBOT_URL = "https://friendbot.stellar.org";
+const MAX_TOPUP_ROUNDS = 5; // cada ronda de friendbot trae ~10.000 XLM
+const FUNDER_MIN_STROOPS = xlmToStroops("500"); // por debajo, el funder se recarga solo
 
 let server: Horizon.Server | undefined;
 function horizon() {
   server ??= new Horizon.Server(env("STELLAR_HORIZON_URL"));
   return server;
-}
-
-export function copAsset(): Asset {
-  return new Asset(COP_CODE, Keypair.fromSecret(env("COP_ISSUER_SECRET")).publicKey());
 }
 
 export function explorerTxUrl(hash: string) {
@@ -38,72 +39,330 @@ export function explorerAccountUrl(publicKey: string) {
   return `https://stellar.expert/explorer/testnet/account/${publicKey}`;
 }
 
-async function submit(tx: Transaction): Promise<string> {
-  try {
-    const res = await horizon().submitTransaction(tx);
-    return res.hash;
-  } catch (err) {
-    throw new Error(describeHorizonError(err));
+type Submitted = { hash: string; fee_charged?: number | string };
+
+/**
+ * Falla al enviar una transacción. `uncertain`: Horizon no dio una respuesta definitiva (red,
+ * timeout 504): la transacción todavía podría entrar hasta su plazo. Si no, Stellar la rechazó
+ * y seguro no se aplicó; `codes` trae los result codes (tx_bad_seq, op_underfunded, …).
+ */
+export class TxError extends Error {
+  constructor(
+    message: string,
+    readonly uncertain: boolean,
+    readonly codes: string[] = [],
+  ) {
+    super(message);
   }
 }
 
-function describeHorizonError(err: unknown): string {
-  const codes = (err as { response?: { data?: { extras?: { result_codes?: unknown } } } })
-    ?.response?.data?.extras?.result_codes;
-  if (codes) return `Stellar rechazó la transacción: ${JSON.stringify(codes)}`;
-  return err instanceof Error ? err.message : String(err);
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Sin respuesta de Horizon, o un 5xx (504 = enviada pero sin confirmar): no sabemos si se aplicó. */
+function isTransient(err: unknown): boolean {
+  if (err instanceof NotFoundError) return false;
+  const status = (err as { response?: { status?: number } })?.response?.status;
+  return status === undefined || status >= 500;
+}
+
+function txHash(tx: Transaction) {
+  return Buffer.from(tx.hash()).toString("hex");
+}
+
+/** Busca una transacción por hash. "failed" = entró pero sus operaciones no se aplicaron. */
+export async function lookupTransaction(hash: string): Promise<TxLookup> {
+  try {
+    const tx = await horizon().transactions().transaction(hash).call();
+    return tx.successful ? "success" : "failed";
+  } catch (err) {
+    return err instanceof NotFoundError ? "missing" : "unknown";
+  }
+}
+
+async function findTransaction(hash: string): Promise<Submitted | null> {
+  try {
+    const tx = await horizon().transactions().transaction(hash).call();
+    return tx.successful ? { hash: tx.hash, fee_charged: tx.fee_charged } : null;
+  } catch {
+    return null;
+  }
 }
 
 /**
- * Crea varias cuentas custodiales en una sola transacción: el funder las fondea con XLM
- * y cada cuenta abre su trustline al COP. Máximo 50 cuentas (2 operaciones c/u).
+ * Envía una transacción firmada. Si falla por red (p. ej. una conexión keep-alive vencida),
+ * busca la transacción por su hash antes de reenviarla: reenviar la MISMA transacción no
+ * puede duplicar el pago (mismo número de secuencia), a lo sumo Horizon la rechaza.
  */
-export async function createCustodialAccounts(count: number): Promise<Keypair[]> {
-  if (count < 1 || count > 50) throw new Error("Se pueden crear entre 1 y 50 cuentas a la vez");
-  const funder = Keypair.fromSecret(env("FUNDER_SECRET"));
-  const asset = copAsset();
-  const accounts = Array.from({ length: count }, () => Keypair.random());
+async function submit(tx: Transaction): Promise<Submitted> {
+  const hash = txHash(tx);
+  let lastErr: unknown;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      return await horizon().submitTransaction(tx);
+    } catch (err) {
+      lastErr = err;
+      if (attempt > 1 || isTransient(err)) {
+        await sleep(1000 * attempt);
+        const applied = await findTransaction(hash);
+        if (applied) return applied;
+      }
+      if (!isTransient(err)) break;
+    }
+  }
+  throw toTxError(lastErr);
+}
 
-  const builder = new TransactionBuilder(await horizon().loadAccount(funder.publicKey()), {
+function toTxError(err: unknown): TxError {
+  const codes = (
+    err as {
+      response?: { data?: { extras?: { result_codes?: { transaction?: string; operations?: string[] } } } };
+    }
+  )?.response?.data?.extras?.result_codes;
+  if (codes) {
+    const list = [codes.transaction, ...(codes.operations ?? [])].filter(
+      (c): c is string => !!c && c !== "op_success",
+    );
+    return new TxError(`Stellar rechazó la transacción: ${JSON.stringify(codes)}`, false, list);
+  }
+  const cause = (err as { cause?: { code?: string; message?: string } })?.cause;
+  const base = err instanceof Error ? err.message : String(err);
+  return new TxError(cause ? `${base} (${cause.code ?? cause.message})` : base, isTransient(err));
+}
+
+export type SignedTx = { hash: string; deadline: Date };
+
+/**
+ * Arma, firma y envía una transacción desde `source`. `onSigned` corre con el hash ANTES de
+ * enviarla (para guardarlo); si falla, no se envía nada. Si la secuencia de la cuenta cambió
+ * entre la lectura y el envío (tx_bad_seq: otra transacción de la misma cuenta entró antes), esa
+ * transacción ya no puede entrar nunca: se vuelve a armar con la secuencia nueva.
+ */
+async function buildAndSubmit(
+  source: Keypair,
+  addOperations: (builder: TransactionBuilder) => TransactionBuilder,
+  onSigned?: (tx: SignedTx) => Promise<void>,
+): Promise<string> {
+  for (let attempt = 1; ; attempt++) {
+    const tx = addOperations(await builderFor(source.publicKey()))
+      .setTimeout(TIMEOUT_SECONDS)
+      .build();
+    tx.sign(source);
+    await onSigned?.({ hash: txHash(tx), deadline: new Date(Number(tx.timeBounds!.maxTime) * 1000) });
+    try {
+      return (await submit(tx)).hash;
+    } catch (err) {
+      if (attempt < 3 && err instanceof TxError && err.codes.includes("tx_bad_seq")) continue;
+      throw err;
+    }
+  }
+}
+
+/**
+ * loadAccount con reintentos ante errores de red: tras una espera larga (p. ej. friendbot) la
+ * conexión keep-alive con Horizon puede estar cerrada y fetch falla sin reintentar. Leer una
+ * cuenta es idempotente; "no existe" (NotFoundError) no se reintenta.
+ */
+async function loadAccount(publicKey: string, attempts = 3) {
+  for (let i = 1; ; i++) {
+    try {
+      return await horizon().loadAccount(publicKey);
+    } catch (err) {
+      if (err instanceof NotFoundError || i >= attempts) throw err;
+      await sleep(500 * i);
+    }
+  }
+}
+
+async function builderFor(publicKey: string) {
+  return new TransactionBuilder(await loadAccount(publicKey), {
     fee: FEE,
     networkPassphrase: Networks.TESTNET,
   });
-  for (const kp of accounts) {
-    builder.addOperation(
-      Operation.createAccount({ destination: kp.publicKey(), startingBalance: STARTING_XLM }),
-    );
-    builder.addOperation(Operation.changeTrust({ asset, source: kp.publicKey() }));
+}
+
+/**
+ * Saldo disponible en stroops (descontada la reserva mínima y un margen para comisiones).
+ * 0 si la cuenta no existe; null si Horizon no respondió (la UI muestra "no disponible").
+ */
+export async function getAvailableStroops(publicKey: string): Promise<bigint | null> {
+  try {
+    const account = await loadAccount(publicKey);
+    const native = account.balances.find((b) => b.asset_type === "native");
+    if (!native) return 0n;
+    return availableStroops({
+      balance: native.balance,
+      subentries: account.subentry_count,
+      sponsoring: account.num_sponsoring ?? 0,
+      sponsored: account.num_sponsored ?? 0,
+      sellingLiabilities: "selling_liabilities" in native ? native.selling_liabilities : "0",
+    });
+  } catch (err) {
+    if (err instanceof NotFoundError) return 0n;
+    console.error(`No se pudo leer el saldo de ${publicKey}:`, err);
+    return null;
   }
-  const tx = builder.setTimeout(TIMEOUT_SECONDS).build();
-  tx.sign(funder, ...accounts);
-  await submit(tx);
+}
+
+/** Fondea una cuenta nueva con friendbot. Si la llamada falla, revisa si igual quedó fondeada. */
+async function friendbot(publicKey: string): Promise<void> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      const res = await fetch(`${FRIENDBOT_URL}/?addr=${encodeURIComponent(publicKey)}`, {
+        cache: "no-store",
+        signal: AbortSignal.timeout(30_000),
+      });
+      if (res.ok) return;
+      throw new Error(`Friendbot respondió ${res.status}`);
+    } catch (err) {
+      const funded = await loadAccount(publicKey).then(
+        () => true,
+        () => false,
+      );
+      if (funded) return;
+      if (attempt >= 2) throw new Error(`Friendbot no respondió: ${(err as Error).message}`);
+      await sleep(1000);
+    }
+  }
+}
+
+export type TopupRound = { txHash: string; amountStroops: bigint };
+
+/**
+ * Recarga con friendbot: friendbot solo fondea cuentas que NO existen, así que en cada ronda
+ * se crea una cuenta temporal, friendbot la fondea y se fusiona (accountMerge) en `destination`.
+ * Repite hasta sumar `minStroops` (al menos una ronda, máximo MAX_TOPUP_ROUNDS). `onRound` corre
+ * al terminar cada ronda: si una ronda posterior falla, las anteriores ya quedaron registradas.
+ */
+export async function friendbotTopUp(
+  destination: string,
+  minStroops = 1n,
+  onRound?: (round: TopupRound) => Promise<void>,
+): Promise<TopupRound[]> {
+  const rounds: TopupRound[] = [];
+  let total = 0n;
+  while (total < minStroops) {
+    if (rounds.length >= MAX_TOPUP_ROUNDS) {
+      throw new Error("El monto supera lo que se puede recargar de una vez.");
+    }
+    const temp = Keypair.random();
+    await friendbot(temp.publicKey());
+    const tempAccount = await loadAccount(temp.publicKey());
+    const balance = xlmToStroops(tempAccount.balances.find((b) => b.asset_type === "native")!.balance);
+    const tx = new TransactionBuilder(tempAccount, { fee: FEE, networkPassphrase: Networks.TESTNET })
+      .addOperation(Operation.accountMerge({ destination }))
+      .setTimeout(TIMEOUT_SECONDS)
+      .build();
+    tx.sign(temp);
+    const res = await submit(tx);
+    // La comisión cobrada sale del saldo de la temporal; el resto llega al destino.
+    const fee = BigInt(res.fee_charged ?? FEE);
+    const round = { txHash: res.hash, amountStroops: balance - fee };
+    rounds.push(round);
+    total += round.amountStroops;
+    await onRound?.(round);
+  }
+  return rounds;
+}
+
+/** Si el funder baja del umbral, se recarga solo con friendbot. */
+async function ensureFunderBalance(funder: Keypair, needed: bigint) {
+  const available = await getAvailableStroops(funder.publicKey());
+  if (available !== null && available - needed >= FUNDER_MIN_STROOPS) return;
+  await friendbotTopUp(funder.publicKey(), needed);
+}
+
+/**
+ * Crea cuentas custodiales (personas o proyectos) en una sola transacción: el funder les da lo
+ * justo para la reserva y algunas comisiones. Máximo 100 cuentas.
+ */
+export async function createCustodialAccounts(count: number): Promise<Keypair[]> {
+  if (count < 1 || count > 100) throw new Error("Se pueden crear entre 1 y 100 cuentas a la vez");
+  const funder = Keypair.fromSecret(env("FUNDER_SECRET"));
+  await ensureFunderBalance(funder, BigInt(count) * xlmToStroops(STARTING_XLM));
+  const accounts = Array.from({ length: count }, () => Keypair.random());
+
+  // Dos registros a la vez usan el funder: buildAndSubmit rearma ante tx_bad_seq.
+  await buildAndSubmit(funder, (builder) => {
+    for (const kp of accounts) {
+      builder.addOperation(
+        Operation.createAccount({ destination: kp.publicKey(), startingBalance: STARTING_XLM }),
+      );
+    }
+    return builder;
+  });
   return accounts;
 }
 
-/** Pago del organizador a la cuenta del proyecto. */
+/** Pago de una persona a la cuenta del proyecto, en stroops. */
 export async function payToProject(opts: {
   payerSecret: string;
   projectPublicKey: string;
-  amount: number;
+  amountStroops: bigint;
   memo: string;
+  onSigned: (tx: SignedTx) => Promise<void>;
 }): Promise<string> {
-  const payer = Keypair.fromSecret(opts.payerSecret);
-  const tx = new TransactionBuilder(await horizon().loadAccount(payer.publicKey()), {
-    fee: FEE,
-    networkPassphrase: Networks.TESTNET,
-  })
-    .addOperation(
-      Operation.payment({
-        destination: opts.projectPublicKey,
-        asset: copAsset(),
-        amount: String(opts.amount),
-      }),
-    )
-    .addMemo(Memo.text(opts.memo))
-    .setTimeout(TIMEOUT_SECONDS)
-    .build();
-  tx.sign(payer);
-  return submit(tx);
+  return buildAndSubmit(
+    Keypair.fromSecret(opts.payerSecret),
+    (builder) =>
+      builder
+        .addOperation(
+          Operation.payment({
+            destination: opts.projectPublicKey,
+            asset: Asset.native(),
+            amount: stroopsToXlm(opts.amountStroops),
+          }),
+        )
+        .addMemo(Memo.text(opts.memo)),
+    opts.onSigned,
+  );
+}
+
+/** true si la cuenta existe; null si Horizon no respondió. */
+export async function accountExists(publicKey: string): Promise<boolean | null> {
+  try {
+    await loadAccount(publicKey);
+    return true;
+  } catch (err) {
+    return err instanceof NotFoundError ? false : null;
+  }
+}
+
+function toMemo(memo: AnchorMemo): Memo {
+  switch (memo.type) {
+    case "id":
+      return Memo.id(memo.value);
+    case "hash":
+      return Memo.hash(Buffer.from(memo.value, "base64").toString("hex"));
+    default:
+      return Memo.text(memo.value);
+  }
+}
+
+/**
+ * Retiro: XLM de la cuenta de una persona a otra cuenta. Si la cuenta de destino no existe se
+ * crea con createAccount (el monto debe cubrir su reserva; lo valida quien llama).
+ */
+export async function sendNative(opts: {
+  sourceSecret: string;
+  destination: string;
+  amountStroops: bigint;
+  createAccount: boolean;
+  memo: AnchorMemo | null;
+  onSigned: (tx: SignedTx) => Promise<void>;
+}): Promise<string> {
+  const amount = stroopsToXlm(opts.amountStroops);
+  return buildAndSubmit(
+    Keypair.fromSecret(opts.sourceSecret),
+    (builder) => {
+      builder.addOperation(
+        opts.createAccount
+          ? Operation.createAccount({ destination: opts.destination, startingBalance: amount })
+          : Operation.payment({ destination: opts.destination, asset: Asset.native(), amount }),
+      );
+      return opts.memo ? builder.addMemo(toMemo(opts.memo)) : builder;
+    },
+    opts.onSigned,
+  );
 }
 
 /**
@@ -112,68 +371,25 @@ export async function payToProject(opts: {
  */
 export async function distribute(opts: {
   projectSecret: string;
-  splits: { publicKey: string; amount: number }[];
+  splits: { publicKey: string; amountStroops: bigint }[];
   memo: string;
+  onSigned: (tx: SignedTx) => Promise<void>;
 }): Promise<string> {
-  const project = Keypair.fromSecret(opts.projectSecret);
-  const asset = copAsset();
-  const builder = new TransactionBuilder(await horizon().loadAccount(project.publicKey()), {
-    fee: FEE,
-    networkPassphrase: Networks.TESTNET,
-  });
-  for (const s of opts.splits) {
-    if (s.amount <= 0) continue; // Stellar no acepta pagos de 0
-    builder.addOperation(
-      Operation.payment({ destination: s.publicKey, asset, amount: String(s.amount) }),
-    );
-  }
-  const tx = builder.addMemo(Memo.text(opts.memo)).setTimeout(TIMEOUT_SECONDS).build();
-  tx.sign(project);
-  return submit(tx);
-}
-
-/**
- * Saldo de COP de una cuenta (entero, en pesos). 0 si la cuenta no existe;
- * null si Horizon no respondió (la UI muestra "no disponible", nunca un 0 falso).
- */
-export async function getCopBalance(publicKey: string): Promise<number | null> {
-  const asset = copAsset();
-  try {
-    const account = await horizon().loadAccount(publicKey);
-    const line = account.balances.find(
-      (b) =>
-        (b.asset_type === "credit_alphanum4" || b.asset_type === "credit_alphanum12") &&
-        b.asset_code === asset.getCode() &&
-        b.asset_issuer === asset.getIssuer(),
-    );
-    return line ? Math.floor(Number(line.balance)) : 0;
-  } catch (err) {
-    if (err instanceof NotFoundError) return 0;
-    console.error(`No se pudo leer el saldo de ${publicKey}:`, err);
-    return null;
-  }
-}
-
-export function organizerPublicKey(): string {
-  return Keypair.fromSecret(env("ORGANIZER_DEMO_SECRET")).publicKey();
-}
-
-/** Emite COP de prueba al organizador demo (solo testnet). */
-export async function fundDemoOrganizer(amount: number): Promise<string> {
-  const issuer = Keypair.fromSecret(env("COP_ISSUER_SECRET"));
-  const tx = new TransactionBuilder(await horizon().loadAccount(issuer.publicKey()), {
-    fee: FEE,
-    networkPassphrase: Networks.TESTNET,
-  })
-    .addOperation(
-      Operation.payment({
-        destination: organizerPublicKey(),
-        asset: copAsset(),
-        amount: String(amount),
-      }),
-    )
-    .setTimeout(TIMEOUT_SECONDS)
-    .build();
-  tx.sign(issuer);
-  return submit(tx);
+  return buildAndSubmit(
+    Keypair.fromSecret(opts.projectSecret),
+    (builder) => {
+      for (const s of opts.splits) {
+        if (s.amountStroops <= 0n) continue; // Stellar no acepta pagos de 0
+        builder.addOperation(
+          Operation.payment({
+            destination: s.publicKey,
+            asset: Asset.native(),
+            amount: stroopsToXlm(s.amountStroops),
+          }),
+        );
+      }
+      return builder.addMemo(Memo.text(opts.memo));
+    },
+    opts.onSigned,
+  );
 }
