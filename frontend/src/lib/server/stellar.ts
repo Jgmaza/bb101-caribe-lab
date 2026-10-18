@@ -18,6 +18,7 @@ import { env } from "./env";
 export const COP_CODE = "COP";
 const FEE = "1000"; // stroops por operación; holgado para testnet
 const STARTING_XLM = "3"; // reservas: cuenta + trustline + comisiones
+const USER_STARTING_XLM = "1.5"; // reserva de la cuenta (1 XLM) + comisiones
 const TIMEOUT_SECONDS = 60;
 
 let server: Horizon.Server | undefined;
@@ -78,6 +79,27 @@ export async function createCustodialAccounts(count: number): Promise<Keypair[]>
   tx.sign(funder, ...accounts);
   await submit(tx);
   return accounts;
+}
+
+/**
+ * Wallet de una persona (una por usuario, sin trustlines). El funder la crea con lo justo
+ * para la reserva mínima (1 XLM) y algunas comisiones.
+ */
+export async function createUserAccount(): Promise<Keypair> {
+  const funder = Keypair.fromSecret(env("FUNDER_SECRET"));
+  const account = Keypair.random();
+  const tx = new TransactionBuilder(await horizon().loadAccount(funder.publicKey()), {
+    fee: FEE,
+    networkPassphrase: Networks.TESTNET,
+  })
+    .addOperation(
+      Operation.createAccount({ destination: account.publicKey(), startingBalance: USER_STARTING_XLM }),
+    )
+    .setTimeout(TIMEOUT_SECONDS)
+    .build();
+  tx.sign(funder);
+  await submit(tx);
+  return account;
 }
 
 /** Pago del organizador a la cuenta del proyecto. */

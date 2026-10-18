@@ -24,6 +24,30 @@ $$;
 -- Tablas
 -- ---------------------------------------------------------------------------
 
+-- Personas con cuenta en Orilla. Cada una tiene UNA wallet custodial (creada al registrarse),
+-- aunque esté en varios proyectos. Para cambiar una contraseña a mano, ver frontend/README.md.
+create table if not exists public.users (
+  id uuid primary key default gen_random_uuid(),
+  username text not null unique check (username ~ '^[a-z0-9_]{3,20}$'),
+  display_name text not null check (char_length(display_name) between 2 and 60),
+  -- bcrypt ($2a$/$2b$, costo 12). Lo genera bcryptjs o crypt(..., gen_salt('bf', 12)).
+  password_hash text not null check (password_hash ~ '^\$2[aby]\$\d{2}\$.{53}$'),
+  stellar_public_key text not null unique check (stellar_public_key ~ '^G[A-Z2-7]{55}$'),
+  stellar_secret_enc text not null,
+  created_at timestamptz not null default now()
+);
+
+-- Sesiones de login. La cookie lleva un token aleatorio; aquí solo su sha256 (hex).
+create table if not exists public.sessions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.users (id) on delete cascade,
+  token_hash text not null unique check (token_hash ~ '^[0-9a-f]{64}$'),
+  expires_at timestamptz not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists sessions_user_id_idx on public.sessions (user_id);
+
 -- Un proyecto es el grupo (banda, staff) que cobra en conjunto.
 -- Tiene su propia cuenta Stellar custodial: ahí paga el organizador.
 create table if not exists public.projects (
@@ -286,11 +310,14 @@ $$;
 -- Seguridad: solo el servidor (service_role) accede. Sin policies públicas.
 -- ---------------------------------------------------------------------------
 
+alter table public.users enable row level security;
+alter table public.sessions enable row level security;
 alter table public.projects enable row level security;
 alter table public.members enable row level security;
 alter table public.payments enable row level security;
 alter table public.distributions enable row level security;
 
+revoke all on public.users, public.sessions from anon, authenticated;
 revoke all on public.projects, public.members, public.payments, public.distributions from anon, authenticated;
 
 revoke execute on function public.create_project(text, text, public.project_kind, text, text, text, jsonb) from public, anon, authenticated;
@@ -298,6 +325,7 @@ revoke execute on function public.update_members(uuid, jsonb) from public, anon,
 revoke execute on function public.record_distribution(uuid, text, jsonb) from public, anon, authenticated;
 
 grant usage on schema public to service_role;
+grant all on public.users, public.sessions to service_role;
 grant all on public.projects, public.members, public.payments, public.distributions to service_role;
 grant execute on function public.create_project(text, text, public.project_kind, text, text, text, jsonb) to service_role;
 grant execute on function public.update_members(uuid, jsonb) to service_role;

@@ -10,10 +10,12 @@ type PreviewMember = { id: string; name: string; role: string; shareBps: number 
 
 export function PayForm({
   slug,
+  payerName,
   members,
   organizerBalance,
 }: {
   slug: string;
+  payerName: string;
   members: PreviewMember[];
   organizerBalance: number | null;
 }) {
@@ -30,7 +32,7 @@ export function PayForm({
   return (
     <form action={action} className="flex flex-col gap-5">
       <Field label="Quién paga">
-        <Input name="payer_name" placeholder="Bar La Troja" required minLength={2} maxLength={120} />
+        <Input name="payer_name" defaultValue={payerName} placeholder="Bar La Troja" required minLength={2} maxLength={120} />
       </Field>
       <Field label="Monto total (COP)">
         <Input

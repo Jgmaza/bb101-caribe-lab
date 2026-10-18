@@ -1,8 +1,11 @@
 import { DesktopShell } from "@/components/DesktopShell";
 import { Card } from "@/components/ui";
+import { requireUser } from "@/lib/server/session";
 import { ProjectForm } from "./ProjectForm";
 
-export default function NuevoProyectoPage() {
+export default async function NuevoProyectoPage() {
+  await requireUser("/proyectos/nuevo");
+
   return (
     <DesktopShell breadcrumb="Proyectos / Nuevo">
       <h1 className="font-display text-[32px] font-bold text-ink">

@@ -15,6 +15,16 @@ export function db(): SupabaseClient {
 export type ProjectKind = "banda" | "staff" | "otro";
 export type PaymentStatus = "pending" | "received" | "distributed" | "failed";
 
+export type UserRow = {
+  id: string;
+  username: string;
+  display_name: string;
+  password_hash: string;
+  stellar_public_key: string;
+  stellar_secret_enc: string;
+  created_at: string;
+};
+
 export type ProjectRow = {
   id: string;
   slug: string;

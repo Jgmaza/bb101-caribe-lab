@@ -4,11 +4,13 @@ import { Button, Card } from "@/components/ui";
 import { formatBalance, formatCop, shortKey } from "@/lib/format";
 import { fundOrganizer } from "@/lib/server/actions";
 import { getProjectBySlug, getProjectMembers } from "@/lib/server/queries";
+import { requireUser } from "@/lib/server/session";
 import { explorerAccountUrl, getCopBalance, organizerPublicKey } from "@/lib/server/stellar";
 import { PayForm } from "./PayForm";
 
 export default async function PagarPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  const user = await requireUser(`/pagar/${encodeURIComponent(slug)}`);
   const project = await getProjectBySlug(slug);
   if (!project) notFound();
 
@@ -30,6 +32,7 @@ export default async function PagarPage({ params }: { params: Promise<{ slug: st
           </p>
           <PayForm
             slug={slug}
+            payerName={user.display_name}
             organizerBalance={organizerBalance}
             members={members.map((m) => ({
               id: m.id,

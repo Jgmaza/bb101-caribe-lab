@@ -8,6 +8,7 @@ import { MAX_AMOUNT, TOTAL_BPS, percentToBps, splitAmount } from "@/lib/split";
 import { decryptSecret, encryptSecret, hashAdminToken, newAdminToken } from "./crypto";
 import { db, type MemberRow, type PaymentRow, type ProjectKind, type ProjectRow } from "./db";
 import { getProjectByAdminToken, isUuid } from "./queries";
+import { requireUser } from "./session";
 import {
   createCustodialAccounts,
   distribute,
@@ -16,10 +17,8 @@ import {
 } from "./stellar";
 import { env } from "./env";
 
-// Sin login en el MVP: el acceso es por links.
-// - /panel/<token>: administra el proyecto (token secreto, solo se guarda su hash)
-// - /pagar/<slug>: público, solo permite pagar
-// - /cobrar/<uuid del integrante>: ver lo que cobró
+// Crear proyecto y pagar exigen sesión (requireUser). Mientras se migra a proyectos con
+// admins, la administración sigue por link (/panel/<token>) y el cobro por /cobrar/<uuid>.
 // Validamos todo lo que llega.
 
 export type FormState = { error: string | null };
@@ -66,6 +65,7 @@ function sharesError(bps: (number | null)[]): string | null {
 }
 
 export async function createProject(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireUser("/proyectos/nuevo");
   const name = text(formData.get("name"));
   const kind = text(formData.get("kind")) as ProjectKind;
   const raw = parseJsonArray(formData.get("members"));
@@ -157,6 +157,7 @@ export async function payProject(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  await requireUser(`/pagar/${encodeURIComponent(slug)}`);
   const payerName = text(formData.get("payer_name"));
   const amount = Number(text(formData.get("amount"), 20).replace(/[.\s$]/g, ""));
 
@@ -272,6 +273,7 @@ async function runDistribution(paymentId: string) {
 }
 
 export async function fundOrganizer(): Promise<void> {
+  await requireUser("/inicio");
   await fundDemoOrganizer(5_000_000);
   refresh();
 }
