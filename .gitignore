@@ -13,3 +13,6 @@ frontend/.env*.local
 
 # SDP clone (pesado; clonar con docs/semana4/SDP-setup.md)
 infra/stellar-disbursement-platform-backend/
+
+# capturas de pruebas con Playwright MCP
+.playwright-mcp/

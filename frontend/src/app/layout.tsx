@@ -15,7 +15,7 @@ const fraunces = Fraunces({
 export const metadata: Metadata = {
   title: "Orilla — Que quien trabaja hoy, cobre hoy",
   description:
-    "Pago masivo a staff y músicos con cash-out a Bancolombia. Demo MVP mock.",
+    "Un solo pago al grupo, repartido al instante según los porcentajes que acordaron. Sobre Stellar.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
