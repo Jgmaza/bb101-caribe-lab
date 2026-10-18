@@ -1,17 +1,4573 @@
 {
-  "version": "2.6",
+  "version": "2.20",
   "children": [
     {
       "type": "frame",
-      "id": "bi8Au",
+      "id": "KCQFM",
       "x": 0,
       "y": 0,
-      "name": "Orilla — canvas",
+      "name": "Components",
+      "width": 1200,
+      "height": 220,
+      "fill": "$bgSoft",
+      "cornerRadius": 16,
+      "gap": 24,
+      "padding": 24,
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "frame",
+          "id": "RMj82",
+          "name": "Btn Primary",
+          "reusable": true,
+          "fill": "$blue",
+          "cornerRadius": 10,
+          "gap": 8,
+          "padding": [
+            14,
+            22
+          ],
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "FHRMX",
+              "name": "Btn Primary Label",
+              "fill": "$white",
+              "content": "Acción principal",
+              "fontFamily": "DM Sans",
+              "fontSize": 15,
+              "fontWeight": "600"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "o9NVJ",
+          "name": "Btn Ghost",
+          "reusable": true,
+          "fill": "$white",
+          "cornerRadius": 10,
+          "stroke": "$line",
+          "strokeWidth": 1,
+          "gap": 8,
+          "padding": [
+            13,
+            22
+          ],
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "e4kRXA",
+              "name": "Btn Ghost Label",
+              "fill": "$ink",
+              "content": "Secundario",
+              "fontFamily": "DM Sans",
+              "fontSize": 15,
+              "fontWeight": "600"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "xLxxY",
+          "name": "Btn CTA Night",
+          "reusable": true,
+          "fill": {
+            "type": "gradient",
+            "gradientType": "linear",
+            "enabled": true,
+            "rotation": 270,
+            "size": {
+              "height": 1
+            },
+            "colors": [
+              {
+                "color": "#0B7BA8",
+                "position": 0
+              },
+              {
+                "color": "#1FA87A",
+                "position": 0.5
+              },
+              {
+                "color": "#E6C34A",
+                "position": 1
+              }
+            ]
+          },
+          "cornerRadius": 12,
+          "gap": 10,
+          "padding": [
+            16,
+            28
+          ],
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "kUdhU",
+              "name": "Btn CTA Label",
+              "fill": "$white",
+              "content": "Cerrar la noche",
+              "fontFamily": "DM Sans",
+              "fontSize": 16,
+              "fontWeight": "700"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "ZlJNN",
+          "name": "Logo Orilla",
+          "reusable": true,
+          "gap": 10,
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "cmK8P",
+              "name": "Logo Mark",
+              "width": 28,
+              "height": 28,
+              "fill": {
+                "type": "gradient",
+                "gradientType": "linear",
+                "enabled": true,
+                "rotation": 270,
+                "size": {
+                  "height": 1
+                },
+                "colors": [
+                  {
+                    "color": "#0B7BA8",
+                    "position": 0
+                  },
+                  {
+                    "color": "#1FA87A",
+                    "position": 0.5
+                  },
+                  {
+                    "color": "#E6C34A",
+                    "position": 1
+                  }
+                ]
+              },
+              "cornerRadius": 8
+            },
+            {
+              "type": "text",
+              "id": "aIwVG",
+              "name": "Logo Word",
+              "fill": {
+                "type": "gradient",
+                "gradientType": "linear",
+                "enabled": true,
+                "rotation": 270,
+                "size": {
+                  "height": 1
+                },
+                "colors": [
+                  {
+                    "color": "#0B7BA8",
+                    "position": 0
+                  },
+                  {
+                    "color": "#1FA87A",
+                    "position": 0.5
+                  },
+                  {
+                    "color": "#E6C34A",
+                    "position": 1
+                  }
+                ]
+              },
+              "content": "Orilla",
+              "fontFamily": "Fraunces",
+              "fontSize": 26,
+              "fontWeight": "700"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "VoFKX",
+          "name": "Status Chip Ok",
+          "reusable": true,
+          "fill": "#E6F6EF",
+          "cornerRadius": 999,
+          "padding": [
+            6,
+            12
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "pI2Sh",
+              "name": "Status Ok Text",
+              "fill": "$success",
+              "content": "Ok",
+              "fontFamily": "DM Sans",
+              "fontSize": 12,
+              "fontWeight": "600"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "VxKUH",
+      "x": 0,
+      "y": 280,
+      "name": "A1 Login Pagador",
       "clip": true,
-      "width": 800,
-      "height": 600,
-      "fill": "#FFFFFF",
-      "layout": "none"
+      "width": 1280,
+      "height": 800,
+      "fill": "$bgSoft",
+      "justifyContent": "center",
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "frame",
+          "id": "iL6kt",
+          "name": "Login Panel",
+          "width": 440,
+          "fill": "$white",
+          "cornerRadius": 18,
+          "stroke": "$line",
+          "strokeWidth": 1,
+          "layout": "vertical",
+          "gap": 22,
+          "padding": 40,
+          "children": [
+            {
+              "id": "lwOV5",
+              "type": "ref",
+              "ref": "ZlJNN",
+              "name": "Login Logo"
+            },
+            {
+              "type": "text",
+              "id": "zsPTH",
+              "name": "Login Title",
+              "fill": "$ink",
+              "content": "Entrar como pagador",
+              "fontFamily": "Fraunces",
+              "fontSize": 28,
+              "fontWeight": "700"
+            },
+            {
+              "type": "text",
+              "id": "erJi8",
+              "name": "Login Sub",
+              "fill": "$inkMuted",
+              "textGrowth": "fixed-width",
+              "width": 360,
+              "content": "Hotel · productora · Carnaval SA. Demo mock — sin contraseña real.",
+              "fontFamily": "DM Sans",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "b40v8H",
+              "name": "Field Org",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "aWJv6",
+                  "name": "Org Label",
+                  "fill": "$inkMuted",
+                  "content": "Organización",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 12,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "frame",
+                  "id": "s6CqXO",
+                  "name": "Org Input",
+                  "width": "fill_container",
+                  "fill": "$bgSoft",
+                  "cornerRadius": 10,
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "padding": [
+                    12,
+                    14
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "FUMX6",
+                      "name": "Org Value",
+                      "fill": "$ink",
+                      "content": "Hotel Dann Carlton Barranquilla",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "uys1k",
+              "name": "Field User",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "PlYIt",
+                  "name": "User Label",
+                  "fill": "$inkMuted",
+                  "content": "Correo",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 12,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "frame",
+                  "id": "gn46I",
+                  "name": "User Input",
+                  "width": "fill_container",
+                  "fill": "$bgSoft",
+                  "cornerRadius": 10,
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "padding": [
+                    12,
+                    14
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Dv52e",
+                      "name": "User Value",
+                      "fill": "$ink",
+                      "content": "tesoreria@danncarltonbq.com",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "hYYrY",
+              "type": "ref",
+              "ref": "RMj82",
+              "name": "Login CTA",
+              "descendants": {
+                "FHRMX": {
+                  "content": "Entrar al panel"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "dwQ7P",
+          "name": "Login Context",
+          "width": 420,
+          "layout": "vertical",
+          "gap": 16,
+          "padding": 32,
+          "children": [
+            {
+              "type": "text",
+              "id": "z7MUUg",
+              "name": "Tagline",
+              "fill": "$ink",
+              "textGrowth": "fixed-width",
+              "width": 380,
+              "content": "Que quien trabaja hoy, cobre hoy.",
+              "fontFamily": "Fraunces",
+              "fontSize": 36,
+              "fontWeight": "700"
+            },
+            {
+              "type": "text",
+              "id": "e86KL",
+              "name": "Side copy",
+              "fill": "$inkMuted",
+              "textGrowth": "fixed-width",
+              "width": 380,
+              "content": "Dispersa el lote del show, cierra la noche y deja que el staff cobre en Bancolombia sin jerga crypto.",
+              "lineHeight": 1.45,
+              "fontFamily": "DM Sans",
+              "fontSize": 16,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "N6eomV",
+              "name": "Accent Bar",
+              "width": 120,
+              "height": 6,
+              "fill": {
+                "type": "gradient",
+                "gradientType": "linear",
+                "enabled": true,
+                "rotation": 270,
+                "size": {
+                  "height": 1
+                },
+                "colors": [
+                  {
+                    "color": "#0B7BA8",
+                    "position": 0
+                  },
+                  {
+                    "color": "#1FA87A",
+                    "position": 0.5
+                  },
+                  {
+                    "color": "#E6C34A",
+                    "position": 1
+                  }
+                ]
+              },
+              "cornerRadius": 99
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "i5VIDI",
+      "x": 1360,
+      "y": 280,
+      "name": "A2 Lotes",
+      "clip": true,
+      "width": 1280,
+      "height": 860,
+      "fill": "$bgSoft",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "DHpOC",
+          "name": "Lotes Topbar",
+          "width": "fill_container",
+          "height": 72,
+          "fill": "$white",
+          "stroke": "$line",
+          "strokeWidth": {
+            "bottom": 1
+          },
+          "padding": [
+            0,
+            32
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "qvbpr",
+              "name": "Top Left",
+              "gap": 16,
+              "alignItems": "center",
+              "children": [
+                {
+                  "id": "X275b",
+                  "type": "ref",
+                  "ref": "ZlJNN",
+                  "name": "Lotes Logo"
+                },
+                {
+                  "type": "text",
+                  "id": "MIIUD",
+                  "name": "Org Chip",
+                  "fill": "$inkMuted",
+                  "content": "Hotel Dann Carlton · Barranquilla",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "id": "Djdsi",
+              "type": "ref",
+              "ref": "RMj82",
+              "name": "Nuevo Lote Btn",
+              "descendants": {
+                "FHRMX": {
+                  "content": "Nuevo lote"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "tvm7Z",
+          "name": "Lotes Body",
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "gap": 20,
+          "padding": 32,
+          "children": [
+            {
+              "type": "text",
+              "id": "J2kVnW",
+              "name": "Lotes H1",
+              "fill": "$ink",
+              "content": "Lotes de pago",
+              "fontFamily": "Fraunces",
+              "fontSize": 32,
+              "fontWeight": "700"
+            },
+            {
+              "type": "text",
+              "id": "waCgJ",
+              "name": "Lotes Sub",
+              "fill": "$inkMuted",
+              "content": "Cierra la noche del show o programa la dispersión de donaciones Carnaval SA.",
+              "fontFamily": "DM Sans",
+              "fontSize": 15,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "cKdYz",
+              "name": "Lotes Table",
+              "clip": true,
+              "width": "fill_container",
+              "fill": "$white",
+              "cornerRadius": 14,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "DMQdY",
+                  "name": "Table Head",
+                  "width": "fill_container",
+                  "fill": "$bgSoft",
+                  "gap": 12,
+                  "padding": [
+                    14,
+                    20
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "C79MbM",
+                      "name": "H Evento",
+                      "fill": "$inkMuted",
+                      "content": "Evento",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "g3Q7wP",
+                      "name": "H Tipo",
+                      "fill": "$inkMuted",
+                      "content": "Tipo",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "WATlW",
+                      "name": "H Personas",
+                      "fill": "$inkMuted",
+                      "content": "Personas",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "kf2LL",
+                      "name": "H Total COP",
+                      "fill": "$inkMuted",
+                      "content": "Total COP",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "DP4X5",
+                      "name": "H Estado",
+                      "fill": "$inkMuted",
+                      "content": "Estado",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "lsWYW",
+                      "name": "H acción",
+                      "fill": "$inkMuted",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "a9aO5f",
+                  "name": "Row Show lobby — Dann Carlton",
+                  "width": "fill_container",
+                  "stroke": "$line",
+                  "strokeWidth": {
+                    "top": 1
+                  },
+                  "gap": 12,
+                  "padding": [
+                    16,
+                    20
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "q2HYPL",
+                      "name": "Ev Show lobby — Dann Carlton",
+                      "fill": "$ink",
+                      "content": "Show lobby — Dann Carlton",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 14,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "p7YvL",
+                      "name": "Tipo Show lobby — Dann Carlton",
+                      "fill": "$inkMuted",
+                      "content": "Staff / músicos",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "D2kp5P",
+                      "name": "N Show lobby — Dann Carlton",
+                      "fill": "$ink",
+                      "content": "12",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "E0Fl3R",
+                      "name": "Tot Show lobby — Dann Carlton",
+                      "fill": "$ink",
+                      "content": "$4.850.000",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 14,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "t6ZiMM",
+                      "name": "Chip Show lobby — Dann Carlton",
+                      "width": 120,
+                      "fill": "#E6F6EF",
+                      "cornerRadius": 999,
+                      "padding": [
+                        6,
+                        12
+                      ],
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "ul1Dj",
+                          "name": "ChipT Show lobby — Dann Carlton",
+                          "fill": "$success",
+                          "content": "Listo",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "B8WUz",
+                      "name": "Act Show lobby — Dann Carlton",
+                      "fill": "$blue",
+                      "content": "Ver",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "d4nTQ",
+                  "name": "Row Carnaval SA — donaciones pre-días",
+                  "width": "fill_container",
+                  "stroke": "$line",
+                  "strokeWidth": {
+                    "top": 1
+                  },
+                  "gap": 12,
+                  "padding": [
+                    16,
+                    20
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "iSpGS",
+                      "name": "Ev Carnaval SA — donaciones pre-días",
+                      "fill": "$ink",
+                      "content": "Carnaval SA — donaciones pre-días",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 14,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Uurkx",
+                      "name": "Tipo Carnaval SA — donaciones pre-días",
+                      "fill": "$inkMuted",
+                      "content": "Donaciones %",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "kGIMb",
+                      "name": "N Carnaval SA — donaciones pre-días",
+                      "fill": "$ink",
+                      "content": "8",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "u33RB",
+                      "name": "Tot Carnaval SA — donaciones pre-días",
+                      "fill": "$ink",
+                      "content": "$28.400.000",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 14,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "dzg4e",
+                      "name": "Chip Carnaval SA — donaciones pre-días",
+                      "width": 120,
+                      "fill": "#E8F4FA",
+                      "cornerRadius": 999,
+                      "padding": [
+                        6,
+                        12
+                      ],
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "AC4WZ",
+                          "name": "ChipT Carnaval SA — donaciones pre-días",
+                          "fill": "$blue",
+                          "content": "Programado",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "k9JPxr",
+                      "name": "Act Carnaval SA — donaciones pre-días",
+                      "fill": "$blue",
+                      "content": "Ver",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "AzDlu",
+                  "name": "Row Feria Expo — staff noche 2",
+                  "width": "fill_container",
+                  "stroke": "$line",
+                  "strokeWidth": {
+                    "top": 1
+                  },
+                  "gap": 12,
+                  "padding": [
+                    16,
+                    20
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "DAMRo",
+                      "name": "Ev Feria Expo — staff noche 2",
+                      "fill": "$ink",
+                      "content": "Feria Expo — staff noche 2",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 14,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "pM4dT",
+                      "name": "Tipo Feria Expo — staff noche 2",
+                      "fill": "$inkMuted",
+                      "content": "Staff",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "nx38U",
+                      "name": "N Feria Expo — staff noche 2",
+                      "fill": "$ink",
+                      "content": "18",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 14,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "NxYZX",
+                      "name": "Tot Feria Expo — staff noche 2",
+                      "fill": "$ink",
+                      "content": "$6.120.000",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 14,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "OG1vL",
+                      "name": "Chip Feria Expo — staff noche 2",
+                      "width": 120,
+                      "fill": "#F4F1E6",
+                      "cornerRadius": 999,
+                      "padding": [
+                        6,
+                        12
+                      ],
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "J1UPa",
+                          "name": "ChipT Feria Expo — staff noche 2",
+                          "fill": "$warn",
+                          "content": "Borrador",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "dBNP8",
+                      "name": "Act Feria Expo — staff noche 2",
+                      "fill": "$blue",
+                      "content": "Editar",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "QIoSA",
+      "x": 0,
+      "y": 1220,
+      "name": "A3 Nuevo Lote",
+      "clip": true,
+      "width": 1280,
+      "height": 900,
+      "fill": "$bgSoft",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "fbY8i",
+          "name": "Nuevo Top",
+          "width": "fill_container",
+          "height": 72,
+          "fill": "$white",
+          "stroke": "$line",
+          "strokeWidth": {
+            "bottom": 1
+          },
+          "padding": [
+            0,
+            32
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "id": "aqljW",
+              "type": "ref",
+              "ref": "ZlJNN",
+              "name": "Nuevo Logo"
+            },
+            {
+              "type": "text",
+              "id": "L2z5TD",
+              "name": "Nuevo Bread",
+              "fill": "$inkMuted",
+              "content": "Lotes / Nuevo lote",
+              "fontFamily": "DM Sans",
+              "fontSize": 13,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "LH5r5",
+          "name": "Nuevo Body",
+          "width": "fill_container",
+          "height": "fill_container",
+          "gap": 24,
+          "padding": 32,
+          "children": [
+            {
+              "type": "frame",
+              "id": "oE2pX",
+              "name": "Nuevo Form",
+              "width": 720,
+              "fill": "$white",
+              "cornerRadius": 14,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 18,
+              "padding": 28,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "j4TUsR",
+                  "name": "Nuevo H1",
+                  "fill": "$ink",
+                  "content": "Nuevo lote",
+                  "fontFamily": "Fraunces",
+                  "fontSize": 28,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "z8u5h",
+                  "name": "Nuevo Sub",
+                  "fill": "$inkMuted",
+                  "content": "Carga el staff del show o un lote porcentual de donaciones.",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "h7LNiU",
+                  "name": "F Nombre del evento",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "B5J5U",
+                      "name": "L Nombre del evento",
+                      "fill": "$inkMuted",
+                      "content": "Nombre del evento",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "wXgps",
+                      "name": "B Nombre del evento",
+                      "width": "fill_container",
+                      "fill": "$bgSoft",
+                      "cornerRadius": 10,
+                      "stroke": "$line",
+                      "strokeWidth": 1,
+                      "padding": [
+                        12,
+                        14
+                      ],
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "LTQ9j",
+                          "name": "V Nombre del evento",
+                          "fill": "$ink",
+                          "content": "Show lobby — Hotel Dann Carlton",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "FC3YH",
+                  "name": "F Fecha / hora",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "t0SB9",
+                      "name": "L Fecha / hora",
+                      "fill": "$inkMuted",
+                      "content": "Fecha / hora",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "gy3fN",
+                      "name": "B Fecha / hora",
+                      "width": "fill_container",
+                      "fill": "$bgSoft",
+                      "cornerRadius": 10,
+                      "stroke": "$line",
+                      "strokeWidth": 1,
+                      "padding": [
+                        12,
+                        14
+                      ],
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "HpvdB",
+                          "name": "V Fecha / hora",
+                          "fill": "$ink",
+                          "content": "11 oct 2026 · 22:30",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "G8JAK",
+                  "name": "F Tipo de lote",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "irDtC",
+                      "name": "L Tipo de lote",
+                      "fill": "$inkMuted",
+                      "content": "Tipo de lote",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "X1PeA5",
+                      "name": "B Tipo de lote",
+                      "width": "fill_container",
+                      "fill": "$bgSoft",
+                      "cornerRadius": 10,
+                      "stroke": "$line",
+                      "strokeWidth": 1,
+                      "padding": [
+                        12,
+                        14
+                      ],
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "X5YEre",
+                          "name": "V Tipo de lote",
+                          "fill": "$ink",
+                          "content": "Staff / músicos",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 14,
+                          "fontWeight": "normal"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "SY5s9",
+                  "name": "CSV Label",
+                  "fill": "$inkMuted",
+                  "content": "Receptores (CSV / lista)",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 12,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "frame",
+                  "id": "DBY8j",
+                  "name": "CSV Drop",
+                  "width": "fill_container",
+                  "height": 120,
+                  "fill": "#F0F8F6",
+                  "cornerRadius": 12,
+                  "stroke": "$green",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "gap": 8,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "aUfVA",
+                      "name": "CSV Icon",
+                      "width": 22,
+                      "height": 22,
+                      "icon": "upload",
+                      "library": "lucide",
+                      "fill": "$green"
+                    },
+                    {
+                      "type": "text",
+                      "id": "u7DRxa",
+                      "name": "CSV Text",
+                      "fill": "$inkMuted",
+                      "content": "Arrastra CSV o pega filas: nombre, celular, monto, rol",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "RTokm",
+              "name": "Nuevo Side",
+              "width": 440,
+              "layout": "vertical",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "Aip2X",
+                  "name": "Preview Card",
+                  "width": "fill_container",
+                  "fill": "$white",
+                  "cornerRadius": 14,
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "gap": 12,
+                  "padding": 22,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "pBbr7",
+                      "name": "Prev Title",
+                      "fill": "$ink",
+                      "content": "Vista previa · 5 receptores",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 14,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Vh0bJ",
+                      "name": "P Laura Méndez",
+                      "width": "fill_container",
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "KdRco",
+                          "name": "PL Laura Méndez",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "CeoaZ",
+                              "name": "PN Laura Méndez",
+                              "fill": "$ink",
+                              "content": "Laura Méndez",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 13,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "qCnnA",
+                              "name": "PR Laura Méndez",
+                              "fill": "$inkMuted",
+                              "content": "Batería",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 12,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "DqHUq",
+                          "name": "PM Laura Méndez",
+                          "fill": "$ink",
+                          "content": "$450.000",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "edmmL",
+                      "name": "P Andrés Pérez",
+                      "width": "fill_container",
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "LnJLM",
+                          "name": "PL Andrés Pérez",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "aIQKO",
+                              "name": "PN Andrés Pérez",
+                              "fill": "$ink",
+                              "content": "Andrés Pérez",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 13,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "pAdiU",
+                              "name": "PR Andrés Pérez",
+                              "fill": "$inkMuted",
+                              "content": "Sonido",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 12,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "ICqXE",
+                          "name": "PM Andrés Pérez",
+                          "fill": "$ink",
+                          "content": "$380.000",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "l8F1x",
+                      "name": "P Camila Ríos",
+                      "width": "fill_container",
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "A7uIuS",
+                          "name": "PL Camila Ríos",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "VjXHt",
+                              "name": "PN Camila Ríos",
+                              "fill": "$ink",
+                              "content": "Camila Ríos",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 13,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "SQHTv",
+                              "name": "PR Camila Ríos",
+                              "fill": "$inkMuted",
+                              "content": "Voces",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 12,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "x4h3VR",
+                          "name": "PM Camila Ríos",
+                          "fill": "$ink",
+                          "content": "$520.000",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "pQc9G",
+                      "name": "P Julián Castro",
+                      "width": "fill_container",
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "BjfNP",
+                          "name": "PL Julián Castro",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "mGMUz",
+                              "name": "PN Julián Castro",
+                              "fill": "$ink",
+                              "content": "Julián Castro",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 13,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "l4wvh",
+                              "name": "PR Julián Castro",
+                              "fill": "$inkMuted",
+                              "content": "Seguridad",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 12,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "rKq8h",
+                          "name": "PM Julián Castro",
+                          "fill": "$ink",
+                          "content": "$280.000",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "fo3Yf",
+                      "name": "P Sofía Acosta",
+                      "width": "fill_container",
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "QrarQ",
+                          "name": "PL Sofía Acosta",
+                          "layout": "vertical",
+                          "gap": 2,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "R3IWGf",
+                              "name": "PN Sofía Acosta",
+                              "fill": "$ink",
+                              "content": "Sofía Acosta",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 13,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "text",
+                              "id": "kJrNL",
+                              "name": "PR Sofía Acosta",
+                              "fill": "$inkMuted",
+                              "content": "Producción",
+                              "fontFamily": "DM Sans",
+                              "fontSize": 12,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "v2a3Q",
+                          "name": "PM Sofía Acosta",
+                          "fill": "$ink",
+                          "content": "$410.000",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Lh7cB",
+                  "name": "Total Card",
+                  "width": "fill_container",
+                  "fill": "$ink",
+                  "cornerRadius": 14,
+                  "layout": "vertical",
+                  "gap": 10,
+                  "padding": 22,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Cvoef",
+                      "name": "Total Label",
+                      "fill": "#A8C0CC",
+                      "content": "Total a dispersar",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Tc7d4",
+                      "name": "Total Value",
+                      "fill": "$white",
+                      "content": "$2.040.000 COP",
+                      "fontFamily": "Fraunces",
+                      "fontSize": 30,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "id": "Nm0jC",
+                  "type": "ref",
+                  "ref": "xLxxY",
+                  "name": "Ir Cerrar",
+                  "descendants": {
+                    "kUdhU": {
+                      "content": "Continuar a cerrar noche"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "tpbAj",
+      "x": 1360,
+      "y": 1220,
+      "name": "A4 Cerrar la noche",
+      "clip": true,
+      "width": 1280,
+      "height": 820,
+      "fill": "$bgSoft",
+      "layout": "vertical",
+      "gap": 24,
+      "padding": 40,
+      "justifyContent": "center",
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "frame",
+          "id": "VywyA",
+          "name": "Cerrar Card",
+          "width": 560,
+          "fill": "$white",
+          "cornerRadius": 18,
+          "stroke": "$line",
+          "strokeWidth": 1,
+          "layout": "vertical",
+          "gap": 18,
+          "padding": 36,
+          "children": [
+            {
+              "id": "du7hG",
+              "type": "ref",
+              "ref": "ZlJNN",
+              "name": "Cerrar Logo"
+            },
+            {
+              "type": "text",
+              "id": "B2SBs",
+              "name": "Cerrar H1",
+              "fill": "$ink",
+              "content": "¿Cerrar la noche?",
+              "fontFamily": "Fraunces",
+              "fontSize": 32,
+              "fontWeight": "700"
+            },
+            {
+              "type": "text",
+              "id": "N23nqy",
+              "name": "Cerrar Copy",
+              "fill": "$inkMuted",
+              "textGrowth": "fixed-width",
+              "width": 480,
+              "content": "Vas a dispersar el lote del Show lobby — Hotel Dann Carlton a 5 personas. Cada receptor recibirá un SMS con link para cobrar.",
+              "lineHeight": 1.45,
+              "fontFamily": "DM Sans",
+              "fontSize": 15,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "OWwOR",
+              "name": "Cerrar Summary",
+              "width": "fill_container",
+              "fill": "$bgSoft",
+              "cornerRadius": 12,
+              "layout": "vertical",
+              "gap": 10,
+              "padding": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "ofLAF",
+                  "name": "CS Evento",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "u0v8Kt",
+                      "name": "CSK Evento",
+                      "fill": "$inkMuted",
+                      "content": "Evento",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "f11dl",
+                      "name": "CSV Evento",
+                      "fill": "$ink",
+                      "content": "Show lobby — Dann Carlton",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Z9ndC",
+                  "name": "CS Receptores",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "IXvO9",
+                      "name": "CSK Receptores",
+                      "fill": "$inkMuted",
+                      "content": "Receptores",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "aPSLw",
+                      "name": "CSV Receptores",
+                      "fill": "$ink",
+                      "content": "5",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "WVsTR",
+                  "name": "CS Total",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "zuYt9",
+                      "name": "CSK Total",
+                      "fill": "$inkMuted",
+                      "content": "Total",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Q4JWBI",
+                      "name": "CSV Total",
+                      "fill": "$ink",
+                      "content": "$2.040.000 COP",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "D5Q7K",
+                  "name": "CS Saldo mock",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "e58Yj",
+                      "name": "CSK Saldo mock",
+                      "fill": "$inkMuted",
+                      "content": "Saldo mock",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "ujRSL",
+                      "name": "CSV Saldo mock",
+                      "fill": "$ink",
+                      "content": "Suficiente (testnet)",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "V8ucg5",
+              "name": "Cerrar Actions",
+              "width": "fill_container",
+              "gap": 12,
+              "children": [
+                {
+                  "id": "qj3rd",
+                  "type": "ref",
+                  "ref": "o9NVJ",
+                  "name": "Cancelar",
+                  "descendants": {
+                    "e4kRXA": {
+                      "content": "Volver"
+                    }
+                  }
+                },
+                {
+                  "id": "ckRXt",
+                  "type": "ref",
+                  "ref": "xLxxY",
+                  "name": "Confirmar"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "z8nUFb",
+      "x": 2720,
+      "y": 280,
+      "name": "A5 Dashboard Lote",
+      "clip": true,
+      "width": 1280,
+      "height": 900,
+      "fill": "$bgSoft",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "a0Hfx",
+          "name": "Dash Top",
+          "width": "fill_container",
+          "height": 72,
+          "fill": "$white",
+          "stroke": "$line",
+          "strokeWidth": {
+            "bottom": 1
+          },
+          "padding": [
+            0,
+            32
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "id": "LeUOM",
+              "type": "ref",
+              "ref": "ZlJNN",
+              "name": "Dash Logo"
+            },
+            {
+              "type": "text",
+              "id": "M2sFD",
+              "name": "Dash Bread",
+              "fill": "$inkMuted",
+              "content": "Lotes / Show lobby — Dann Carlton",
+              "fontFamily": "DM Sans",
+              "fontSize": 13,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "enqOm",
+          "name": "Dash Body",
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "gap": 20,
+          "padding": 32,
+          "children": [
+            {
+              "type": "text",
+              "id": "p4xo6",
+              "name": "Dash H1",
+              "fill": "$ink",
+              "content": "Dashboard del lote",
+              "fontFamily": "Fraunces",
+              "fontSize": 30,
+              "fontWeight": "700"
+            },
+            {
+              "type": "text",
+              "id": "OOUw1",
+              "name": "Dash Sub",
+              "fill": "$inkMuted",
+              "content": "Show lobby — Hotel Dann Carlton · cerrado 22:41",
+              "fontFamily": "DM Sans",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "ZD5jC",
+              "name": "Metrics",
+              "width": "fill_container",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "cPoWG",
+                  "name": "M Ok",
+                  "width": 280,
+                  "fill": "$white",
+                  "cornerRadius": 14,
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "gap": 6,
+                  "padding": 20,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "ucpjm",
+                      "name": "ML Ok",
+                      "fill": "$inkMuted",
+                      "content": "Ok",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "s4koiq",
+                      "name": "MV Ok",
+                      "fill": "$success",
+                      "content": "4",
+                      "fontFamily": "Fraunces",
+                      "fontSize": 28,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "rPoum",
+                  "name": "M Pendiente",
+                  "width": 280,
+                  "fill": "$white",
+                  "cornerRadius": 14,
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "gap": 6,
+                  "padding": 20,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "J52aT",
+                      "name": "ML Pendiente",
+                      "fill": "$inkMuted",
+                      "content": "Pendiente",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "k8mrg",
+                      "name": "MV Pendiente",
+                      "fill": "$warn",
+                      "content": "1",
+                      "fontFamily": "Fraunces",
+                      "fontSize": 28,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "xLbte",
+                  "name": "M Fallido",
+                  "width": 280,
+                  "fill": "$white",
+                  "cornerRadius": 14,
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "gap": 6,
+                  "padding": 20,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "vp7o6",
+                      "name": "ML Fallido",
+                      "fill": "$inkMuted",
+                      "content": "Fallido",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "tPEer",
+                      "name": "MV Fallido",
+                      "fill": "$danger",
+                      "content": "0",
+                      "fontFamily": "Fraunces",
+                      "fontSize": 28,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "SZJUx",
+                  "name": "M Total",
+                  "width": 280,
+                  "fill": "$white",
+                  "cornerRadius": 14,
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "gap": 6,
+                  "padding": 20,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "noIwv",
+                      "name": "ML Total",
+                      "fill": "$inkMuted",
+                      "content": "Total",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "GBPuN",
+                      "name": "MV Total",
+                      "fill": "$blue",
+                      "content": "$2.040.000",
+                      "fontFamily": "Fraunces",
+                      "fontSize": 28,
+                      "fontWeight": "700"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "fPz2I",
+              "name": "Dash Table",
+              "clip": true,
+              "width": "fill_container",
+              "fill": "$white",
+              "cornerRadius": 14,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "KFz5D",
+                  "name": "Dash Head",
+                  "width": "fill_container",
+                  "fill": "$bgSoft",
+                  "gap": 12,
+                  "padding": [
+                    14,
+                    20
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "bvDWY",
+                      "name": "DH Persona",
+                      "fill": "$inkMuted",
+                      "content": "Persona",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "S9CdF",
+                      "name": "DH Rol",
+                      "fill": "$inkMuted",
+                      "content": "Rol",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "y0W0c",
+                      "name": "DH Celular",
+                      "fill": "$inkMuted",
+                      "content": "Celular",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Dt0y2",
+                      "name": "DH Monto",
+                      "fill": "$inkMuted",
+                      "content": "Monto",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "mEsMZ",
+                      "name": "DH Estado",
+                      "fill": "$inkMuted",
+                      "content": "Estado",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "c6scWE",
+                      "name": "DH Comprobante",
+                      "fill": "$inkMuted",
+                      "content": "Comprobante",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "EPIh4",
+                  "name": "DR Laura Méndez",
+                  "width": "fill_container",
+                  "stroke": "$line",
+                  "strokeWidth": {
+                    "top": 1
+                  },
+                  "gap": 12,
+                  "padding": [
+                    14,
+                    20
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "ooG9m",
+                      "name": "DRn Laura Méndez",
+                      "fill": "$ink",
+                      "content": "Laura Méndez",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 14,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "y6VXYm",
+                      "name": "DRr Laura Méndez",
+                      "fill": "$inkMuted",
+                      "content": "Batería",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "UHkrT",
+                      "name": "DRc Laura Méndez",
+                      "fill": "$ink",
+                      "content": "300 555 0142",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "C2XsPf",
+                      "name": "DRm Laura Méndez",
+                      "fill": "$ink",
+                      "content": "$450.000",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "V4kUG",
+                      "name": "DRch Laura Méndez",
+                      "width": 120,
+                      "fill": "#E6F6EF",
+                      "cornerRadius": 999,
+                      "padding": [
+                        6,
+                        12
+                      ],
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "k5dl2O",
+                          "name": "DRcht Laura Méndez",
+                          "fill": "$success",
+                          "content": "Ok",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "jx97x",
+                      "name": "DRco Laura Méndez",
+                      "fill": "$blue",
+                      "content": "Ver en explorador",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "OqQYK",
+                  "name": "DR Andrés Pérez",
+                  "width": "fill_container",
+                  "stroke": "$line",
+                  "strokeWidth": {
+                    "top": 1
+                  },
+                  "gap": 12,
+                  "padding": [
+                    14,
+                    20
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "t1r9k",
+                      "name": "DRn Andrés Pérez",
+                      "fill": "$ink",
+                      "content": "Andrés Pérez",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 14,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "YoUEN",
+                      "name": "DRr Andrés Pérez",
+                      "fill": "$inkMuted",
+                      "content": "Sonido",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "GhNy5",
+                      "name": "DRc Andrés Pérez",
+                      "fill": "$ink",
+                      "content": "300 555 0188",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "bhKBi",
+                      "name": "DRm Andrés Pérez",
+                      "fill": "$ink",
+                      "content": "$380.000",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "FCiFL",
+                      "name": "DRch Andrés Pérez",
+                      "width": 120,
+                      "fill": "#E6F6EF",
+                      "cornerRadius": 999,
+                      "padding": [
+                        6,
+                        12
+                      ],
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "V6NWJQ",
+                          "name": "DRcht Andrés Pérez",
+                          "fill": "$success",
+                          "content": "Ok",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "TMwrI",
+                      "name": "DRco Andrés Pérez",
+                      "fill": "$blue",
+                      "content": "Ver en explorador",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "m9FQ7",
+                  "name": "DR Camila Ríos",
+                  "width": "fill_container",
+                  "stroke": "$line",
+                  "strokeWidth": {
+                    "top": 1
+                  },
+                  "gap": 12,
+                  "padding": [
+                    14,
+                    20
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "RpJB8",
+                      "name": "DRn Camila Ríos",
+                      "fill": "$ink",
+                      "content": "Camila Ríos",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 14,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "ubJN7",
+                      "name": "DRr Camila Ríos",
+                      "fill": "$inkMuted",
+                      "content": "Voces",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Q0Fx8",
+                      "name": "DRc Camila Ríos",
+                      "fill": "$ink",
+                      "content": "301 555 0221",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "TmlHd",
+                      "name": "DRm Camila Ríos",
+                      "fill": "$ink",
+                      "content": "$520.000",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "I8FXsC",
+                      "name": "DRch Camila Ríos",
+                      "width": 120,
+                      "fill": "#E6F6EF",
+                      "cornerRadius": 999,
+                      "padding": [
+                        6,
+                        12
+                      ],
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "LjHwY",
+                          "name": "DRcht Camila Ríos",
+                          "fill": "$success",
+                          "content": "Ok",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "oYKTX",
+                      "name": "DRco Camila Ríos",
+                      "fill": "$blue",
+                      "content": "Ver en explorador",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Apbrx",
+                  "name": "DR Julián Castro",
+                  "width": "fill_container",
+                  "stroke": "$line",
+                  "strokeWidth": {
+                    "top": 1
+                  },
+                  "gap": 12,
+                  "padding": [
+                    14,
+                    20
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "YuEeD",
+                      "name": "DRn Julián Castro",
+                      "fill": "$ink",
+                      "content": "Julián Castro",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 14,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "KLi3D",
+                      "name": "DRr Julián Castro",
+                      "fill": "$inkMuted",
+                      "content": "Seguridad",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "XWstz",
+                      "name": "DRc Julián Castro",
+                      "fill": "$ink",
+                      "content": "302 555 0334",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Ivrri",
+                      "name": "DRm Julián Castro",
+                      "fill": "$ink",
+                      "content": "$280.000",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "tgFvi",
+                      "name": "DRch Julián Castro",
+                      "width": 120,
+                      "fill": "#F4F1E6",
+                      "cornerRadius": 999,
+                      "padding": [
+                        6,
+                        12
+                      ],
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "A7Bazl",
+                          "name": "DRcht Julián Castro",
+                          "fill": "$warn",
+                          "content": "Pendiente",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "RbywU",
+                      "name": "DRco Julián Castro",
+                      "fill": "$inkMuted",
+                      "content": "—",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "QRHzk",
+                  "name": "DR Sofía Acosta",
+                  "width": "fill_container",
+                  "stroke": "$line",
+                  "strokeWidth": {
+                    "top": 1
+                  },
+                  "gap": 12,
+                  "padding": [
+                    14,
+                    20
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "mTMeX",
+                      "name": "DRn Sofía Acosta",
+                      "fill": "$ink",
+                      "content": "Sofía Acosta",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 14,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "text",
+                      "id": "RXmRE",
+                      "name": "DRr Sofía Acosta",
+                      "fill": "$inkMuted",
+                      "content": "Producción",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "J9cfjJ",
+                      "name": "DRc Sofía Acosta",
+                      "fill": "$ink",
+                      "content": "300 555 0410",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "H85UUe",
+                      "name": "DRm Sofía Acosta",
+                      "fill": "$ink",
+                      "content": "$410.000",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    },
+                    {
+                      "type": "frame",
+                      "id": "cTxdA",
+                      "name": "DRch Sofía Acosta",
+                      "width": 120,
+                      "fill": "#E6F6EF",
+                      "cornerRadius": 999,
+                      "padding": [
+                        6,
+                        12
+                      ],
+                      "justifyContent": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "QupEL",
+                          "name": "DRcht Sofía Acosta",
+                          "fill": "$success",
+                          "content": "Ok",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "dVzOA",
+                      "name": "DRco Sofía Acosta",
+                      "fill": "$blue",
+                      "content": "Ver en explorador",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "KCZVI",
+      "x": 0,
+      "y": 2220,
+      "name": "M1 OTP Onboarding",
+      "clip": true,
+      "width": 390,
+      "height": 844,
+      "fill": "$white",
+      "cornerRadius": 28,
+      "stroke": "$line",
+      "strokeWidth": 1,
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "bINPM",
+          "name": "OTP Top",
+          "width": "fill_container",
+          "height": 54,
+          "padding": [
+            16,
+            20
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "v6RQk",
+              "name": "OTP Time",
+              "fill": "$ink",
+              "content": "9:41",
+              "fontFamily": "DM Sans",
+              "fontSize": 14,
+              "fontWeight": "600"
+            },
+            {
+              "type": "text",
+              "id": "AhxyG",
+              "name": "OTP Status",
+              "fill": "$inkMuted",
+              "content": "LTE",
+              "fontFamily": "DM Sans",
+              "fontSize": 12,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "Ec8Wb",
+          "name": "OTP Body",
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "gap": 18,
+          "padding": [
+            28,
+            24
+          ],
+          "children": [
+            {
+              "id": "YRYVb",
+              "type": "ref",
+              "ref": "ZlJNN",
+              "name": "OTP Logo"
+            },
+            {
+              "type": "text",
+              "id": "Gjdk3",
+              "name": "OTP H1",
+              "fill": "$ink",
+              "content": "Verifica tu celular",
+              "fontFamily": "Fraunces",
+              "fontSize": 30,
+              "fontWeight": "700"
+            },
+            {
+              "type": "text",
+              "id": "C8SoI1",
+              "name": "OTP Sub",
+              "fill": "$inkMuted",
+              "textGrowth": "fixed-width",
+              "width": 330,
+              "content": "Paso 1 de 3 · Te enviamos un código para cobrar el show del Dann Carlton.",
+              "lineHeight": 1.4,
+              "fontFamily": "DM Sans",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "O0dI8P",
+              "name": "Phone Field",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 8,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "Dp2WZ",
+                  "name": "Phone L",
+                  "fill": "$inkMuted",
+                  "content": "Celular",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 12,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "frame",
+                  "id": "NE9fH",
+                  "name": "Phone Box",
+                  "width": "fill_container",
+                  "fill": "$bgSoft",
+                  "cornerRadius": 12,
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "padding": 14,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "VFuNw",
+                      "name": "Phone V",
+                      "fill": "$ink",
+                      "content": "+57 300 555 0142",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 16,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "T3I1u",
+              "name": "OTP Digits",
+              "width": "fill_container",
+              "gap": 10,
+              "justifyContent": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "yPZTW",
+                  "name": "Digit 4",
+                  "width": 58,
+                  "height": 64,
+                  "fill": "$bgSoft",
+                  "cornerRadius": 12,
+                  "stroke": "$blue",
+                  "strokeWidth": 1.5,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "SqIgm",
+                      "name": "DigitT 4",
+                      "fill": "$ink",
+                      "content": "4",
+                      "fontFamily": "Fraunces",
+                      "fontSize": 28,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "q6vsu",
+                  "name": "Digit 8",
+                  "width": 58,
+                  "height": 64,
+                  "fill": "$bgSoft",
+                  "cornerRadius": 12,
+                  "stroke": "$blue",
+                  "strokeWidth": 1.5,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "qKO1o",
+                      "name": "DigitT 8",
+                      "fill": "$ink",
+                      "content": "8",
+                      "fontFamily": "Fraunces",
+                      "fontSize": 28,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "KRbtR",
+                  "name": "Digit 2",
+                  "width": 58,
+                  "height": 64,
+                  "fill": "$bgSoft",
+                  "cornerRadius": 12,
+                  "stroke": "$blue",
+                  "strokeWidth": 1.5,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "LyySC",
+                      "name": "DigitT 2",
+                      "fill": "$ink",
+                      "content": "2",
+                      "fontFamily": "Fraunces",
+                      "fontSize": 28,
+                      "fontWeight": "700"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "ecepl",
+                  "name": "Digit 1",
+                  "width": 58,
+                  "height": 64,
+                  "fill": "$bgSoft",
+                  "cornerRadius": 12,
+                  "stroke": "$blue",
+                  "strokeWidth": 1.5,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "QaPif",
+                      "name": "DigitT 1",
+                      "fill": "$ink",
+                      "content": "1",
+                      "fontFamily": "Fraunces",
+                      "fontSize": 28,
+                      "fontWeight": "700"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "ZQNb1",
+              "name": "OTP Hint",
+              "fill": "$inkMuted",
+              "content": "Código mock: 4821 · no es un SMS real",
+              "fontFamily": "DM Sans",
+              "fontSize": 12,
+              "fontWeight": "normal"
+            },
+            {
+              "id": "xRjrJ",
+              "type": "ref",
+              "ref": "RMj82",
+              "name": "OTP CTA",
+              "descendants": {
+                "FHRMX": {
+                  "content": "Continuar"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "spc2o",
+      "x": 430,
+      "y": 2220,
+      "name": "M2 Te pagaron",
+      "clip": true,
+      "width": 390,
+      "height": 844,
+      "fill": "$white",
+      "cornerRadius": 28,
+      "stroke": "$line",
+      "strokeWidth": 1,
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "NkOO9",
+          "name": "Paid Top",
+          "width": "fill_container",
+          "height": 54,
+          "padding": [
+            16,
+            20
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "Ahy5U",
+              "name": "Paid Time",
+              "fill": "$ink",
+              "content": "9:41",
+              "fontFamily": "DM Sans",
+              "fontSize": 14,
+              "fontWeight": "600"
+            },
+            {
+              "id": "hPiRq",
+              "type": "ref",
+              "ref": "ZlJNN",
+              "name": "Paid Logo Mini"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "DWviI",
+          "name": "Paid Body",
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "padding": [
+            24,
+            22
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "rGsNI",
+              "name": "Paid Hero",
+              "width": "fill_container",
+              "fill": {
+                "type": "gradient",
+                "gradientType": "linear",
+                "enabled": true,
+                "rotation": 270,
+                "size": {
+                  "height": 1
+                },
+                "colors": [
+                  {
+                    "color": "#0B7BA8",
+                    "position": 0
+                  },
+                  {
+                    "color": "#1FA87A",
+                    "position": 0.5
+                  },
+                  {
+                    "color": "#E6C34A",
+                    "position": 1
+                  }
+                ]
+              },
+              "cornerRadius": 18,
+              "layout": "vertical",
+              "gap": 10,
+              "padding": 22,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "swO8h",
+                  "name": "Paid Eyebrow",
+                  "fill": "#FFFFFFCC",
+                  "content": "Hotel Dann Carlton",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 13,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "QoRRA",
+                  "name": "Paid H1",
+                  "fill": "$white",
+                  "content": "Te pagaron",
+                  "fontFamily": "Fraunces",
+                  "fontSize": 34,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "s3f3WW",
+                  "name": "Paid Amount",
+                  "fill": "$white",
+                  "content": "$450.000",
+                  "fontFamily": "Fraunces",
+                  "fontSize": 42,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "hh7Sh",
+                  "name": "Paid Meta",
+                  "fill": "#FFFFFFDD",
+                  "content": "Show lobby · hoy 22:41",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 13,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "p1T82",
+              "name": "Paid Detail",
+              "width": "fill_container",
+              "fill": "$bgSoft",
+              "cornerRadius": 14,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 18,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "ir1pl",
+                  "name": "PD Rol",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "zTC0s",
+                      "name": "PDk Rol",
+                      "fill": "$inkMuted",
+                      "content": "Rol",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "zPoZm",
+                      "name": "PDv Rol",
+                      "fill": "$ink",
+                      "content": "Batería",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "wuXZx",
+                  "name": "PD Pagador",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "xBM0b",
+                      "name": "PDk Pagador",
+                      "fill": "$inkMuted",
+                      "content": "Pagador",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "yCLjG",
+                      "name": "PDv Pagador",
+                      "fill": "$ink",
+                      "content": "Tesorería Dann Carlton",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Q3ob3",
+                  "name": "PD Estado",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "d5qvx",
+                      "name": "PDk Estado",
+                      "fill": "$inkMuted",
+                      "content": "Estado",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "hKwct",
+                      "name": "PDv Estado",
+                      "fill": "$ink",
+                      "content": "Disponible para retirar",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "UE3kk",
+              "name": "Paid Note",
+              "fill": "$inkMuted",
+              "textGrowth": "fixed-width",
+              "width": 330,
+              "content": "Sin jerga crypto. Solo toca el botón para mandar a tu Bancolombia.",
+              "fontFamily": "DM Sans",
+              "fontSize": 13,
+              "fontWeight": "normal"
+            },
+            {
+              "id": "E15FQq",
+              "type": "ref",
+              "ref": "RMj82",
+              "name": "Paid CTA",
+              "descendants": {
+                "FHRMX": {
+                  "content": "Enviar a Bancolombia"
+                }
+              }
+            },
+            {
+              "id": "LCDsv",
+              "type": "ref",
+              "ref": "o9NVJ",
+              "name": "Paid Ghost",
+              "descendants": {
+                "e4kRXA": {
+                  "content": "Ver comprobante"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "S5Y25e",
+      "x": 860,
+      "y": 2220,
+      "name": "M3 Enviar a Bancolombia",
+      "clip": true,
+      "width": 390,
+      "height": 844,
+      "fill": "$white",
+      "cornerRadius": 28,
+      "stroke": "$line",
+      "strokeWidth": 1,
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "Y3DDE",
+          "name": "Bank Top",
+          "width": "fill_container",
+          "height": 54,
+          "padding": [
+            16,
+            20
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "qJHz6",
+              "name": "Bank Back",
+              "fill": "$blue",
+              "content": "← Atrás",
+              "fontFamily": "DM Sans",
+              "fontSize": 14,
+              "fontWeight": "600"
+            },
+            {
+              "type": "text",
+              "id": "kdGLX",
+              "name": "Bank Step",
+              "fill": "$inkMuted",
+              "content": "2 / 3",
+              "fontFamily": "DM Sans",
+              "fontSize": 12,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "gmpGO",
+          "name": "Bank Body",
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "gap": 16,
+          "padding": [
+            24,
+            22
+          ],
+          "children": [
+            {
+              "type": "text",
+              "id": "wmBuo",
+              "name": "Bank H1",
+              "fill": "$ink",
+              "content": "Enviar a Bancolombia",
+              "fontFamily": "Fraunces",
+              "fontSize": 28,
+              "fontWeight": "700"
+            },
+            {
+              "type": "text",
+              "id": "GScKG",
+              "name": "Bank Sub",
+              "fill": "$inkMuted",
+              "textGrowth": "fixed-width",
+              "width": 330,
+              "content": "Vas a retirar $450.000 a tu cuenta. Flujo sandbox / mock.",
+              "fontFamily": "DM Sans",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "fGgn6",
+              "name": "BF Banco",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 6,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "o5R9mL",
+                  "name": "BL Banco",
+                  "fill": "$inkMuted",
+                  "content": "Banco",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 12,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "frame",
+                  "id": "S6pWR",
+                  "name": "BB Banco",
+                  "width": "fill_container",
+                  "fill": "$bgSoft",
+                  "cornerRadius": 12,
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "padding": [
+                    12,
+                    14
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "MqrWy",
+                      "name": "BV Banco",
+                      "fill": "$ink",
+                      "content": "Bancolombia",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "Z22VYO",
+              "name": "BF Tipo de cuenta",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 6,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "j5qYHS",
+                  "name": "BL Tipo de cuenta",
+                  "fill": "$inkMuted",
+                  "content": "Tipo de cuenta",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 12,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "frame",
+                  "id": "YXdNr",
+                  "name": "BB Tipo de cuenta",
+                  "width": "fill_container",
+                  "fill": "$bgSoft",
+                  "cornerRadius": 12,
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "padding": [
+                    12,
+                    14
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "rhd4k",
+                      "name": "BV Tipo de cuenta",
+                      "fill": "$ink",
+                      "content": "Ahorros",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "QYR0p",
+              "name": "BF Número / llave",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 6,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "whRHG",
+                  "name": "BL Número / llave",
+                  "fill": "$inkMuted",
+                  "content": "Número / llave",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 12,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "frame",
+                  "id": "nwwMA",
+                  "name": "BB Número / llave",
+                  "width": "fill_container",
+                  "fill": "$bgSoft",
+                  "cornerRadius": 12,
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "padding": [
+                    12,
+                    14
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "z48aqz",
+                      "name": "BV Número / llave",
+                      "fill": "$ink",
+                      "content": "•••• 8842",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "u3o8tz",
+              "name": "BF Titular",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 6,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "OxXWj",
+                  "name": "BL Titular",
+                  "fill": "$inkMuted",
+                  "content": "Titular",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 12,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "frame",
+                  "id": "cnVEb",
+                  "name": "BB Titular",
+                  "width": "fill_container",
+                  "fill": "$bgSoft",
+                  "cornerRadius": 12,
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "padding": [
+                    12,
+                    14
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "T9ruu",
+                      "name": "BV Titular",
+                      "fill": "$ink",
+                      "content": "Laura Méndez",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 15,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "pBda3",
+              "type": "ref",
+              "ref": "RMj82",
+              "name": "Bank CTA",
+              "descendants": {
+                "FHRMX": {
+                  "content": "Confirmar envío"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "HYekL",
+      "x": 1290,
+      "y": 2220,
+      "name": "M4 Éxito cash-out",
+      "clip": true,
+      "width": 390,
+      "height": 844,
+      "fill": "$white",
+      "cornerRadius": 28,
+      "stroke": "$line",
+      "strokeWidth": 1,
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "N5PGDG",
+          "name": "Ok Body",
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "gap": 18,
+          "padding": [
+            40,
+            28
+          ],
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "kbdCN",
+              "name": "Ok Circle",
+              "width": 88,
+              "height": 88,
+              "fill": "#E6F6EF",
+              "cornerRadius": 999,
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon",
+                  "id": "f1LeFA",
+                  "name": "Ok Icon",
+                  "width": 40,
+                  "height": 40,
+                  "icon": "check",
+                  "library": "lucide",
+                  "fill": "$success"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "dItNq",
+              "name": "Ok H1",
+              "fill": "$ink",
+              "content": "Listo",
+              "textAlign": "center",
+              "fontFamily": "Fraunces",
+              "fontSize": 36,
+              "fontWeight": "700"
+            },
+            {
+              "type": "text",
+              "id": "F5SLe",
+              "name": "Ok Copy",
+              "fill": "$inkMuted",
+              "textGrowth": "fixed-width",
+              "width": 300,
+              "content": "$450.000 van camino a tu Bancolombia. En demo verás confirmación sandbox.",
+              "lineHeight": 1.4,
+              "textAlign": "center",
+              "fontFamily": "DM Sans",
+              "fontSize": 15,
+              "fontWeight": "normal"
+            },
+            {
+              "id": "rHtJR",
+              "type": "ref",
+              "ref": "RMj82",
+              "name": "Ok CTA",
+              "descendants": {
+                "FHRMX": {
+                  "content": "Ver comprobante"
+                }
+              }
+            },
+            {
+              "id": "I7XWo",
+              "type": "ref",
+              "ref": "o9NVJ",
+              "name": "Ok Ghost",
+              "descendants": {
+                "e4kRXA": {
+                  "content": "Volver al inicio"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "P8tn4",
+      "x": 1720,
+      "y": 2220,
+      "name": "M5 Comprobante",
+      "clip": true,
+      "width": 390,
+      "height": 844,
+      "fill": "$white",
+      "cornerRadius": 28,
+      "stroke": "$line",
+      "strokeWidth": 1,
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "s8laGO",
+          "name": "Comp Top",
+          "width": "fill_container",
+          "height": 54,
+          "padding": [
+            16,
+            20
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "text",
+              "id": "WcQS1",
+              "name": "Comp Back",
+              "fill": "$ink",
+              "content": "←",
+              "fontFamily": "DM Sans",
+              "fontSize": 18,
+              "fontWeight": "600"
+            },
+            {
+              "id": "S8k5X",
+              "type": "ref",
+              "ref": "ZlJNN",
+              "name": "Comp Logo"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "aqin9",
+          "name": "Comp Body",
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "padding": [
+            24,
+            22
+          ],
+          "children": [
+            {
+              "type": "text",
+              "id": "djE8Z",
+              "name": "Comp H1",
+              "fill": "$ink",
+              "content": "Comprobante",
+              "fontFamily": "Fraunces",
+              "fontSize": 28,
+              "fontWeight": "700"
+            },
+            {
+              "type": "frame",
+              "id": "sHBUz",
+              "name": "Comp Sheet",
+              "width": "fill_container",
+              "fill": "$bgSoft",
+              "cornerRadius": 16,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 20,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "iYto1",
+                  "name": "Comp Amt",
+                  "fill": "$ink",
+                  "content": "$450.000 COP",
+                  "fontFamily": "Fraunces",
+                  "fontSize": 30,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "sSnnd",
+                  "name": "Comp Ev",
+                  "fill": "$inkMuted",
+                  "content": "Show lobby — Hotel Dann Carlton",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "JThcV",
+                  "name": "CR Fecha",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "F5XeJp",
+                      "name": "CRk Fecha",
+                      "fill": "$inkMuted",
+                      "content": "Fecha",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "mYkBD",
+                      "name": "CRv Fecha",
+                      "fill": "$ink",
+                      "content": "11 oct 2026 · 22:41",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "f1c79L",
+                  "name": "CR Receptor",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "rXpKu",
+                      "name": "CRk Receptor",
+                      "fill": "$inkMuted",
+                      "content": "Receptor",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Lsz5b",
+                      "name": "CRv Receptor",
+                      "fill": "$ink",
+                      "content": "Laura Méndez",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "m51ILy",
+                  "name": "CR Destino",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Garl6",
+                      "name": "CRk Destino",
+                      "fill": "$inkMuted",
+                      "content": "Destino",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "SFwRs",
+                      "name": "CRv Destino",
+                      "fill": "$ink",
+                      "content": "Bancolombia · •••• 8842",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "GkGXG",
+                  "name": "CR Hash (mock)",
+                  "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "WHszP",
+                      "name": "CRk Hash (mock)",
+                      "fill": "$inkMuted",
+                      "content": "Hash (mock)",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 12,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "P3gQ0",
+                      "name": "CRv Hash (mock)",
+                      "fill": "$ink",
+                      "content": "a1b2…9f3e",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "uk9EK",
+              "type": "ref",
+              "ref": "o9NVJ",
+              "name": "Comp Explorer",
+              "descendants": {
+                "e4kRXA": {
+                  "content": "Abrir explorador Stellar"
+                }
+              }
+            },
+            {
+              "type": "text",
+              "id": "Y0vWsP",
+              "name": "Comp Note",
+              "fill": "$inkMuted",
+              "textGrowth": "fixed-width",
+              "width": 330,
+              "content": "Este enlace es la prueba compartida del pago — no depende del Excel del hotel.",
+              "fontFamily": "DM Sans",
+              "fontSize": 12,
+              "fontWeight": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "M3wiL",
+      "x": 2720,
+      "y": 1220,
+      "name": "A6 Carnaval SA Donaciones %",
+      "clip": true,
+      "width": 1280,
+      "height": 900,
+      "fill": "$bgSoft",
+      "layout": "vertical",
+      "children": [
+        {
+          "type": "frame",
+          "id": "q9umH8",
+          "name": "Car Top",
+          "width": "fill_container",
+          "height": 72,
+          "fill": "$white",
+          "stroke": "$line",
+          "strokeWidth": {
+            "bottom": 1
+          },
+          "padding": [
+            0,
+            32
+          ],
+          "justifyContent": "space_between",
+          "alignItems": "center",
+          "children": [
+            {
+              "id": "b48Zv",
+              "type": "ref",
+              "ref": "ZlJNN",
+              "name": "Car Logo"
+            },
+            {
+              "type": "text",
+              "id": "lQ5jV",
+              "name": "Car Org",
+              "fill": "$inkMuted",
+              "content": "Carnaval SA · Encargado de donaciones",
+              "fontFamily": "DM Sans",
+              "fontSize": 13,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "kiThm",
+          "name": "Car Body",
+          "width": "fill_container",
+          "height": "fill_container",
+          "gap": 24,
+          "padding": 32,
+          "children": [
+            {
+              "type": "frame",
+              "id": "VU0QV",
+              "name": "Car Left",
+              "width": 740,
+              "fill": "$white",
+              "cornerRadius": 14,
+              "stroke": "$line",
+              "strokeWidth": 1,
+              "layout": "vertical",
+              "gap": 16,
+              "padding": 28,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "E1Tzyg",
+                  "name": "Car H1",
+                  "fill": "$ink",
+                  "content": "Lote porcentual de donaciones",
+                  "fontFamily": "Fraunces",
+                  "fontSize": 28,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "syurU",
+                  "name": "Car Sub",
+                  "fill": "$inkMuted",
+                  "textGrowth": "fixed-width",
+                  "width": 680,
+                  "content": "Recaudación del evento programada antes de los días de Carnaval. Orilla reparte por % como un Excel vivo — sin esperar a liquidar a mano.",
+                  "lineHeight": 1.4,
+                  "fontFamily": "DM Sans",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "XGrsd",
+                  "name": "Pool Card",
+                  "width": "fill_container",
+                  "fill": "$ink",
+                  "cornerRadius": 12,
+                  "padding": 18,
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "v1imh",
+                      "name": "Pool L",
+                      "layout": "vertical",
+                      "gap": 4,
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "lWkoM",
+                          "name": "Pool Label",
+                          "fill": "#A8C0CC",
+                          "content": "Pool de donaciones (mock)",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 12,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "HJ77R",
+                          "name": "Pool Value",
+                          "fill": "$white",
+                          "content": "$28.400.000 COP",
+                          "fontFamily": "Fraunces",
+                          "fontSize": 28,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "j4fKak",
+                      "name": "Pool When",
+                      "fill": "$sand",
+                      "content": "Programado · 10 feb",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "WtPsd",
+                  "name": "Pct Table",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "V7R8N",
+                      "name": "Pct Head",
+                      "width": "fill_container",
+                      "gap": 12,
+                      "padding": [
+                        10,
+                        0
+                      ],
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "x6oDJC",
+                          "name": "PH Beneficiario",
+                          "fill": "$inkMuted",
+                          "content": "Beneficiario",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "RksQM",
+                          "name": "PH Rol",
+                          "fill": "$inkMuted",
+                          "content": "Rol",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "qvwAD",
+                          "name": "PH %",
+                          "fill": "$inkMuted",
+                          "content": "%",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "iTqEB",
+                          "name": "PH Monto",
+                          "fill": "$inkMuted",
+                          "content": "Monto",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "qZRNh",
+                      "name": "PR Fundación Comparsa del Río",
+                      "width": "fill_container",
+                      "stroke": "$line",
+                      "strokeWidth": {
+                        "top": 1
+                      },
+                      "gap": 12,
+                      "padding": [
+                        12,
+                        0
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "Bf6Ue",
+                          "name": "PRn Fundación Comparsa del Río",
+                          "fill": "$ink",
+                          "content": "Fundación Comparsa del Río",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "tegA0",
+                          "name": "PRr Fundación Comparsa del Río",
+                          "fill": "$inkMuted",
+                          "content": "Comparsa",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "xuboc",
+                          "name": "PRp Fundación Comparsa del Río",
+                          "fill": "$blue",
+                          "content": "35%",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 13,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "LeeNC",
+                          "name": "PRm Fundación Comparsa del Río",
+                          "fill": "$ink",
+                          "content": "$9.940.000",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "jaHRX",
+                      "name": "PR Colectivo Danza Sur",
+                      "width": "fill_container",
+                      "stroke": "$line",
+                      "strokeWidth": {
+                        "top": 1
+                      },
+                      "gap": 12,
+                      "padding": [
+                        12,
+                        0
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "sFZmW",
+                          "name": "PRn Colectivo Danza Sur",
+                          "fill": "$ink",
+                          "content": "Colectivo Danza Sur",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "T5Tn6n",
+                          "name": "PRr Colectivo Danza Sur",
+                          "fill": "$inkMuted",
+                          "content": "Danza",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "W65w6",
+                          "name": "PRp Colectivo Danza Sur",
+                          "fill": "$blue",
+                          "content": "20%",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 13,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "OqeRb",
+                          "name": "PRm Colectivo Danza Sur",
+                          "fill": "$ink",
+                          "content": "$5.680.000",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "a1ewb8",
+                      "name": "PR Escuela de Batucada",
+                      "width": "fill_container",
+                      "stroke": "$line",
+                      "strokeWidth": {
+                        "top": 1
+                      },
+                      "gap": 12,
+                      "padding": [
+                        12,
+                        0
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "D6c65U",
+                          "name": "PRn Escuela de Batucada",
+                          "fill": "$ink",
+                          "content": "Escuela de Batucada",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "msSbw",
+                          "name": "PRr Escuela de Batucada",
+                          "fill": "$inkMuted",
+                          "content": "Música",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "KCdaz",
+                          "name": "PRp Escuela de Batucada",
+                          "fill": "$blue",
+                          "content": "18%",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 13,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "HK1QJ",
+                          "name": "PRm Escuela de Batucada",
+                          "fill": "$ink",
+                          "content": "$5.112.000",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "D35NCz",
+                      "name": "PR Staff logístico Carnaval",
+                      "width": "fill_container",
+                      "stroke": "$line",
+                      "strokeWidth": {
+                        "top": 1
+                      },
+                      "gap": 12,
+                      "padding": [
+                        12,
+                        0
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "SKTPi",
+                          "name": "PRn Staff logístico Carnaval",
+                          "fill": "$ink",
+                          "content": "Staff logístico Carnaval",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "f0X98D",
+                          "name": "PRr Staff logístico Carnaval",
+                          "fill": "$inkMuted",
+                          "content": "Staff",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "phEdD",
+                          "name": "PRp Staff logístico Carnaval",
+                          "fill": "$blue",
+                          "content": "15%",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 13,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "g0VVc",
+                          "name": "PRm Staff logístico Carnaval",
+                          "fill": "$ink",
+                          "content": "$4.260.000",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "bcxSs",
+                      "name": "PR Reserva operativa",
+                      "width": "fill_container",
+                      "stroke": "$line",
+                      "strokeWidth": {
+                        "top": 1
+                      },
+                      "gap": 12,
+                      "padding": [
+                        12,
+                        0
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "hRdIr",
+                          "name": "PRn Reserva operativa",
+                          "fill": "$ink",
+                          "content": "Reserva operativa",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "p95kw",
+                          "name": "PRr Reserva operativa",
+                          "fill": "$inkMuted",
+                          "content": "Operación",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 13,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "WLaE8",
+                          "name": "PRp Reserva operativa",
+                          "fill": "$blue",
+                          "content": "12%",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 13,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "text",
+                          "id": "rywfX",
+                          "name": "PRm Reserva operativa",
+                          "fill": "$ink",
+                          "content": "$3.408.000",
+                          "fontFamily": "DM Sans",
+                          "fontSize": 13,
+                          "fontWeight": "600"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "cTpCo",
+              "name": "Car Right",
+              "width": 440,
+              "layout": "vertical",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "bt1jj",
+                  "name": "Viability Note",
+                  "width": "fill_container",
+                  "fill": "$white",
+                  "cornerRadius": 14,
+                  "stroke": "$line",
+                  "strokeWidth": 1,
+                  "layout": "vertical",
+                  "gap": 10,
+                  "padding": 22,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "YUAVk",
+                      "name": "Note Title",
+                      "fill": "$blue",
+                      "content": "Idea de valor (fase 2)",
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Wo5Kh",
+                      "name": "Note Body",
+                      "fill": "$inkMuted",
+                      "textGrowth": "fixed-width",
+                      "width": 380,
+                      "content": "MVP esta semana: UI mock del reparto %. Decisión técnica sigue siendo SDP (opción B). Un smart contract de escrow/reparto solo se evalúa después si hace falta congelar fondos o reglas on-chain; no es obligatorio para el happy path.",
+                      "lineHeight": 1.45,
+                      "fontFamily": "DM Sans",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "id": "XaqSz",
+                  "type": "ref",
+                  "ref": "xLxxY",
+                  "name": "Car CTA",
+                  "descendants": {
+                    "kUdhU": {
+                      "content": "Programar dispersión"
+                    }
+                  }
+                },
+                {
+                  "id": "F10iUT",
+                  "type": "ref",
+                  "ref": "o9NVJ",
+                  "name": "Car Ghost",
+                  "descendants": {
+                    "e4kRXA": {
+                      "content": "Exportar Excel"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "v2aga",
+      "x": 4080,
+      "y": 280,
+      "name": "Brand Board Orilla",
+      "clip": true,
+      "width": 720,
+      "height": 640,
+      "fill": "$white",
+      "cornerRadius": 16,
+      "stroke": "$line",
+      "strokeWidth": 1,
+      "layout": "vertical",
+      "gap": 20,
+      "padding": 36,
+      "children": [
+        {
+          "id": "OfL2P",
+          "type": "ref",
+          "ref": "ZlJNN",
+          "name": "Brand Logo"
+        },
+        {
+          "type": "text",
+          "id": "O0mXJ",
+          "name": "Brand Tag",
+          "fill": "$ink",
+          "textGrowth": "fixed-width",
+          "width": 640,
+          "content": "Que quien trabaja hoy, cobre hoy.",
+          "fontFamily": "Fraunces",
+          "fontSize": 26,
+          "fontWeight": "700"
+        },
+        {
+          "type": "frame",
+          "id": "Oib4B",
+          "name": "Swatches",
+          "gap": 12,
+          "children": [
+            {
+              "type": "frame",
+              "id": "RtHNH",
+              "name": "Sw Blue",
+              "layout": "vertical",
+              "gap": 6,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "dcBtW",
+                  "name": "SwC Blue",
+                  "width": 72,
+                  "height": 72,
+                  "fill": "$blue",
+                  "cornerRadius": 12,
+                  "stroke": "$line",
+                  "strokeWidth": 1
+                },
+                {
+                  "type": "text",
+                  "id": "WqmR1",
+                  "name": "SwT Blue",
+                  "fill": "$inkMuted",
+                  "content": "Blue",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "nqjJu",
+              "name": "Sw Green",
+              "layout": "vertical",
+              "gap": 6,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "TIKTy",
+                  "name": "SwC Green",
+                  "width": 72,
+                  "height": 72,
+                  "fill": "$green",
+                  "cornerRadius": 12,
+                  "stroke": "$line",
+                  "strokeWidth": 1
+                },
+                {
+                  "type": "text",
+                  "id": "ORKQI",
+                  "name": "SwT Green",
+                  "fill": "$inkMuted",
+                  "content": "Green",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "n6O0K",
+              "name": "Sw Sand",
+              "layout": "vertical",
+              "gap": 6,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "rmkXW",
+                  "name": "SwC Sand",
+                  "width": 72,
+                  "height": 72,
+                  "fill": "$sand",
+                  "cornerRadius": 12,
+                  "stroke": "$line",
+                  "strokeWidth": 1
+                },
+                {
+                  "type": "text",
+                  "id": "dn0OU",
+                  "name": "SwT Sand",
+                  "fill": "$inkMuted",
+                  "content": "Sand",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "PA1jW",
+              "name": "Sw Ink",
+              "layout": "vertical",
+              "gap": 6,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "XBXnL",
+                  "name": "SwC Ink",
+                  "width": 72,
+                  "height": 72,
+                  "fill": "$ink",
+                  "cornerRadius": 12,
+                  "stroke": "$line",
+                  "strokeWidth": 1
+                },
+                {
+                  "type": "text",
+                  "id": "K5MKmG",
+                  "name": "SwT Ink",
+                  "fill": "$inkMuted",
+                  "content": "Ink",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "ILMRP",
+              "name": "Sw Soft",
+              "layout": "vertical",
+              "gap": 6,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "gtbEx",
+                  "name": "SwC Soft",
+                  "width": 72,
+                  "height": 72,
+                  "fill": "$bgSoft",
+                  "cornerRadius": 12,
+                  "stroke": "$line",
+                  "strokeWidth": 1
+                },
+                {
+                  "type": "text",
+                  "id": "o6Fge4",
+                  "name": "SwT Soft",
+                  "fill": "$inkMuted",
+                  "content": "Soft",
+                  "fontFamily": "DM Sans",
+                  "fontSize": 11,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "id": "fRR4L",
+          "name": "Brand Type",
+          "fill": "$inkMuted",
+          "textGrowth": "fixed-width",
+          "width": 640,
+          "content": "Tipografía: Fraunces (marca / títulos) + DM Sans (UI). Fondo blanco, acentos Caribe. Admin desktop-first · Staff mobile-first.",
+          "lineHeight": 1.45,
+          "fontFamily": "DM Sans",
+          "fontSize": 14,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "frame",
+          "id": "g5yPt",
+          "name": "Brand Accent",
+          "width": 160,
+          "height": 8,
+          "fill": {
+            "type": "gradient",
+            "gradientType": "linear",
+            "enabled": true,
+            "rotation": 270,
+            "size": {
+              "height": 1
+            },
+            "colors": [
+              {
+                "color": "#0B7BA8",
+                "position": 0
+              },
+              {
+                "color": "#1FA87A",
+                "position": 0.5
+              },
+              {
+                "color": "#E6C34A",
+                "position": 1
+              }
+            ]
+          },
+          "cornerRadius": 99
+        }
+      ]
     }
-  ]
+  ],
+  "variables": {
+    "bg": {
+      "type": "color",
+      "value": "#FFFFFF"
+    },
+    "bgSoft": {
+      "type": "color",
+      "value": "#F4F9F8"
+    },
+    "ink": {
+      "type": "color",
+      "value": "#0F2430"
+    },
+    "inkMuted": {
+      "type": "color",
+      "value": "#5A6F7A"
+    },
+    "line": {
+      "type": "color",
+      "value": "#D7E3E8"
+    },
+    "blue": {
+      "type": "color",
+      "value": "#0B7BA8"
+    },
+    "green": {
+      "type": "color",
+      "value": "#1FA87A"
+    },
+    "sand": {
+      "type": "color",
+      "value": "#E6C34A"
+    },
+    "success": {
+      "type": "color",
+      "value": "#168A5B"
+    },
+    "warn": {
+      "type": "color",
+      "value": "#C4921A"
+    },
+    "danger": {
+      "type": "color",
+      "value": "#C23B3B"
+    },
+    "white": {
+      "type": "color",
+      "value": "#FFFFFF"
+    }
+  },
+  "fileToken": "2bfb9f7a-c5cb-4cb3-9408-a59b13b0f8b2"
 }
