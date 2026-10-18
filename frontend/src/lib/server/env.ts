@@ -17,3 +17,11 @@ export function env(key: EnvKey): string {
   }
   return value;
 }
+
+/**
+ * `ORILLA_PROD_MODE=true` oculta las herramientas de prueba (p. ej. el botón a Stellar Expert).
+ * Sin definir o con cualquier otro valor, se muestran.
+ */
+export function isProdMode(): boolean {
+  return process.env.ORILLA_PROD_MODE === "true";
+}

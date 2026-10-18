@@ -4,6 +4,8 @@ import Link from "next/link";
 import { Card, LinkButton, TxLink } from "@/components/ui";
 import { KIND_LABEL, formatBalance, formatCop, formatDateTime } from "@/lib/format";
 import { logout } from "@/lib/server/auth-actions";
+import { isProdMode } from "@/lib/server/env";
+import { explorerAccountUrl } from "@/lib/server/stellar";
 import { getBalance, getUserMovements, getUserProjects } from "@/lib/server/queries";
 import { bpsToPercent } from "@/lib/split";
 import { requireUser } from "@/lib/server/session";
@@ -47,6 +49,17 @@ export default async function InicioPage() {
         <LinkButton href="/retirar" variant="ghost" className="w-full">
           Retirar
         </LinkButton>
+        {isProdMode() ? null : (
+          <a
+            href={explorerAccountUrl(user.stellar_public_key)}
+            target="_blank"
+            rel="noreferrer"
+            className="rounded-[10px] border border-dashed border-line px-4 py-3 text-center text-sm font-semibold text-blue hover:border-blue hover:bg-bg-soft"
+          >
+            Ver mis transacciones en Stellar Expert ↗
+            <span className="block text-xs font-normal text-ink-muted">Solo en modo de prueba</span>
+          </a>
+        )}
       </div>
 
       <div className="mt-8 flex items-center justify-between gap-3">
