@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useState } from "react";
+import { type FormEvent, useActionState, useState } from "react";
 import { MIN_PASSWORD } from "@/lib/auth";
 import { login, register } from "@/lib/server/auth-actions";
 import { Field, FormError, Input, SubmitButton } from "./ui";
@@ -10,10 +10,27 @@ import { Field, FormError, Input, SubmitButton } from "./ui";
 export function AuthForm({ mode, next }: { mode: "registro" | "ingresar"; next?: string }) {
   const isRegister = mode === "registro";
   const [state, action, pending] = useActionState(isRegister ? register : login, { error: null });
+  const [mismatch, setMismatch] = useState(false);
   const query = next ? `?next=${encodeURIComponent(next)}` : "";
 
+  // React limpia todo el formulario tras cada envío, así que la coincidencia se revisa aquí:
+  // si falla no se envía y solo se borra la confirmación. El servidor vuelve a validarla.
+  function checkPasswords(e: FormEvent<HTMLFormElement>) {
+    if (!isRegister) return;
+    const form = e.currentTarget;
+    const confirm = form.elements.namedItem("password_confirm") as HTMLInputElement;
+    const password = form.elements.namedItem("password") as HTMLInputElement;
+    const differ = password.value !== confirm.value;
+    setMismatch(differ);
+    if (differ) {
+      e.preventDefault();
+      confirm.value = "";
+      confirm.focus();
+    }
+  }
+
   return (
-    <form action={action} className="flex flex-col gap-4">
+    <form action={action} onSubmit={checkPasswords} className="flex flex-col gap-4">
       {next ? <input type="hidden" name="next" value={next} /> : null}
       <Field
         label="Username"
@@ -68,7 +85,7 @@ export function AuthForm({ mode, next }: { mode: "registro" | "ingresar"; next?:
         />
       ) : null}
 
-      <FormError message={state.error} />
+      <FormError message={mismatch ? "Las contraseñas no coinciden." : state.error} />
       <SubmitButton
         variant="cta"
         pending={pending}
