@@ -2,10 +2,18 @@ import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
 
 const baseBtn =
-  "inline-flex items-center justify-center gap-2 rounded-[10px] px-5 py-3.5 text-[15px] font-semibold transition active:scale-[0.99] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2";
+  "inline-flex items-center justify-center gap-2 rounded-[10px] px-5 py-3.5 text-[15px] font-semibold cursor-pointer transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2";
+
+type Variant = "primary" | "ghost" | "cta";
+
+const variantStyles: Record<Variant, string> = {
+  primary: "bg-blue text-white hover:brightness-90 hover:shadow-md",
+  ghost: "border border-line bg-white text-ink hover:border-blue hover:bg-bg-soft hover:text-blue",
+  cta: "bg-orilla-gradient text-white shadow-sm hover:brightness-90 hover:shadow-md",
+};
 
 type ButtonProps = ComponentProps<"button"> & {
-  variant?: "primary" | "ghost" | "cta";
+  variant?: Variant;
 };
 
 export function Button({
@@ -13,11 +21,7 @@ export function Button({
   className = "",
   ...props
 }: ButtonProps) {
-  const styles = {
-    primary: "bg-blue text-white hover:brightness-105",
-    ghost: "border border-line bg-white text-ink hover:bg-bg-soft",
-    cta: "bg-orilla-gradient text-white shadow-sm hover:brightness-105",
-  }[variant];
+  const styles = variantStyles[variant];
 
   return (
     <button className={`${baseBtn} ${styles} ${className}`} {...props} />
@@ -25,7 +29,7 @@ export function Button({
 }
 
 type LinkButtonProps = ComponentProps<typeof Link> & {
-  variant?: "primary" | "ghost" | "cta";
+  variant?: Variant;
   className?: string;
   children: ReactNode;
 };
@@ -36,11 +40,7 @@ export function LinkButton({
   children,
   ...props
 }: LinkButtonProps) {
-  const styles = {
-    primary: "bg-blue text-white hover:brightness-105",
-    ghost: "border border-line bg-white text-ink hover:bg-bg-soft",
-    cta: "bg-orilla-gradient text-white shadow-sm hover:brightness-105",
-  }[variant];
+  const styles = variantStyles[variant];
 
   return (
     <Link className={`${baseBtn} ${styles} ${className}`} {...props}>
@@ -81,7 +81,7 @@ export function SubmitButton({
   children: ReactNode;
   pendingLabel: string;
   pending: boolean;
-  variant?: "primary" | "ghost" | "cta";
+  variant?: Variant;
   className?: string;
 }) {
   return (

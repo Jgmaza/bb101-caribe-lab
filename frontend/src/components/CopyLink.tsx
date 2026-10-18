@@ -20,7 +20,7 @@ export function CopyLink({ path, label = "Copiar link" }: { path: string; label?
     <button
       type="button"
       onClick={copy}
-      className="inline-flex items-center justify-center rounded-[10px] border border-line bg-white px-3.5 py-2 text-sm font-semibold text-ink transition hover:bg-bg-soft focus-visible:ring-2 focus-visible:ring-blue focus-visible:outline-none"
+      className="inline-flex items-center justify-center rounded-[10px] border border-line bg-white px-3.5 py-2 text-sm font-semibold text-ink cursor-pointer transition hover:border-blue hover:bg-bg-soft hover:text-blue focus-visible:ring-2 focus-visible:ring-blue focus-visible:outline-none"
     >
       <span aria-live="polite">{copied ? "¡Copiado!" : label}</span>
     </button>

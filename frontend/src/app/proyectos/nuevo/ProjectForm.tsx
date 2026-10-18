@@ -23,7 +23,7 @@ export function ProjectForm() {
           <select
             name="kind"
             defaultValue="banda"
-            className="w-full rounded-[10px] border border-line bg-bg-soft px-3.5 py-3 text-sm text-ink outline-none focus:border-blue focus-visible:ring-2 focus-visible:ring-blue/40"
+            className="w-full cursor-pointer rounded-[10px] border border-line bg-bg-soft px-3.5 py-3 text-sm text-ink outline-none focus:border-blue focus-visible:ring-2 focus-visible:ring-blue/40"
           >
             <option value="banda">Banda / grupo musical</option>
             <option value="staff">Staff de evento</option>

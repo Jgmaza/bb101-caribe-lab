@@ -132,7 +132,7 @@ export function MembersEditor({
                 type="button"
                 onClick={() => setMembers((ms) => ms.filter((x) => x.key !== m.key))}
                 disabled={members.length === 1}
-                className="h-8 w-8 justify-self-end rounded-lg text-lg text-ink-muted hover:bg-bg-soft disabled:opacity-30"
+                className="h-8 w-8 justify-self-end rounded-lg cursor-pointer text-lg text-ink-muted transition hover:bg-bg-soft hover:text-ink disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-ink-muted"
                 aria-label={`Quitar integrante ${i + 1}`}
               >
                 ×

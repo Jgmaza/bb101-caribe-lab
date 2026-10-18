@@ -81,7 +81,7 @@ export default async function PanelPage({
               /pagar/{slug}
             </code>
             <CopyLink path={`/pagar/${slug}`} />
-            <Link href={`/pagar/${slug}`} className="text-sm font-semibold text-blue">
+            <Link href={`/pagar/${slug}`} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-blue">
               Abrir →
             </Link>
           </div>
@@ -134,7 +134,7 @@ export default async function PanelPage({
               <p className="text-[13px] text-ink">{formatPhone(m.phone)}</p>
               <p className="text-sm font-bold text-blue">{bpsToPercent(m.share_bps)}%</p>
               <div className="flex items-center gap-3">
-                <Link href={`/cobrar/${m.id}`} className="text-[13px] font-semibold text-blue">
+                <Link href={`/cobrar/${m.id}`} target="_blank" rel="noopener noreferrer" className="text-[13px] font-semibold text-blue">
                   Abrir
                 </Link>
                 <CopyLink path={`/cobrar/${m.id}`} label="Copiar" />
