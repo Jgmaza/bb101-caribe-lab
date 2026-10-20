@@ -1,5 +1,9 @@
 # Video MVP — link editable
 
+## Guion y cómo grabar
+
+→ **[`Guion-video-Apex-3min.md`](./Guion-video-Apex-3min.md)** — pitch, shot list, tips si no te gusta la cámara, edición con Kinocut.
+
 ## URL que va en Apex / MVPFunctional
 
 ```
@@ -14,10 +18,16 @@ https://www.youtube.com/watch?v=VIDEO_URL
 
 [`video-mvp-orilla.mp4`](./video-mvp-orilla.mp4)
 
+## Edición (Kinocut MCP)
+
+Ya configurado en Cursor (`kinocut` en `~/.cursor/mcp.json`). FFmpeg OK · `kino doctor` → `required_ok: true`.
+
+Carpeta sugerida de tomas: `~/Movies/Orilla-Apex/`
+
 ## Checklist entrega
 
 - [ ] Video ≤ 3 min con pitch + producto funcionando
 - [ ] YouTube (u otra plataforma pública) publicado
 - [ ] `VIDEO_URL` sustituido en `MVPFunctional.md`
 - [ ] Commit + push a `main`
-- [ ] Proyecto cargado en Apex
+- [ ] Proyecto en Apex (ya registrado desde E1)

@@ -6,6 +6,7 @@
 |---|---|
 | Documentación obligatoria | [`MVPFunctional.md`](./MVPFunctional.md) |
 | **Video público (editar aquí)** | [`VIDEO.md`](./VIDEO.md) → `https://www.youtube.com/watch?v=VIDEO_URL` |
+| **Guion + pitch + cómo grabar** | [`Guion-video-Apex-3min.md`](./Guion-video-Apex-3min.md) |
 | Video archivo (respaldo) | [`video-mvp-orilla.mp4`](./video-mvp-orilla.mp4) |
 | Producto en línea | https://orilla-dusky.vercel.app |
 | Excel demo | https://orilla-dusky.vercel.app/Lote-pagos-Orilla-demo.xlsx |
