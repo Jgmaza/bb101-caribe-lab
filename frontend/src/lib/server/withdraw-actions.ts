@@ -5,14 +5,14 @@ import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { formatCop } from "@/lib/format";
 import { copToStroops, parseCop, stroopsToCop } from "@/lib/money";
-import { MIN_NEW_ACCOUNT_STROOPS, parseDestination, parseMemoText } from "@/lib/withdrawals";
+import { parseDestination, parseMemoText } from "@/lib/withdrawals";
 import type { FormState, RequestFormState } from "./actions";
 import { getWithdrawLimits, startWithdraw } from "./anchor";
 import { db, type WithdrawalRow } from "./db";
 import { getCopPerXlm } from "./price";
 import { getWithdrawal, isUuid } from "./queries";
 import { requireUser, type User } from "./session";
-import { accountExists, getAvailableStroops } from "./stellar";
+import { accountExists, canReceiveUsdc, getAvailableStroops } from "./stellar";
 import { sendWithdrawal, syncWithdrawal, syncWithdrawals, userKeypair } from "./withdrawal-flow";
 
 // Retiros. Todas exigen sesión y solo actúan sobre retiros de quien está logueado.
@@ -106,9 +106,13 @@ export async function withdrawToWallet(prev: RequestFormState, formData: FormDat
   if (typeof amounts === "string") return keep(amounts);
   const exists = await accountExists(destination.value);
   if (exists === null) return keep("No pudimos revisar esa cuenta. Intenta de nuevo en un momento.");
-  if (!exists && amounts.amountStroops < MIN_NEW_ACCOUNT_STROOPS) {
-    const min = stroopsToCop(MIN_NEW_ACCOUNT_STROOPS, amounts.copPerXlm);
-    return keep(`Esa cuenta todavía no está activa. Para activarla, el retiro mínimo es ≈ ${formatCop(min + 1)}.`);
+  if (!exists) {
+    return keep("Esa cuenta todavía no está activa. La persona debe tener cuenta Orilla (o aceptar USDC) antes de recibir.");
+  }
+  const acceptsUsdc = await canReceiveUsdc(destination.value);
+  if (acceptsUsdc === null) return keep("No pudimos revisar esa cuenta. Intenta de nuevo en un momento.");
+  if (!acceptsUsdc) {
+    return keep("Esa cuenta aún no acepta USDC. Pídele que abra Orilla o active USDC antes de enviarle.");
   }
 
   await settleInFlight(user.id);
@@ -119,7 +123,7 @@ export async function withdrawToWallet(prev: RequestFormState, formData: FormDat
     destination: destination.value,
     memo: memo.value,
     memo_type: memo.value ? "text" : null,
-    creates_account: !exists,
+    creates_account: false,
     amount_cop: amounts.amountCop,
     amount_stroops: Number(amounts.amountStroops),
     cop_per_xlm: amounts.copPerXlm,

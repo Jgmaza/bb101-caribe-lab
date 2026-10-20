@@ -1,11 +1,12 @@
 import "server-only";
 
-// Tasa XLM→COP de CoinGecko (precio de mainnet: en testnet es solo una referencia).
+// Tasa USDC→COP de CoinGecko (precio de mainnet: en testnet es solo una referencia).
 // Caché en memoria de 60 s. Si CoinGecko falla, se usa la última tasa conocida hasta por
 // una hora; después la operación falla en vez de inventar un precio.
 // Cada pago, recarga y retiro guarda la tasa con la que se hizo (se congela).
+// El nombre `getCopPerXlm` se mantiene por compatibilidad con columnas `cop_per_xlm` en DB.
 
-const URL = "https://api.coingecko.com/api/v3/simple/price?ids=stellar&vs_currencies=cop";
+const URL = "https://api.coingecko.com/api/v3/simple/price?ids=usd-coin&vs_currencies=cop";
 const FRESH_MS = 60_000;
 const STALE_MS = 60 * 60_000;
 
@@ -17,12 +18,12 @@ async function fetchRate(): Promise<number> {
   if (process.env.COINGECKO_API_KEY) headers["x-cg-demo-api-key"] = process.env.COINGECKO_API_KEY;
   const res = await fetch(URL, { headers, cache: "no-store", signal: AbortSignal.timeout(8_000) });
   if (!res.ok) throw new Error(`CoinGecko respondió ${res.status}`);
-  const rate = Number((await res.json())?.stellar?.cop);
-  if (!(rate > 0)) throw new Error("CoinGecko no devolvió la tasa XLM/COP");
+  const rate = Number((await res.json())?.["usd-coin"]?.cop);
+  if (!(rate > 0)) throw new Error("CoinGecko no devolvió la tasa USDC/COP");
   return rate;
 }
 
-/** Pesos colombianos por 1 XLM. */
+/** Pesos colombianos por 1 USDC (histórico: getCopPerXlm). */
 export async function getCopPerXlm(): Promise<number> {
   const now = Date.now();
   if (cached && now - cached.at < FRESH_MS) return cached.rate;
@@ -36,7 +37,7 @@ export async function getCopPerXlm(): Promise<number> {
     return rate;
   } catch (err) {
     if (cached && now - cached.at < STALE_MS) {
-      console.error("Usando la última tasa XLM/COP conocida:", err);
+      console.error("Usando la última tasa USDC/COP conocida:", err);
       return cached.rate;
     }
     throw new Error("No pudimos consultar el precio en pesos. Intenta de nuevo en un momento.");

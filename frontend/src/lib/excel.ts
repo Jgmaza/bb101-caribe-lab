@@ -1,3 +1,4 @@
+import * as XLSX from "xlsx";
 import { normalizeRole } from "./roles";
 import { parseCop } from "./money";
 import { percentToBps, TOTAL_BPS } from "./split";
@@ -121,6 +122,45 @@ export function parseSpreadsheetText(text: string): { headers: string[]; rows: R
     return row;
   });
   return { headers, rows };
+}
+
+/** Parsea .xlsx/.xls (primera hoja con datos; salta hojas «Instrucciones»). */
+export function parseSpreadsheetBinary(data: ArrayBuffer): { headers: string[]; rows: Record<string, string>[] } {
+  const wb = XLSX.read(data, { type: "array", cellDates: false });
+  const sheetName =
+    wb.SheetNames.find((n) => !/instruc/i.test(n)) ?? wb.SheetNames[0];
+  if (!sheetName) return { headers: [], rows: [] };
+  const sheet = wb.Sheets[sheetName];
+  const matrix = XLSX.utils.sheet_to_json<(string | number | boolean | null)[]>(sheet, {
+    header: 1,
+    defval: "",
+    raw: false,
+  }) as (string | number | boolean | null)[][];
+  const nonEmpty = matrix.filter((row) => row.some((c) => String(c ?? "").trim() !== ""));
+  if (nonEmpty.length === 0) return { headers: [], rows: [] };
+  const headers = nonEmpty[0].map((h, i) => String(h ?? "").trim() || `col${i + 1}`);
+  const rows = nonEmpty.slice(1).map((cells) => {
+    const row: Record<string, string> = {};
+    headers.forEach((h, i) => {
+      row[h] = String(cells[i] ?? "").trim();
+    });
+    return row;
+  });
+  return { headers, rows };
+}
+
+/** CSV o Excel según extensión / MIME del File. */
+export async function parseSpreadsheetFile(file: File): Promise<{ headers: string[]; rows: Record<string, string>[] }> {
+  const name = file.name.toLowerCase();
+  const isExcel =
+    name.endsWith(".xlsx") ||
+    name.endsWith(".xls") ||
+    file.type.includes("spreadsheet") ||
+    file.type === "application/vnd.ms-excel";
+  if (isExcel) {
+    return parseSpreadsheetBinary(await file.arrayBuffer());
+  }
+  return parseSpreadsheetText(await file.text());
 }
 
 function cell(row: Record<string, string>, key?: string) {

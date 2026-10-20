@@ -6,10 +6,11 @@ import { db, type PaymentRow, type ProjectRow } from "./db";
 import {
   TxError,
   distribute,
-  friendbotTopUp,
+  ensureUsdcTrustline,
   getAvailableStroops,
   lookupTransaction,
   payToProject,
+  usdcTopUp,
   type TopupRound,
 } from "./stellar";
 
@@ -73,6 +74,7 @@ export async function executePayment(opts: {
   payment: PaymentRow;
   payer: { id: string; publicKey: string; secretEnc: string };
   projectPublicKey: string;
+  projectSecretEnc: string;
 }): Promise<PaymentOutcome> {
   const { payment, payer } = opts;
   const fail = async (error: string): Promise<PaymentOutcome> => {
@@ -80,13 +82,21 @@ export async function executePayment(opts: {
     return { kind: "failed", error };
   };
 
-  // 1) Recarga automática si el saldo no alcanza.
+  // 1) Trustlines USDC + recarga automática si el saldo no alcanza.
+  const payerSecret = decryptSecret(payer.secretEnc);
+  try {
+    await ensureUsdcTrustline(payerSecret);
+    await ensureUsdcTrustline(decryptSecret(opts.projectSecretEnc));
+  } catch (err) {
+    console.error(`Trustline USDC fallida (pago ${payment.id}):`, err);
+    return fail(`No pudimos preparar tu cuenta para USDC. ${PAYMENT_NOT_SENT} Intenta de nuevo en un momento.`);
+  }
   const available = await getAvailableStroops(payer.publicKey);
   if (available === null) return fail("No pudimos consultar tu saldo. Intenta de nuevo en un momento.");
   const shortfall = topUpShortfall(available, BigInt(payment.amount_stroops));
   if (shortfall > 0n) {
     try {
-      await friendbotTopUp(payer.publicKey, shortfall, async (round) => {
+      await usdcTopUp(payerSecret, shortfall, async (round) => {
         // La plata ya llegó: si el registro falla, el pago sigue (queda en el log).
         await recordTopup(payer.id, round, payment.cop_per_xlm, payment.id).catch((err) =>
           console.error(err),
@@ -102,7 +112,7 @@ export async function executePayment(opts: {
   // 2) Quien paga → cuenta del proyecto. El hash queda guardado antes de enviar.
   try {
     const hash = await payToProject({
-      payerSecret: decryptSecret(payer.secretEnc),
+      payerSecret,
       projectPublicKey: opts.projectPublicKey,
       amountStroops: BigInt(payment.amount_stroops),
       memo: memoFor(payment.id),
@@ -159,11 +169,23 @@ export async function runDistribution(paymentId: string): Promise<DistributionOu
       db().from("projects").select("*").eq("id", payment.project_id).single<ProjectRow>(),
       db()
         .from("project_members")
-        .select("user_id, share_bps, user:users(stellar_public_key)")
+        .select("user_id, share_bps, user:users(stellar_public_key, stellar_secret_enc)")
         .eq("project_id", payment.project_id)
-        .returns<{ user_id: string; share_bps: number; user: { stellar_public_key: string } }[]>(),
+        .returns<
+          {
+            user_id: string;
+            share_bps: number;
+            user: { stellar_public_key: string; stellar_secret_enc: string };
+          }[]
+        >(),
     ]);
     if (!project || !members?.length) throw new Error("Proyecto sin integrantes");
+
+    const projectSecret = decryptSecret(project.stellar_secret_enc);
+    await ensureUsdcTrustline(projectSecret);
+    for (const m of members) {
+      await ensureUsdcTrustline(decryptSecret(m.user.stellar_secret_enc));
+    }
 
     const splits = splitAmount(
       BigInt(payment.amount_stroops),
@@ -172,7 +194,7 @@ export async function runDistribution(paymentId: string): Promise<DistributionOu
     const byId = new Map(members.map((m) => [m.user_id, m]));
 
     const hash = await distribute({
-      projectSecret: decryptSecret(project.stellar_secret_enc),
+      projectSecret,
       splits: splits.map((s) => ({
         publicKey: byId.get(s.id)!.user.stellar_public_key,
         amountStroops: s.amount,

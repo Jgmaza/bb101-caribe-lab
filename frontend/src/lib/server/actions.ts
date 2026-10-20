@@ -7,7 +7,7 @@ import { formatCop } from "@/lib/format";
 import { parseMembers, type ParsedMember } from "@/lib/members";
 import { MAX_PAYMENT_COP, copToStroops, parseCop } from "@/lib/money";
 import { canRetryDistribution } from "@/lib/payments";
-import { encryptSecret } from "./crypto";
+import { decryptSecret, encryptSecret } from "./crypto";
 import { db, type PaymentRow, type ProjectKind, type ProjectRow } from "./db";
 import {
   executePayment,
@@ -19,7 +19,7 @@ import {
 import { getCopPerXlm } from "./price";
 import { getPayment, getProjectAccess, getUsersByUsername, isUuid } from "./queries";
 import { requireUser } from "./session";
-import { createCustodialAccounts, friendbotTopUp } from "./stellar";
+import { createCustodialAccounts, usdcTopUp } from "./stellar";
 
 // Todas las acciones exigen sesión (requireUser). Editar un proyecto y reintentar un reparto
 // exigen además ser admin del proyecto. Validamos todo lo que llega.
@@ -230,6 +230,7 @@ export async function payProject(
     payment,
     payer: { id: user.id, publicKey: user.stellar_public_key, secretEnc: payer.stellar_secret_enc },
     projectPublicKey: project.stellar_public_key,
+    projectSecretEnc: project.stellar_secret_enc,
   });
   if (outcome.kind === "failed") return fresh(outcome.error);
   // Si el reparto falla, el recibo lo dice y un admin puede reintentarlo.
@@ -270,12 +271,20 @@ export async function retryDistribution(slug: string, paymentId: string): Promis
   return { error: failed?.error ?? "No se pudo repartir el pago." };
 }
 
-/** "Recargar saldo": en testnet, una ronda de friendbot (~10.000 XLM) fusionada en la wallet. */
+/** "Recargar saldo": en testnet, swap XLM→USDC (friendbot + DEX) en la wallet custodial. */
 export async function topUpBalance(): Promise<FormState> {
   const user = await requireUser("/inicio");
   try {
     const copPerXlm = await getCopPerXlm();
-    await friendbotTopUp(user.stellar_public_key, 1n, (round) => recordTopup(user.id, round, copPerXlm));
+    const { data: row } = await db()
+      .from("users")
+      .select("stellar_secret_enc")
+      .eq("id", user.id)
+      .single<{ stellar_secret_enc: string }>();
+    if (!row) return { error: "No encontramos tu cuenta." };
+    await usdcTopUp(decryptSecret(row.stellar_secret_enc), 1_000_000n, (round) =>
+      recordTopup(user.id, round, copPerXlm),
+    );
   } catch (err) {
     console.error("Recarga fallida:", err);
     return { error: "No pudimos recargar tu saldo. Intenta de nuevo en un momento." };

@@ -58,7 +58,7 @@ function sendErrorMessage(err: unknown): string {
 }
 
 /**
- * Envía el XLM de un retiro ya reclamado (status 'sending'). Devuelve el estado en que quedó
+ * Envía el USDC de un retiro ya reclamado (status 'sending'). Devuelve el estado en que quedó
  * y, si no salió, el mensaje para mostrar.
  */
 export async function sendWithdrawal(w: WithdrawalRow, kp: Keypair): Promise<{ status: WithdrawalStatus; error?: string }> {

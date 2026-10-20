@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { LoteInterpretacion } from "@/components/LoteInterpretacion";
 import { DesktopShell } from "@/components/DesktopShell";
 import { Card, TxLink } from "@/components/ui";
 import { formatCop, formatDateTime } from "@/lib/format";
@@ -38,11 +39,21 @@ export default async function LoteDetailPage({
 
   const canAct = lote.status === "draft" || lote.status === "scheduled" || lote.status === "failed";
   const unmatched = (items ?? []).filter((i) => !i.user_id);
+  const mode = lote.mode === "percent" ? "percent" : "amounts";
+  const previewRows = (items ?? []).map((i) => ({
+    key: i.id,
+    username: i.username ?? "",
+    displayName: i.display_name ?? "",
+    role: i.role ?? "",
+    amountCop: i.amount_cop != null ? Number(i.amount_cop) : null,
+    shareBps: i.share_bps != null ? Number(i.share_bps) : null,
+    matched: !!i.user_id,
+  }));
 
   return (
     <DesktopShell breadcrumb={`Lotes / ${lote.name}`}>
       <p className="text-xs font-semibold tracking-wide text-blue uppercase">
-        {STATUS[lote.status]} · {lote.mode === "percent" ? "Porcentajes" : "Montos"}
+        {STATUS[lote.status]} · {mode === "percent" ? "Porcentajes" : "Montos"}
       </p>
       <h1 className="mt-1 font-display text-[32px] font-bold text-ink">{lote.name}</h1>
       <p className="mt-1 text-sm text-ink-muted">
@@ -76,44 +87,53 @@ export default async function LoteDetailPage({
         </p>
       ) : null}
 
-      <Card className="mt-6 overflow-x-auto p-0">
-        <table className="w-full min-w-[640px] text-left text-sm">
-          <thead className="border-b border-line bg-bg-soft text-xs font-semibold text-ink-muted">
-            <tr>
-              <th className="px-4 py-3">Nombre</th>
-              <th className="px-4 py-3">Usuario</th>
-              <th className="px-4 py-3">Celular</th>
-              <th className="px-4 py-3">Rol</th>
-              <th className="px-4 py-3">Pago</th>
-              <th className="px-4 py-3">Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(items ?? []).map((i) => (
-              <tr key={i.id} className="border-b border-line last:border-0">
-                <td className="px-4 py-3 font-medium text-ink">{i.display_name || "—"}</td>
-                <td className="px-4 py-3">
-                  {i.username ? (
-                    <span className={i.user_id ? "text-ink" : "text-warn"}>@{i.username}</span>
-                  ) : (
-                    "—"
-                  )}
-                </td>
-                <td className="px-4 py-3 text-ink-muted">{i.phone || "—"}</td>
-                <td className="px-4 py-3 text-ink-muted">{i.role || "—"}</td>
-                <td className="px-4 py-3 font-semibold text-ink">
-                  {lote.mode === "percent" && i.share_bps
-                    ? `${bpsToPercent(i.share_bps)}%`
-                    : i.amount_cop
-                      ? formatCop(Number(i.amount_cop))
-                      : "—"}
-                </td>
-                <td className="px-4 py-3 text-xs text-ink-muted">{i.status}</td>
+      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_340px]">
+        <Card className="overflow-x-auto p-0">
+          <table className="w-full min-w-[560px] text-left text-sm">
+            <thead className="border-b border-line bg-bg-soft text-xs font-semibold text-ink-muted">
+              <tr>
+                <th className="px-4 py-3">Nombre</th>
+                <th className="px-4 py-3">Usuario</th>
+                <th className="px-4 py-3">Rol</th>
+                <th className="px-4 py-3">Pago</th>
+                <th className="px-4 py-3">Estado</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </Card>
+            </thead>
+            <tbody>
+              {(items ?? []).map((i) => (
+                <tr key={i.id} className="border-b border-line last:border-0">
+                  <td className="px-4 py-3 font-medium text-ink">{i.display_name || "—"}</td>
+                  <td className="px-4 py-3">
+                    {i.username ? (
+                      <span className={i.user_id ? "text-ink" : "text-warn"}>@{i.username}</span>
+                    ) : (
+                      "—"
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-ink-muted">{i.role || "—"}</td>
+                  <td className="px-4 py-3 font-semibold text-ink">
+                    {lote.mode === "percent" && i.share_bps
+                      ? `${bpsToPercent(i.share_bps)}%`
+                      : i.amount_cop
+                        ? formatCop(Number(i.amount_cop))
+                        : "—"}
+                  </td>
+                  <td className="px-4 py-3 text-xs text-ink-muted">{i.status}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+
+        <Card className="p-5 lg:sticky lg:top-6 lg:self-start">
+          <LoteInterpretacion
+            rows={previewRows}
+            mode={mode}
+            totalCop={lote.total_cop != null ? Number(lote.total_cop) : null}
+            title="Quién recibe cuánto"
+          />
+        </Card>
+      </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-4">
         <LoteActions loteId={lote.id} canSchedule={canAct && lote.status !== "scheduled"} canClose={canAct} />

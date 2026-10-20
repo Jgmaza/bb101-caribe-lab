@@ -16,14 +16,21 @@ import type { AnchorMemo } from "@/lib/withdrawals";
 import { env } from "./env";
 
 // Toda la interacción con Stellar testnet pasa por aquí.
-// Activo: XLM nativo. Montos en stroops (BigInt). En pantalla se muestran en pesos.
+// Activo de pago: USDC de Circle en testnet. Montos en unidades de 10^-7 ("stroops").
+// XLM solo para reserva de cuenta, comisiones y swap al fondear.
 
 const FEE = "1000"; // stroops por operación; holgado para testnet
-const STARTING_XLM = "1.5"; // reserva de la cuenta (1 XLM) + comisiones
+const STARTING_XLM = "2.5"; // reserva + trustline USDC + comisiones
 const TIMEOUT_SECONDS = 60;
 const FRIENDBOT_URL = "https://friendbot.stellar.org";
 const MAX_TOPUP_ROUNDS = 5; // cada ronda de friendbot trae ~10.000 XLM
+const MAX_USDC_TOPUP_ROUNDS = 20; // cada ronda compra hasta 25 USDC en el DEX
 const FUNDER_MIN_STROOPS = xlmToStroops("500"); // por debajo, el funder se recarga solo
+
+/** USDC de Circle en Stellar Testnet (mismo issuer que testanchor). */
+export const USDC_CODE = "USDC";
+export const USDC_ISSUER = "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5";
+export const USDC = new Asset(USDC_CODE, USDC_ISSUER);
 
 let server: Horizon.Server | undefined;
 function horizon() {
@@ -180,11 +187,48 @@ async function builderFor(publicKey: string) {
   });
 }
 
+function usdcBalanceStroops(account: Horizon.AccountResponse): bigint {
+  const line = account.balances.find(
+    (b) =>
+      b.asset_type !== "native" &&
+      "asset_code" in b &&
+      b.asset_code === USDC_CODE &&
+      b.asset_issuer === USDC_ISSUER,
+  );
+  if (!line) return 0n;
+  const bal = xlmToStroops(line.balance);
+  const selling = "selling_liabilities" in line ? xlmToStroops(line.selling_liabilities) : 0n;
+  const free = bal - selling;
+  return free > 0n ? free : 0n;
+}
+
+function hasUsdcTrustline(account: Horizon.AccountResponse): boolean {
+  return account.balances.some(
+    (b) =>
+      b.asset_type !== "native" &&
+      "asset_code" in b &&
+      b.asset_code === USDC_CODE &&
+      b.asset_issuer === USDC_ISSUER,
+  );
+}
+
 /**
- * Saldo disponible en stroops (descontada la reserva mínima y un margen para comisiones).
- * 0 si la cuenta no existe; null si Horizon no respondió (la UI muestra "no disponible").
+ * Saldo disponible en USDC (unidades 10^-7). 0 si no hay trustline; null si Horizon falló.
+ * El nombre histórico `getAvailableStroops` se mantiene: la UI y la DB siguen hablando de stroops.
  */
 export async function getAvailableStroops(publicKey: string): Promise<bigint | null> {
+  try {
+    const account = await loadAccount(publicKey);
+    return usdcBalanceStroops(account);
+  } catch (err) {
+    if (err instanceof NotFoundError) return 0n;
+    console.error(`No se pudo leer el saldo USDC de ${publicKey}:`, err);
+    return null;
+  }
+}
+
+/** Saldo XLM gastable (reserva + comisiones). Usado internamente para fondeo. */
+async function getAvailableNativeStroops(publicKey: string): Promise<bigint | null> {
   try {
     const account = await loadAccount(publicKey);
     const native = account.balances.find((b) => b.asset_type === "native");
@@ -198,9 +242,17 @@ export async function getAvailableStroops(publicKey: string): Promise<bigint | n
     });
   } catch (err) {
     if (err instanceof NotFoundError) return 0n;
-    console.error(`No se pudo leer el saldo de ${publicKey}:`, err);
+    console.error(`No se pudo leer el saldo XLM de ${publicKey}:`, err);
     return null;
   }
+}
+
+/** Abre trustline USDC si falta (idempotente). */
+export async function ensureUsdcTrustline(secret: string): Promise<void> {
+  const kp = Keypair.fromSecret(secret);
+  const account = await loadAccount(kp.publicKey());
+  if (hasUsdcTrustline(account)) return;
+  await buildAndSubmit(kp, (builder) => builder.addOperation(Operation.changeTrust({ asset: USDC })));
 }
 
 /** Fondea una cuenta nueva con friendbot. Si la llamada falla, revisa si igual quedó fondeada. */
@@ -228,10 +280,8 @@ async function friendbot(publicKey: string): Promise<void> {
 export type TopupRound = { txHash: string; amountStroops: bigint };
 
 /**
- * Recarga con friendbot: friendbot solo fondea cuentas que NO existen, así que en cada ronda
- * se crea una cuenta temporal, friendbot la fondea y se fusiona (accountMerge) en `destination`.
- * Repite hasta sumar `minStroops` (al menos una ronda, máximo MAX_TOPUP_ROUNDS). `onRound` corre
- * al terminar cada ronda: si una ronda posterior falla, las anteriores ya quedaron registradas.
+ * Recarga XLM con friendbot: crea cuenta temporal, friendbot la fondea y se fusiona en
+ * `destination`. Repite hasta sumar `minStroops` de XLM.
  */
 export async function friendbotTopUp(
   destination: string,
@@ -254,7 +304,6 @@ export async function friendbotTopUp(
       .build();
     tx.sign(temp);
     const res = await submit(tx);
-    // La comisión cobrada sale del saldo de la temporal; el resto llega al destino.
     const fee = BigInt(res.fee_charged ?? FEE);
     const round = { txHash: res.hash, amountStroops: balance - fee };
     rounds.push(round);
@@ -264,16 +313,70 @@ export async function friendbotTopUp(
   return rounds;
 }
 
+/**
+ * Recarga USDC en testnet: friendbot trae XLM y se cambia a USDC en el DEX (path payment).
+ * `onRound` recibe el USDC neto de cada swap (para registrar en `topups`).
+ */
+export async function usdcTopUp(
+  secret: string,
+  minUsdcStroops = 1n,
+  onRound?: (round: TopupRound) => Promise<void>,
+): Promise<TopupRound[]> {
+  const kp = Keypair.fromSecret(secret);
+  await ensureUsdcTrustline(secret);
+
+  const rounds: TopupRound[] = [];
+  let available = (await getAvailableStroops(kp.publicKey())) ?? 0n;
+
+  while (available < minUsdcStroops) {
+    if (rounds.length >= MAX_USDC_TOPUP_ROUNDS) {
+      throw new Error("El monto supera lo que se puede recargar de una vez.");
+    }
+    const need = minUsdcStroops - available;
+    // Pedimos de a poco para no agotar un solo nivel del libro (máx. 25 USDC/ronda).
+    const chunk = need > 250_000_000n ? 250_000_000n : need < 1_000_000n ? 1_000_000n : need;
+    // Precio de referencia ~0.12–0.5 USDC por XLM → margen amplio de XLM a enviar.
+    const xlmForSwap = chunk * 20n + xlmToStroops("100");
+    const nativeFree = (await getAvailableNativeStroops(kp.publicKey())) ?? 0n;
+    if (nativeFree < xlmForSwap) {
+      await friendbotTopUp(kp.publicKey(), xlmForSwap - nativeFree + xlmToStroops("10"));
+    }
+
+    const before = available;
+    const destAmount = stroopsToXlm(chunk);
+    const sendMax = stroopsToXlm(xlmForSwap);
+    const hash = await buildAndSubmit(kp, (builder) =>
+      builder.addOperation(
+        Operation.pathPaymentStrictReceive({
+          sendAsset: Asset.native(),
+          sendMax,
+          destination: kp.publicKey(),
+          destAsset: USDC,
+          destAmount,
+          path: [],
+        }),
+      ),
+    );
+    available = (await getAvailableStroops(kp.publicKey())) ?? 0n;
+    const gained = available - before;
+    if (gained <= 0n) throw new Error("El swap XLM→USDC no aumentó el saldo.");
+    const round = { txHash: hash, amountStroops: gained };
+    rounds.push(round);
+    await onRound?.(round);
+  }
+  return rounds;
+}
+
 /** Si el funder baja del umbral, se recarga solo con friendbot. */
 async function ensureFunderBalance(funder: Keypair, needed: bigint) {
-  const available = await getAvailableStroops(funder.publicKey());
+  const available = await getAvailableNativeStroops(funder.publicKey());
   if (available !== null && available - needed >= FUNDER_MIN_STROOPS) return;
   await friendbotTopUp(funder.publicKey(), needed);
 }
 
 /**
  * Crea cuentas custodiales (personas o proyectos) en una sola transacción: el funder les da lo
- * justo para la reserva y algunas comisiones. Máximo 100 cuentas.
+ * justo para la reserva y algunas comisiones. Luego cada una abre trustline USDC.
  */
 export async function createCustodialAccounts(count: number): Promise<Keypair[]> {
   if (count < 1 || count > 100) throw new Error("Se pueden crear entre 1 y 100 cuentas a la vez");
@@ -281,7 +384,6 @@ export async function createCustodialAccounts(count: number): Promise<Keypair[]>
   await ensureFunderBalance(funder, BigInt(count) * xlmToStroops(STARTING_XLM));
   const accounts = Array.from({ length: count }, () => Keypair.random());
 
-  // Dos registros a la vez usan el funder: buildAndSubmit rearma ante tx_bad_seq.
   await buildAndSubmit(funder, (builder) => {
     for (const kp of accounts) {
       builder.addOperation(
@@ -290,10 +392,14 @@ export async function createCustodialAccounts(count: number): Promise<Keypair[]>
     }
     return builder;
   });
+
+  for (const kp of accounts) {
+    await ensureUsdcTrustline(kp.secret());
+  }
   return accounts;
 }
 
-/** Pago de una persona a la cuenta del proyecto, en stroops. */
+/** Pago de una persona a la cuenta del proyecto, en USDC. */
 export async function payToProject(opts: {
   payerSecret: string;
   projectPublicKey: string;
@@ -301,6 +407,7 @@ export async function payToProject(opts: {
   memo: string;
   onSigned: (tx: SignedTx) => Promise<void>;
 }): Promise<string> {
+  await ensureUsdcTrustline(opts.payerSecret);
   return buildAndSubmit(
     Keypair.fromSecret(opts.payerSecret),
     (builder) =>
@@ -308,7 +415,7 @@ export async function payToProject(opts: {
         .addOperation(
           Operation.payment({
             destination: opts.projectPublicKey,
-            asset: Asset.native(),
+            asset: USDC,
             amount: stroopsToXlm(opts.amountStroops),
           }),
         )
@@ -327,6 +434,15 @@ export async function accountExists(publicKey: string): Promise<boolean | null> 
   }
 }
 
+/** true si la cuenta puede recibir USDC (trustline abierta). */
+export async function canReceiveUsdc(publicKey: string): Promise<boolean | null> {
+  try {
+    return hasUsdcTrustline(await loadAccount(publicKey));
+  } catch (err) {
+    return err instanceof NotFoundError ? false : null;
+  }
+}
+
 function toMemo(memo: AnchorMemo): Memo {
   switch (memo.type) {
     case "id":
@@ -339,8 +455,8 @@ function toMemo(memo: AnchorMemo): Memo {
 }
 
 /**
- * Retiro: XLM de la cuenta de una persona a otra cuenta. Si la cuenta de destino no existe se
- * crea con createAccount (el monto debe cubrir su reserva; lo valida quien llama).
+ * Retiro: USDC de la cuenta de una persona a otra. No crea cuentas nuevas (hace falta
+ * trustline USDC en el destino, que solo puede abrir el dueño de esa cuenta).
  */
 export async function sendNative(opts: {
   sourceSecret: string;
@@ -350,14 +466,18 @@ export async function sendNative(opts: {
   memo: AnchorMemo | null;
   onSigned: (tx: SignedTx) => Promise<void>;
 }): Promise<string> {
+  if (opts.createAccount) {
+    throw new TxError("Para recibir USDC la cuenta destino ya debe existir y aceptar USDC.", false, [
+      "op_no_trust",
+    ]);
+  }
+  await ensureUsdcTrustline(opts.sourceSecret);
   const amount = stroopsToXlm(opts.amountStroops);
   return buildAndSubmit(
     Keypair.fromSecret(opts.sourceSecret),
     (builder) => {
       builder.addOperation(
-        opts.createAccount
-          ? Operation.createAccount({ destination: opts.destination, startingBalance: amount })
-          : Operation.payment({ destination: opts.destination, asset: Asset.native(), amount }),
+        Operation.payment({ destination: opts.destination, asset: USDC, amount }),
       );
       return opts.memo ? builder.addMemo(toMemo(opts.memo)) : builder;
     },
@@ -384,9 +504,8 @@ export async function distribute(opts: {
 }
 
 /**
- * Varios pagos nativos desde una sola cuenta (hotel cierra lote, o proyecto reparte).
+ * Varios pagos USDC desde una sola cuenta (hotel cierra lote, o proyecto reparte).
  * Máx. ~100 ops/tx en Stellar; el MVP de lotes limita a 40 filas.
- * Interfaz estable para sustituir por SDP más adelante.
  */
 export async function payMany(opts: {
   payerSecret: string;
@@ -394,6 +513,7 @@ export async function payMany(opts: {
   memo: string;
   onSigned?: (tx: SignedTx) => Promise<void>;
 }): Promise<string> {
+  await ensureUsdcTrustline(opts.payerSecret);
   return buildAndSubmit(
     Keypair.fromSecret(opts.payerSecret),
     (builder) => {
@@ -402,7 +522,7 @@ export async function payMany(opts: {
         builder.addOperation(
           Operation.payment({
             destination: s.publicKey,
-            asset: Asset.native(),
+            asset: USDC,
             amount: stroopsToXlm(s.amountStroops),
           }),
         );

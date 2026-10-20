@@ -2,11 +2,14 @@
 
 ## Entregable 4 — Apex
 
-| Pieza | Archivo |
+| Pieza | Archivo / enlace |
 |---|---|
 | Documentación obligatoria | [`MVPFunctional.md`](./MVPFunctional.md) |
-| Video MVP (≤3 min) | [`video-mvp-orilla.mp4`](./video-mvp-orilla.mp4) |
+| **Video público (editar aquí)** | [`VIDEO.md`](./VIDEO.md) → `https://www.youtube.com/watch?v=VIDEO_URL` |
+| Video archivo (respaldo) | [`video-mvp-orilla.mp4`](./video-mvp-orilla.mp4) |
 | Producto en línea | https://orilla-dusky.vercel.app |
+| Excel demo | https://orilla-dusky.vercel.app/Lote-pagos-Orilla-demo.xlsx |
+| Apex | https://stellarapex.org/hackathons/ea3a5982-7c2e-4dce-a769-37e3a563fb15 |
 
 ## Challenge #4 (redes, ≤60s)
 
@@ -15,5 +18,5 @@
 
 ## Notas
 
-Estado operativo ampliado (fuera del repo si aplica): `Entregables/Entregable 4/docs/ESTADO.md`  
-Datos locales / passwords: `Entregables/Entregable 4/docs/local/` — no subir secrets aquí.
+Estado operativo ampliado: `Entregables/Entregable 4/docs/ESTADO.md`  
+Passwords / seed: `Entregables/Entregable 4/docs/local/` — no subir secrets aquí.

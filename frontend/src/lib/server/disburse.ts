@@ -4,7 +4,7 @@ import { splitAmount } from "@/lib/split";
 import { decryptSecret } from "./crypto";
 import { db } from "./db";
 import { getCopPerXlm } from "./price";
-import { friendbotTopUp, getAvailableStroops, payMany } from "./stellar";
+import { ensureUsdcTrustline, getAvailableStroops, payMany, usdcTopUp } from "./stellar";
 
 /**
  * Interfaz de dispersión de un lote.
@@ -28,7 +28,7 @@ export async function disburseLote(loteId: string, ownerId: string): Promise<{ o
   const usernames = [...new Set(items.map((i) => i.username).filter(Boolean))] as string[];
   const { data: users } = await db()
     .from("users")
-    .select("id, username, stellar_public_key")
+    .select("id, username, stellar_public_key, stellar_secret_enc")
     .in("username", usernames);
   const byUser = new Map((users ?? []).map((u) => [u.username, u]));
 
@@ -96,13 +96,19 @@ export async function disburseLote(loteId: string, ownerId: string): Promise<{ o
   await db().from("lotes").update({ status: "closing", error: null }).eq("id", loteId);
 
   try {
+    const secret = decryptSecret(owner.stellar_secret_enc);
+    await ensureUsdcTrustline(secret);
+    for (const item of items) {
+      const u = byUser.get(item.username!)!;
+      await ensureUsdcTrustline(decryptSecret(u.stellar_secret_enc));
+    }
+
     const available = await getAvailableStroops(owner.stellar_public_key);
     const need = totalStroops;
     if (available === null || available < need) {
-      await friendbotTopUp(owner.stellar_public_key, need - (available ?? 0n) + 5_000_000n);
+      await usdcTopUp(secret, need - (available ?? 0n) + 1_000_000n);
     }
 
-    const secret = decryptSecret(owner.stellar_secret_enc);
     const txHash = await payMany({
       payerSecret: secret,
       splits: splits.map((s) => ({ publicKey: s.publicKey, amountStroops: s.amountStroops })),

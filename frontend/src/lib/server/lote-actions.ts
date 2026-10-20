@@ -6,7 +6,7 @@ import {
   detectColumns,
   detectMode,
   mapRows,
-  parseSpreadsheetText,
+  parseSpreadsheetFile,
   validateLote,
   type LoteMode,
   type ParsedRow,
@@ -46,12 +46,17 @@ export async function createLoteFromUpload(
   const file = formData.get("file");
 
   if (!(file instanceof File) || file.size === 0) {
-    return { error: "Sube un archivo CSV (desde Excel: Guardar como CSV)." };
+    return { error: "Sube el Excel (.xlsx) o un CSV UTF-8." };
   }
   if (file.size > 1_500_000) return { error: "El archivo es demasiado grande (máx. 1,5 MB)." };
 
-  const textContent = await file.text();
-  const { headers, rows } = parseSpreadsheetText(textContent);
+  let headers: string[];
+  let rows: Record<string, string>[];
+  try {
+    ({ headers, rows } = await parseSpreadsheetFile(file));
+  } catch {
+    return { error: "No pudimos leer ese Excel/CSV. Usa la plantilla del Entregable 4." };
+  }
   if (!headers.length) return { error: "No pudimos leer columnas en el archivo." };
 
   const map = detectColumns(headers);

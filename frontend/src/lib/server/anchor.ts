@@ -1,9 +1,10 @@
 import "server-only";
 import { Keypair, Networks, StellarToml, TransactionBuilder, WebAuth } from "@stellar/stellar-sdk";
 import { stroopsToXlm, xlmToStroops } from "@/lib/money";
+import { USDC_CODE, USDC_ISSUER } from "./stellar";
 
 // Anchor SEP-24 para "Retirar a mi banco". En testnet: testanchor.stellar.org, que acepta
-// retiros de XLM nativo. Para un banco real (p. ej. Bancolombia) solo cambia ANCHOR_DOMAIN.
+// retiros de USDC (Circle). Para un banco real (p. ej. Bancolombia) solo cambia ANCHOR_DOMAIN.
 // La autenticación es SEP-10: el anchor manda un challenge, lo verificamos y lo firmamos con la
 // clave custodial de la persona en el servidor. La clave nunca sale del servidor.
 
@@ -95,18 +96,18 @@ export type WithdrawLimits = { enabled: boolean; minStroops: bigint; maxStroops:
 
 let info: { value: WithdrawLimits; at: number } | undefined;
 
-/** Montos que el anchor acepta para retirar XLM (testanchor: entre 1 y 10 XLM). */
+/** Montos que el anchor acepta para retirar USDC (testanchor: entre 1 y 10 USDC). */
 export async function getWithdrawLimits(): Promise<WithdrawLimits> {
   if (info && Date.now() - info.at < INFO_TTL_MS) return info.value;
   const { transferServer } = await anchorConfig();
   const body = await request<{
-    withdraw?: { native?: { enabled?: boolean; min_amount?: number; max_amount?: number } };
+    withdraw?: { USDC?: { enabled?: boolean; min_amount?: number; max_amount?: number } };
   }>(`${transferServer}/info`);
-  const native = body.withdraw?.native;
+  const usdc = body.withdraw?.USDC;
   const value = {
-    enabled: !!native?.enabled,
-    minStroops: native?.min_amount ? xlmToStroops(String(native.min_amount)) : 1n,
-    maxStroops: native?.max_amount ? xlmToStroops(String(native.max_amount)) : null,
+    enabled: !!usdc?.enabled,
+    minStroops: usdc?.min_amount ? xlmToStroops(String(usdc.min_amount)) : 1n,
+    maxStroops: usdc?.max_amount ? xlmToStroops(String(usdc.max_amount)) : null,
   };
   info = { value, at: Date.now() };
   return value;
@@ -122,7 +123,8 @@ export async function startWithdraw(kp: Keypair, amountStroops: bigint): Promise
       method: "POST",
       headers: { authorization: `Bearer ${token}` },
       body: JSON.stringify({
-        asset_code: "native",
+        asset_code: USDC_CODE,
+        asset_issuer: USDC_ISSUER,
         account: kp.publicKey(),
         amount: stroopsToXlm(amountStroops),
         lang: "es",

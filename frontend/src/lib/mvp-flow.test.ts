@@ -60,10 +60,11 @@ test("MVP · Excel: la plantilla pública de Caribe se interpreta en modo montos
   assert.ok(map.username && map.amount && map.role && map.displayName);
 
   const parsed = mapRows(rows, map, "amounts");
-  assert.ok(parsed.length >= 4);
+  assert.equal(parsed.length, 5);
   assert.ok(parsed.every((r) => r.username && r.amountCop && r.amountCop > 0));
-  assert.ok(parsed.some((r) => r.username === "laura"));
-  assert.ok(parsed.some((r) => r.username === "andres"));
+  for (const u of ["laura", "andres", "pedro", "athomserx", "jgmaza"]) {
+    assert.ok(parsed.some((r) => r.username === u), `falta @${u}`);
+  }
   assert.deepEqual(validateLote(parsed, "amounts", null), []);
 });
 
@@ -103,7 +104,7 @@ test("MVP · roles: el Excel normaliza cargo a roles de evento", () => {
 // --- 3. Cerrar la noche: montos → stroops → splits ---
 
 test("MVP · cerrar noche (montos): cada fila se convierte a stroops con tasa fija", () => {
-  const rate = 3000; // COP por XLM (demo)
+  const rate = 4000; // COP por USDC (demo)
   const rows = [
     { username: "laura", amountCop: 320_000 },
     { username: "andres", amountCop: 280_000 },

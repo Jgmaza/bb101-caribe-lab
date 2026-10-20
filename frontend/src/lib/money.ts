@@ -1,5 +1,5 @@
-// Montos: en Stellar todo va en stroops (1 XLM = 10.000.000), siempre BigInt.
-// En pantalla todo va en pesos, convertidos con una tasa COP por XLM.
+// Montos on-chain: unidades de 10^-7 del activo de pago (USDC en testnet), siempre BigInt.
+// En pantalla todo va en pesos, convertidos con una tasa COP por USDC (columna histórica cop_per_xlm).
 
 export const STROOPS_PER_XLM = 10_000_000n;
 /** Tope por pago: cabe en las recargas automáticas (5 × 10.000 XLM) con margen. */
