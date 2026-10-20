@@ -375,11 +375,30 @@ export async function distribute(opts: {
   memo: string;
   onSigned: (tx: SignedTx) => Promise<void>;
 }): Promise<string> {
+  return payMany({
+    payerSecret: opts.projectSecret,
+    splits: opts.splits,
+    memo: opts.memo,
+    onSigned: opts.onSigned,
+  });
+}
+
+/**
+ * Varios pagos nativos desde una sola cuenta (hotel cierra lote, o proyecto reparte).
+ * Máx. ~100 ops/tx en Stellar; el MVP de lotes limita a 40 filas.
+ * Interfaz estable para sustituir por SDP más adelante.
+ */
+export async function payMany(opts: {
+  payerSecret: string;
+  splits: { publicKey: string; amountStroops: bigint }[];
+  memo: string;
+  onSigned?: (tx: SignedTx) => Promise<void>;
+}): Promise<string> {
   return buildAndSubmit(
-    Keypair.fromSecret(opts.projectSecret),
+    Keypair.fromSecret(opts.payerSecret),
     (builder) => {
       for (const s of opts.splits) {
-        if (s.amountStroops <= 0n) continue; // Stellar no acepta pagos de 0
+        if (s.amountStroops <= 0n) continue;
         builder.addOperation(
           Operation.payment({
             destination: s.publicKey,

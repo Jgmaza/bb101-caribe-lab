@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { formatCop } from "@/lib/format";
 import { MAX_MEMBERS } from "@/lib/members";
 import { TOTAL_BPS, percentToBps, splitAmount } from "@/lib/split";
@@ -29,7 +29,14 @@ export function newMemberDraft(partial: Partial<MemberDraft> = {}): MemberDraft 
  * Filas editables de integrantes (@usuario, rol, %, admin). Serializa el estado en un input
  * oculto `members` para que la server action lo reciba como JSON.
  */
-export function MembersEditor({ initial }: { initial: MemberDraft[] }) {
+export function MembersEditor({
+  initial,
+  onValidityChange,
+}: {
+  initial: MemberDraft[];
+  /** true solo si los % suman 100 y hay al menos un admin. */
+  onValidityChange?: (ok: boolean) => void;
+}) {
   const [members, setMembers] = useState(initial);
 
   const bps = members.map((m) => percentToBps(m.pct));
@@ -37,6 +44,13 @@ export function MembersEditor({ initial }: { initial: MemberDraft[] }) {
   const sum = bps.reduce<number>((acc, b) => acc + (b ?? 0), 0);
   const balanced = valid && sum === TOTAL_BPS;
   const hasAdmin = members.some((m) => m.isAdmin);
+  const ready = balanced && hasAdmin;
+
+  useEffect(() => {
+    onValidityChange?.(ready);
+    // Solo reaccionamos a `ready`; el padre puede pasar un setState inline.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- onValidityChange estable en la práctica
+  }, [ready]);
   const preview = balanced
     ? splitAmount(
         BigInt(EXAMPLE_TOTAL),

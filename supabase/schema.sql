@@ -25,6 +25,15 @@ begin
       'interactive', 'ready', 'sending', 'processing', 'completed', 'failed', 'cancelled'
     );
   end if;
+  if not exists (select 1 from pg_type where typname = 'lote_status') then
+    create type public.lote_status as enum ('draft', 'scheduled', 'closing', 'closed', 'failed');
+  end if;
+  if not exists (select 1 from pg_type where typname = 'lote_mode') then
+    create type public.lote_mode as enum ('amounts', 'percent');
+  end if;
+  if not exists (select 1 from pg_type where typname = 'lote_item_status') then
+    create type public.lote_item_status as enum ('pending', 'paid', 'failed', 'skipped');
+  end if;
 end
 $$;
 
@@ -538,6 +547,43 @@ $$;
 -- Seguridad: solo el servidor (service_role) accede. Sin policies públicas.
 -- ---------------------------------------------------------------------------
 
+-- Lotes del hotel: Excel → programar → cerrar la noche (dispersión vía Horizon hoy; SDP después).
+create table if not exists public.lotes (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid not null references public.users (id) on delete restrict,
+  name text not null check (char_length(name) between 2 and 120),
+  mode public.lote_mode not null default 'amounts',
+  total_cop bigint check (total_cop is null or total_cop > 0),
+  status public.lote_status not null default 'draft',
+  notes text not null default '' check (char_length(notes) <= 500),
+  scheduled_for timestamptz,
+  closed_at timestamptz,
+  distribution_tx_hash text check (distribution_tx_hash is null or distribution_tx_hash ~ '^[a-f0-9]{64}$'),
+  error text,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists lotes_owner_id_idx on public.lotes (owner_id);
+create index if not exists lotes_status_idx on public.lotes (status);
+
+create table if not exists public.lote_items (
+  id uuid primary key default gen_random_uuid(),
+  lote_id uuid not null references public.lotes (id) on delete cascade,
+  user_id uuid references public.users (id) on delete set null,
+  username text check (username is null or username ~ '^[a-z0-9_]{3,20}$'),
+  display_name text not null default '' check (char_length(display_name) <= 60),
+  phone text not null default '' check (char_length(phone) <= 20),
+  role text not null default '' check (char_length(role) <= 60),
+  amount_cop bigint check (amount_cop is null or amount_cop > 0),
+  share_bps integer check (share_bps is null or share_bps between 1 and 10000),
+  status public.lote_item_status not null default 'pending',
+  error text,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists lote_items_lote_id_idx on public.lote_items (lote_id);
+create index if not exists lote_items_user_id_idx on public.lote_items (user_id);
+
 alter table public.users enable row level security;
 alter table public.sessions enable row level security;
 alter table public.topups enable row level security;
@@ -547,10 +593,13 @@ alter table public.share_changes enable row level security;
 alter table public.payments enable row level security;
 alter table public.distributions enable row level security;
 alter table public.withdrawals enable row level security;
+alter table public.lotes enable row level security;
+alter table public.lote_items enable row level security;
 
 revoke all on public.users, public.sessions, public.topups from anon, authenticated;
 revoke all on public.projects, public.project_members, public.share_changes from anon, authenticated;
 revoke all on public.payments, public.distributions, public.withdrawals from anon, authenticated;
+revoke all on public.lotes, public.lote_items from anon, authenticated;
 
 revoke execute on function public.project_members_snapshot(uuid) from public, anon, authenticated;
 revoke execute on function public.create_project(text, text, public.project_kind, text, text, uuid, jsonb) from public, anon, authenticated;
@@ -562,6 +611,7 @@ grant usage on schema public to service_role;
 grant all on public.users, public.sessions, public.topups to service_role;
 grant all on public.projects, public.project_members, public.share_changes to service_role;
 grant all on public.payments, public.distributions, public.withdrawals to service_role;
+grant all on public.lotes, public.lote_items to service_role;
 grant execute on function public.project_members_snapshot(uuid) to service_role;
 grant execute on function public.create_project(text, text, public.project_kind, text, text, uuid, jsonb) to service_role;
 grant execute on function public.update_project_members(uuid, uuid, jsonb) to service_role;

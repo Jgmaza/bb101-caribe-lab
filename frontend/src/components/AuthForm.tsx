@@ -49,7 +49,7 @@ export function AuthForm({ mode, next }: { mode: "registro" | "ingresar"; next?:
           spellCheck={false}
           required
           minLength={3}
-          maxLength={21}
+          maxLength={20}
         />
       </Field>
       {isRegister ? (

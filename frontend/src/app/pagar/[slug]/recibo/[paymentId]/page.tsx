@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AutoRefresh } from "@/components/AutoRefresh";
 import { Logo } from "@/components/Logo";
 import { LinkButton, StatusChip, TxLink } from "@/components/ui";
 import { formatCop, formatDateTime } from "@/lib/format";
@@ -9,6 +10,8 @@ import { reconcilePayment } from "@/lib/server/payment-flow";
 import { getPayment, getPaymentTopups, getProjectAccess } from "@/lib/server/queries";
 import { requireUser } from "@/lib/server/session";
 import { bpsToPercent } from "@/lib/split";
+
+const POLLING: PaymentPhase[] = ["processing", "confirming", "distributing", "received"];
 
 const TITLE: Record<PaymentPhase, string> = {
   processing: "Procesando el pago",
@@ -47,6 +50,7 @@ export default async function ReciboPage({
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-bg-soft px-4 py-12">
+      {POLLING.includes(phase) ? <AutoRefresh seconds={4} /> : null}
       <div className="w-full max-w-[560px] rounded-[18px] border border-line bg-white p-6 shadow-sm sm:p-9">
         <Logo href="/inicio" />
         <div className="mt-6 flex items-center gap-3">
@@ -158,13 +162,13 @@ function StatusMessage({
   if (phase === "distributed") return null;
   const base = "mt-4 rounded-[10px] px-3.5 py-3 text-[13px]";
 
-  if (phase === "processing" || phase === "confirming" || phase === "distributing") {
+  if (phase === "processing" || phase === "confirming" || phase === "distributing" || phase === "received") {
     return (
       <p className={`${base} bg-[#E8F4FA] text-ink`}>
-        {phase === "distributing"
+        {phase === "distributing" || phase === "received"
           ? "Estamos confirmando el reparto con la red."
           : "Estamos confirmando tu pago con la red."}{" "}
-        Vuelve a cargar esta página en un minuto.
+        Esta página se actualiza sola.
       </p>
     );
   }

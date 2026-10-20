@@ -1,12 +1,13 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { MembersEditor, type MemberDraft } from "@/components/MembersEditor";
 import { Field, FormError, Input, SubmitButton } from "@/components/ui";
 import { createProject } from "@/lib/server/actions";
 
 export function ProjectForm({ me }: { me: { username: string; displayName: string } }) {
   const [state, action, pending] = useActionState(createProject, { error: null });
+  const [membersOk, setMembersOk] = useState(false);
   // Quien crea el proyecto entra como integrante y admin; no se puede quitar.
   const initial: MemberDraft[] = [
     {
@@ -54,13 +55,18 @@ export function ProjectForm({ me }: { me: { username: string; displayName: strin
           Agrega a cada integrante por su @usuario de Orilla. Lo que acuerden aquí
           se aplica a cada pago que reciba el proyecto; los porcentajes deben sumar 100%.
         </p>
-        <MembersEditor initial={initial} />
+        <MembersEditor initial={initial} onValidityChange={setMembersOk} />
       </div>
 
       <FormError message={state.error} />
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <SubmitButton variant="cta" pending={pending} pendingLabel="Creando el proyecto…">
+        <SubmitButton
+          variant="cta"
+          pending={pending}
+          pendingLabel="Creando el proyecto…"
+          disabled={!membersOk}
+        >
           Crear proyecto
         </SubmitButton>
         <p className="text-xs text-ink-muted">

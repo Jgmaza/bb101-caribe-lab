@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Logo } from "./Logo";
 
+/** Shell del trabajador: móvil-first limpio, sin marco de teléfono falso. */
 export function MobileShell({
   children,
   showLogo = false,
@@ -13,16 +14,16 @@ export function MobileShell({
   right?: ReactNode;
 }) {
   return (
-    <div className="mx-auto min-h-screen w-full max-w-[430px] bg-white shadow-sm sm:my-6 sm:min-h-[844px] sm:rounded-[28px] sm:border sm:border-line sm:overflow-hidden">
-      <div className="flex h-14 items-center justify-between px-5">
-        <div className="text-sm font-semibold text-ink">
-          {left ?? <span>9:41</span>}
+    <div className="min-h-screen bg-bg-soft">
+      <header className="sticky top-0 z-10 border-b border-line bg-white/95 backdrop-blur">
+        <div className="mx-auto flex h-14 max-w-lg items-center justify-between gap-3 px-4">
+          <div className="min-w-0 text-sm font-semibold text-ink">
+            {left ?? (showLogo ? <Logo href="/inicio" size="sm" /> : null)}
+          </div>
+          <div className="shrink-0 text-xs text-ink-muted">{right}</div>
         </div>
-        <div className="text-xs text-ink-muted">
-          {right ?? (showLogo ? <Logo href="/" size="sm" /> : <span>LTE</span>)}
-        </div>
-      </div>
-      <div className="px-5 pb-10">{children}</div>
+      </header>
+      <main className="mx-auto w-full max-w-lg px-4 py-6 pb-12">{children}</main>
     </div>
   );
 }

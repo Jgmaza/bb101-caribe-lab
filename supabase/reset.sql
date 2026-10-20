@@ -24,6 +24,8 @@ end
 $$;
 
 -- cascade arrastra los triggers de cada tabla.
+drop table if exists public.lote_items cascade;
+drop table if exists public.lotes cascade;
 drop table if exists public.withdrawals cascade;
 drop table if exists public.topups cascade;
 drop table if exists public.distributions cascade;
@@ -41,6 +43,9 @@ drop function if exists public.check_project_has_admin();
 drop function if exists public.check_distribution_sum();
 drop function if exists public.check_distribution_member();
 
+drop type if exists public.lote_item_status;
+drop type if exists public.lote_mode;
+drop type if exists public.lote_status;
 drop type if exists public.payment_status;
 drop type if exists public.withdrawal_status;
 drop type if exists public.withdrawal_kind;

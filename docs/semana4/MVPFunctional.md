@@ -4,7 +4,7 @@
 **Producto:** Orilla — *Que quien trabaja hoy, cobre hoy.*  
 **Repositorio:** [Jgmaza/bb101-caribe-lab](https://github.com/Jgmaza/bb101-caribe-lab)  
 **Deadline Apex:** 19 oct 2026, 23:00 COT  
-**Decisión E3 (opción B):** tecnología del ecosistema Stellar — pagos nativos + ancla SEP-24 (track de integración SCF); el camino SDP del E3 se sustituyó por un MVP de proyectos con reparto on-chain más demostrable en el plazo.
+**Decisión E3 (opción B):** tecnología del ecosistema Stellar — pagos nativos (Horizon/SDK) + ancla SEP-24; SDP queda como motor de escala para lotes grandes. El MVP hotel usa **Excel → lotes → cerrar la noche**; los grupos con % y `/pagar/[slug]` son un atajo secundario.
 
 ---
 

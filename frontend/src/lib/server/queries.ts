@@ -1,5 +1,6 @@
 import "server-only";
 import { stroopsToCop } from "@/lib/money";
+import { paymentPhase } from "@/lib/payments";
 import {
   db,
   type DistributionRow,
@@ -241,16 +242,33 @@ export async function getUserMovements(userId: string, limit = 20): Promise<Move
       txHash: d.payment.distribution_tx_hash,
       note: null,
     })),
-    ...orThrow(paid).map((p) => ({
-      id: `pago-${p.id}`,
-      kind: "pago" as const,
-      title: `Pago a ${p.project.name}`,
-      amountCop: -p.amount_cop,
-      at: p.created_at,
-      href: `/pagar/${p.project.slug}/recibo/${p.id}`,
-      txHash: p.status === "pending" ? null : p.payment_tx_hash,
-      note: p.status === "pending" ? "Confirmando" : null,
-    })),
+    ...orThrow(paid).map((p) => {
+      const phase = paymentPhase({
+        status: p.status,
+        payment_tx_hash: p.payment_tx_hash,
+        distribution_tx_hash: null,
+        tx_deadline: null,
+        created_at: p.created_at,
+      });
+      const noteByPhase: Partial<Record<typeof phase, string>> = {
+        processing: "Procesando",
+        confirming: "Confirmando",
+        received: "Falta repartir",
+        distributing: "Repartiendo",
+        payment_failed: "No salió",
+        distribution_failed: "Falló el reparto",
+      };
+      return {
+        id: `pago-${p.id}`,
+        kind: "pago" as const,
+        title: `Pago a ${p.project.name}`,
+        amountCop: -p.amount_cop,
+        at: p.created_at,
+        href: `/pagar/${p.project.slug}/recibo/${p.id}`,
+        txHash: p.status === "pending" ? null : p.payment_tx_hash,
+        note: noteByPhase[phase] ?? null,
+      };
+    }),
     ...topups.map((t) => ({
       id: `recarga-${t.id}`,
       kind: "recarga" as const,

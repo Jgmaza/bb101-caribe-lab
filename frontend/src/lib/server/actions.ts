@@ -109,7 +109,8 @@ export async function createProject(
     });
     if (error) throw new Error(error.message);
   } catch (err) {
-    return fail(`No pudimos crear el proyecto. ${(err as Error).message}`);
+    console.error("createProject", err);
+    return fail("No pudimos crear el proyecto. Intenta de nuevo en un momento.");
   }
 
   redirect(`/proyectos/${slug}`);
@@ -138,7 +139,10 @@ export async function updateProjectMembers(
     p_members: resolved.rows,
   });
   if (error?.code === "42501") return { error: "Solo los admins pueden editar el proyecto." };
-  if (error) return { error: `No pudimos guardar los cambios. ${error.message}` };
+  if (error) {
+    console.error("updateProjectMembers", error);
+    return { error: "No pudimos guardar los cambios. Intenta de nuevo." };
+  }
 
   // Si se quitó a sí mismo del proyecto, ya no puede verlo.
   const stillMember = resolved.rows.some((m) => m.user_id === user.id);

@@ -179,6 +179,12 @@ export default async function ProyectoPage({
                     <p className="text-[13px] text-ink-muted">
                       {p.payer.display_name} · {formatDateTime(p.created_at)}
                     </p>
+                    <Link
+                      href={`/pagar/${slug}/recibo/${p.id}`}
+                      className="mt-1 inline-block text-sm font-semibold text-blue hover:underline"
+                    >
+                      Ver recibo
+                    </Link>
                   </div>
                   <StatusChip phase={paymentPhase(p)} />
                 </div>
