@@ -31,7 +31,21 @@ const HEADER_ALIASES: Record<keyof ColumnMap, string[]> = {
   displayName: ["nombre", "name", "display_name", "nombre completo", "trabajador"],
   phone: ["celular", "telefono", "teléfono", "phone", "tel", "whatsapp", "móvil", "movil"],
   role: ["rol", "role", "cargo", "puesto", "funcion", "función"],
-  amount: ["monto", "valor", "pago", "honorarios", "amount", "cop", "pesos", "$", "total"],
+  amount: [
+    "monto",
+    "monto cop",
+    "monto_cop",
+    "montocop",
+    "valor",
+    "pago",
+    "honorarios",
+    "amount",
+    "cop",
+    "pesos",
+    "pesos colombianos",
+    "$",
+    "total",
+  ],
   percent: ["porcentaje", "percent", "%", "participacion", "participación", "pct", "share"],
 };
 

@@ -156,7 +156,11 @@ export async function startBankWithdrawal(prev: RequestFormState, formData: Form
     if (amountStroops < limits.minStroops || (limits.maxStroops !== null && amountStroops > limits.maxStroops)) {
       const min = formatCop(stroopsToCop(limits.minStroops, copPerXlm) + 1);
       const max = limits.maxStroops === null ? null : formatCop(stroopsToCop(limits.maxStroops, copPerXlm));
-      return keep(max ? `El banco de prueba acepta retiros entre ≈ ${min} y ≈ ${max}.` : `El mínimo es ≈ ${min}.`);
+      return keep(
+        max
+          ? `Bancolombia (demo) acepta retiros entre ≈ ${min} y ≈ ${max} en pesos. El tope es del banco de prueba, no de Orilla.`
+          : `El mínimo es ≈ ${min} en pesos.`,
+      );
     }
     anchorTx = await startWithdraw(await userKeypair(user.id), amountStroops);
   } catch (err) {

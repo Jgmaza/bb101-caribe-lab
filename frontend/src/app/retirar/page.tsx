@@ -40,8 +40,9 @@ export default async function RetirarPage() {
       }
     >
       <h1 className="mt-2 font-display text-[28px] font-bold leading-tight text-ink">Retirar</h1>
+      <p className="mt-1 text-sm text-ink-muted">Todo en pesos colombianos (COP). No trabajas en dólares.</p>
       <Card className="mt-4 p-4">
-        <p className="text-xs font-semibold text-ink-muted">Saldo disponible</p>
+        <p className="text-xs font-semibold text-ink-muted">Saldo disponible (COP)</p>
         <p className="mt-1 font-display text-2xl font-bold text-ink">
           {balance.cop === null ? formatBalance(null) : `≈ ${formatBalance(balance.cop)}`}
         </p>

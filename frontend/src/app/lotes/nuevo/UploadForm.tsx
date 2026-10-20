@@ -88,7 +88,7 @@ export function UploadForm() {
 
         <Field
           label="Excel o CSV"
-          hint="Plantilla del Entregable 4 (.xlsx) o CSV. Columnas: nombre, usuario, celular, rol, monto o %."
+          hint="Plantilla (.xlsx/CSV). Montos en pesos colombianos: columnas nombre, usuario, celular, rol, monto_cop (o %). No uses dólares."
         >
           <input
             type="file"
@@ -117,7 +117,7 @@ export function UploadForm() {
                 onChange={() => setMode("amounts")}
                 className="accent-blue"
               />
-              Montos exactos ($)
+              Montos exactos (COP)
             </label>
             <label className="flex cursor-pointer items-center gap-2">
               <input

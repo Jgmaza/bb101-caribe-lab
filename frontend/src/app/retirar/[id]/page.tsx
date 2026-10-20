@@ -46,7 +46,7 @@ export default async function RetiroPage({ params }: { params: Promise<{ id: str
     stroops === null ? null : stroopsToCop(BigInt(stroops), w.cop_per_xlm);
   const amountCop = toCop(w.amount_stroops) ?? w.amount_cop;
   const feeCop = w.fee_stroops > 0 ? toCop(w.fee_stroops) : null;
-  // Lo pedido, como lo espera el formulario del anchor (punto decimal, hasta 2 decimales).
+  // Código interno del formulario de prueba (no es lo que ve el usuario en Orilla).
   const anchorAmount = (Math.floor((w.amount_cop / w.cop_per_xlm) * 100) / 100).toFixed(2);
   const [chip, chipStyle] = CHIP[w.status];
   const isBank = w.kind === "banco";
@@ -62,11 +62,16 @@ export default async function RetiroPage({ params }: { params: Promise<{ id: str
     >
       {POLLING.includes(w.status) ? <AutoRefresh seconds={4} /> : null}
       <p className="mt-2 text-xs font-semibold tracking-wide text-blue uppercase">
-        {isBank ? "Retiro a tu banco (prueba)" : "Retiro a otra cuenta"}
+        {isBank ? "Retiro a Bancolombia · pesos (COP)" : "Retiro a otra cuenta"}
       </p>
       <h1 className="mt-1 font-display text-[32px] font-bold leading-tight text-ink">
         ≈ {formatCop(amountCop)}
       </h1>
+      {isBank ? (
+        <p className="mt-1 text-sm text-ink-muted">
+          Así se vería el abono en tu cuenta Bancolombia (demo, no es dinero real).
+        </p>
+      ) : null}
       <span className={`mt-2 inline-flex w-fit rounded-full px-3 py-1 text-xs font-semibold ${chipStyle}`}>
         {chip}
       </span>
@@ -75,13 +80,21 @@ export default async function RetiroPage({ params }: { params: Promise<{ id: str
       <div className="mt-5 flex flex-col gap-4">
         {w.status === "interactive" && w.anchor_url ? (
           <Card className="p-5">
+            <p className="mb-3 rounded-[10px] bg-[#E6F6EF] px-3.5 py-3 text-sm text-success">
+              Vas a retirar{" "}
+              <strong className="font-display text-base text-ink">≈ {formatCop(amountCop)}</strong>{" "}
+              a Bancolombia.
+            </p>
             <ol className="flex list-decimal flex-col gap-3 pl-5 text-sm text-ink">
               <li>
-                Completa los datos de tu banco. Se abre en otra pestaña.
-                {/* El formulario del anchor de prueba no recibe el monto que le mandamos. */}
-                <span className="mt-1 block text-[13px] text-ink-muted">
-                  Donde diga «Amount» escribe <strong className="font-mono text-ink">{anchorAmount}</strong>:
-                  son tus ≈ {formatCop(w.amount_cop)} en la moneda del banco de prueba.
+                Completa los datos en el formulario de prueba (simula Bancolombia). Se abre en otra
+                pestaña.
+                {/* El formulario del anchor no recibe el monto en COP; hay que repetirlo ahí. */}
+                <span className="mt-2 block rounded-[10px] bg-bg-soft px-3 py-2 text-[13px] text-ink-muted">
+                  En ese formulario, donde diga «Amount», escribe{" "}
+                  <strong className="font-mono text-ink">{anchorAmount}</strong>. Eso equivale a tus{" "}
+                  <strong className="text-ink">≈ {formatCop(w.amount_cop)}</strong> en pesos
+                  colombianos — no pienses en dólares: en Orilla el retiro es en COP.
                 </span>
                 <a
                   href={w.anchor_url}
@@ -89,10 +102,10 @@ export default async function RetiroPage({ params }: { params: Promise<{ id: str
                   rel="noopener noreferrer"
                   className="mt-2 flex w-full items-center justify-center rounded-[10px] bg-blue px-5 py-3 text-[15px] font-semibold text-white hover:brightness-90"
                 >
-                  Abrir el formulario del banco
+                  Abrir formulario Bancolombia (demo)
                 </a>
               </li>
-              <li>Vuelve aquí: cuando el banco esté listo te pediremos confirmar el envío.</li>
+              <li>Vuelve aquí: cuando esté listo te pediremos confirmar el envío en pesos.</li>
             </ol>
             <p className="mt-3 text-xs text-ink-muted">Esta página se actualiza sola.</p>
           </Card>
@@ -100,14 +113,19 @@ export default async function RetiroPage({ params }: { params: Promise<{ id: str
 
         {w.status === "ready" ? (
           <Card className="p-5">
-            <p className="text-sm font-bold text-ink">El banco está listo para recibir tu retiro</p>
+            <p className="text-sm font-bold text-ink">Bancolombia (demo) listo para recibir tu retiro</p>
             <dl className="mt-3 space-y-1.5 text-[13px]">
-              <Row label="Sale de tu saldo">≈ {formatCop(amountCop)}</Row>
-              {feeCop !== null ? <Row label="Comisión del banco (incluida)">≈ {formatCop(feeCop)}</Row> : null}
+              <Row label="Abono en pesos (COP)">≈ {formatCop(amountCop)}</Row>
+              {feeCop !== null ? (
+                <Row label="Comisión del banco (incluida, en COP)">≈ {formatCop(feeCop)}</Row>
+              ) : null}
             </dl>
             {w.error ? <p className="mt-3 text-xs text-danger">{w.error}</p> : null}
             <div className="mt-4">
-              <ConfirmBankWithdrawal id={w.id} label={`Confirmar y enviar ≈ ${formatCop(amountCop)}`} />
+              <ConfirmBankWithdrawal
+                id={w.id}
+                label={`Confirmar y enviar ≈ ${formatCop(amountCop)} a Bancolombia`}
+              />
             </div>
           </Card>
         ) : null}
@@ -122,7 +140,9 @@ export default async function RetiroPage({ params }: { params: Promise<{ id: str
         ) : null}
         {w.status === "completed" ? (
           <StatusNote tone="success">
-            {isBank ? "Listo: el banco completó tu retiro." : "Listo: el dinero llegó a la cuenta de destino."}
+            {isBank
+              ? `Listo: Bancolombia (demo) completó tu retiro de ≈ ${formatCop(amountCop)}.`
+              : "Listo: el dinero llegó a la cuenta de destino."}
           </StatusNote>
         ) : null}
         {w.status === "failed" ? (
