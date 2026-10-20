@@ -36,7 +36,7 @@
 | Qué | Enlace |
 |---|---|
 | **Producto en línea** | https://orilla-dusky.vercel.app |
-| **Video del MVP (≤3 min)** | https://www.youtube.com/watch?v=VIDEO_URL |
+| **Video del MVP (≤3 min)** | https://youtu.be/eJXm5zq-Qfw |
 | **Excel demo (montos)** | https://orilla-dusky.vercel.app/Lote-pagos-Orilla-demo.xlsx |
 | **Excel demo (%)** | https://orilla-dusky.vercel.app/Lote-pagos-Orilla-porcentajes.xlsx |
 | **CSV espejo (montos)** | https://github.com/Jgmaza/bb101-caribe-lab/raw/main/frontend/public/plantilla-lote-caribe.csv |
