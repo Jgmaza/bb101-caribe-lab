@@ -20,7 +20,9 @@ import { env } from "./env";
 // XLM solo para reserva de cuenta, comisiones y swap al fondear.
 
 const FEE = "1000"; // stroops por operación; holgado para testnet
-const STARTING_XLM = "2.5"; // reserva + trustline USDC + comisiones
+const STARTING_XLM = "3"; // (2+trustline)×0,5 XLM + margen de comisiones
+/** XLM libres mínimos antes de abrir trustline USDC (reserva extra + fees). */
+const TRUSTLINE_NATIVE_MIN = xlmToStroops("1.5");
 const TIMEOUT_SECONDS = 60;
 const FRIENDBOT_URL = "https://friendbot.stellar.org";
 const MAX_TOPUP_ROUNDS = 5; // cada ronda de friendbot trae ~10.000 XLM
@@ -247,11 +249,16 @@ async function getAvailableNativeStroops(publicKey: string): Promise<bigint | nu
   }
 }
 
-/** Abre trustline USDC si falta (idempotente). */
+/** Abre trustline USDC si falta (idempotente). Si falta XLM de reserva → friendbot. */
 export async function ensureUsdcTrustline(secret: string): Promise<void> {
   const kp = Keypair.fromSecret(secret);
   const account = await loadAccount(kp.publicKey());
   if (hasUsdcTrustline(account)) return;
+  // ChangeTrust + fee exige ≥1,5 XLM con 0 subentradas; cuentas viejas a 1,5 fallan (op_low_reserve).
+  const nativeFree = (await getAvailableNativeStroops(kp.publicKey())) ?? 0n;
+  if (nativeFree < TRUSTLINE_NATIVE_MIN) {
+    await friendbotTopUp(kp.publicKey(), TRUSTLINE_NATIVE_MIN - nativeFree + xlmToStroops("1"));
+  }
   await buildAndSubmit(kp, (builder) => builder.addOperation(Operation.changeTrust({ asset: USDC })));
 }
 
