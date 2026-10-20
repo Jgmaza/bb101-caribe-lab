@@ -56,9 +56,11 @@ export async function startSession(userId: string): Promise<void> {
     .insert({ user_id: userId, token_hash: hashToken(token), expires_at: expiresAt.toISOString() });
   if (error) throw new Error(error.message);
 
+  // `secure: true` solo en HTTPS (Vercel). En http://localhost / 127.0.0.1 el navegador
+  // no reenvía cookies Secure → cada navegación parece sin sesión y vuelve al login.
   (await cookies()).set(COOKIE, token, {
     httpOnly: true,
-    secure: true,
+    secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
     expires: expiresAt,
@@ -83,7 +85,10 @@ export const getCurrentUser = cache(async (): Promise<User | null> => {
     .gt("expires_at", new Date().toISOString())
     .maybeSingle<{ user: User }>();
   if (error) throw new Error(error.message);
-  return data?.user ?? null;
+  const user = data?.user;
+  // PostgREST a veces tipa el embed como array; normalizamos.
+  if (Array.isArray(user)) return (user[0] as User | undefined) ?? null;
+  return user ?? null;
 });
 
 /** Para páginas y acciones que exigen sesión: si no hay, manda a ingresar y vuelve a `next`. */

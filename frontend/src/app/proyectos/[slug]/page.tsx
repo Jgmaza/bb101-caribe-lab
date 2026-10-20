@@ -82,7 +82,7 @@ export default async function ProyectoPage({
         <Card className="p-5">
           <h2 className="text-sm font-bold text-ink">Link de pago</h2>
           <p className="mt-1 text-[13px] text-ink-muted">
-            Compártanlo con el bar, hotel o productora. Pagan un total y Orilla lo
+            Compártanlo con la empresa o productora. Pagan un total y Orilla lo
             reparte según sus porcentajes.
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-2">

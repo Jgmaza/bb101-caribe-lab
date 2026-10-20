@@ -9,13 +9,13 @@ export default async function HomePage() {
     <div className="flex min-h-screen items-center justify-center bg-bg-soft px-4 py-16 sm:px-6">
       <div className="grid w-full max-w-4xl gap-8 md:grid-cols-2">
         <section className="flex flex-col justify-center gap-5">
-          <Logo href={undefined} />
+          <Logo href={undefined} size="lg" />
           <h1 className="font-display text-4xl font-bold leading-tight text-ink md:text-5xl">
             Que quien trabaja hoy, cobre hoy.
           </h1>
           <p className="max-w-md text-base leading-relaxed text-ink-muted">
-            El hotel o la productora sube su Excel, cierra la noche y cada músico o
-            staff ve <strong className="font-semibold text-ink">Te pagaron</strong> con
+            La empresa sube su Excel, cierra la noche y cada músico o staff ve{" "}
+            <strong className="font-semibold text-ink">Te pagaron</strong> con
             comprobante en Stellar.
           </p>
           <div className="h-1.5 w-28 rounded-full bg-orilla-gradient" />
@@ -30,7 +30,7 @@ export default async function HomePage() {
           {user ? (
             <>
               <LinkButton href="/lotes" variant="cta" className="w-full">
-                Soy hotel / empresa — lotes
+                Soy empresa — lotes
               </LinkButton>
               <LinkButton href="/inicio" variant="primary" className="w-full">
                 Vengo a cobrar — mi wallet
@@ -42,7 +42,7 @@ export default async function HomePage() {
           ) : (
             <>
               <LinkButton href="/ingresar?next=/lotes" variant="cta" className="w-full">
-                Soy hotel / empresa
+                Soy empresa
               </LinkButton>
               <LinkButton href="/ingresar?next=/inicio" variant="primary" className="w-full">
                 Vengo a cobrar
@@ -55,7 +55,7 @@ export default async function HomePage() {
 
           <ul className="flex flex-col gap-2 text-xs leading-relaxed text-ink-muted">
             <li>
-              <strong className="text-ink">Hotel:</strong> sube el Excel de siempre (montos o
+              <strong className="text-ink">Empresa:</strong> sube el Excel de siempre (montos o
               %), programa y cierra la noche.
             </li>
             <li>

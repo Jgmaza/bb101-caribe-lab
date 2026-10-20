@@ -35,7 +35,7 @@ export default async function LotesPage() {
     >
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold tracking-wide text-blue uppercase">Hotel / empresa</p>
+          <p className="text-xs font-semibold tracking-wide text-blue uppercase">Empresa</p>
           <h1 className="font-display text-[32px] font-bold text-ink">Tus lotes de pago</h1>
           <p className="mt-1 max-w-xl text-sm text-ink-muted">
             Sube el Excel con el que ya trabajas, revisa montos o %, programa y cierra la noche.

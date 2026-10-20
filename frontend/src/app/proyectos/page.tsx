@@ -18,7 +18,7 @@ export default async function ProyectosIndexPage() {
           <p className="text-xs font-semibold tracking-wide text-blue uppercase">Atajo</p>
           <h1 className="font-display text-[32px] font-bold text-ink">Grupos con porcentaje</h1>
           <p className="mt-1 max-w-xl text-sm text-ink-muted">
-            Para bandas que acuerdan % y comparten un link de pago. Si eres hotel, usa{" "}
+            Para bandas que acuerdan % y comparten un link de pago. Si eres empresa, usa{" "}
             <Link href="/lotes" className="font-semibold text-blue hover:underline">
               Lotes + Excel
             </Link>

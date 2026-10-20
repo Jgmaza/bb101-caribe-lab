@@ -53,7 +53,7 @@ export default async function RetiroPage({ params }: { params: Promise<{ id: str
 
   return (
     <MobileShell
-      left={<Logo href="/inicio" size="sm" />}
+      left={<Logo href="/inicio" size="md" />}
       right={
         <Link href="/inicio" className="text-xs font-semibold text-ink-muted hover:text-blue">
           Mi inicio

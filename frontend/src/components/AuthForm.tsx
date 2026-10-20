@@ -36,14 +36,14 @@ export function AuthForm({ mode, next }: { mode: "registro" | "ingresar"; next?:
         label="Username"
         hint={
           isRegister
-            ? "Es tu identificador único en Orilla: con él te encuentran y te agregan a los proyectos como @username. Usa de 3 a 20 letras sin tildes, números o _."
+            ? "Así te agregan a un lote o grupo: @username. De 3 a 20 letras sin tildes, números o _. Orilla crea tu cuenta; tú solo usas saldo y retiros al banco."
             : undefined
         }
       >
         <Input
           name="username"
           defaultValue={state.username}
-          placeholder="laura"
+          placeholder="username"
           autoComplete="username"
           autoCapitalize="none"
           spellCheck={false}

@@ -10,7 +10,7 @@ export function TopUpForm() {
   return (
     <form action={action} className="flex flex-col gap-3">
       <SubmitButton variant="cta" pending={pending} pendingLabel="Recargando…" className="w-full">
-        Recargar saldo
+        Recargar saldo de prueba
       </SubmitButton>
       <Button type="button" variant="ghost" disabled className="w-full">
         Recargar desde mi banco · pronto

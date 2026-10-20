@@ -12,7 +12,7 @@ export default async function NuevoProyectoPage() {
         Crear proyecto
       </h1>
       <p className="mt-2 max-w-2xl text-[15px] text-ink-muted">
-        Definan una sola vez cuánto le toca a cada uno. Cuando el bar, hotel u
+        Definan una sola vez cuánto le toca a cada uno. Cuando la empresa u
         organizador pague al proyecto, Orilla reparte automáticamente.
       </p>
       <Card className="mt-6 p-5 sm:p-7">

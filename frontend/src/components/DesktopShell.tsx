@@ -13,7 +13,7 @@ export function DesktopShell({
 }) {
   return (
     <div className="min-h-screen bg-bg-soft">
-      <header className="flex h-[72px] items-center justify-between gap-4 border-b border-line bg-white px-4 sm:px-8">
+      <header className="flex h-[80px] items-center justify-between gap-4 border-b border-line bg-white px-4 sm:px-8">
         <div className="flex min-w-0 items-center gap-4">
           <Logo href="/lotes" />
           <nav className="hidden items-center gap-3 text-sm font-semibold text-ink-muted sm:flex">

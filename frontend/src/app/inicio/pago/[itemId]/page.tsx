@@ -28,7 +28,7 @@ export default async function TePagaronPage({ params }: { params: Promise<{ item
   if (!lote || lote.status !== "closed") notFound();
 
   return (
-    <MobileShell left={<Logo href="/inicio" size="sm" />}>
+    <MobileShell left={<Logo href="/inicio" size="md" />}>
       <div className="mt-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#E6F6EF] text-2xl text-success">
         ✓
       </div>
@@ -44,7 +44,7 @@ export default async function TePagaronPage({ params }: { params: Promise<{ item
 
       {lote.distribution_tx_hash ? (
         <div className="mt-6 rounded-[14px] border border-line bg-white p-4 text-sm">
-          <p className="font-semibold text-ink">Transacción en Stellar</p>
+          <p className="font-semibold text-ink">Comprobante del pago</p>
           <p className="mt-2">
             <TxLink hash={lote.distribution_tx_hash} />
           </p>

@@ -10,7 +10,8 @@
     "test": "tsx --test src/lib/*.test.ts",
     "db:apply": "node --env-file=.env.local scripts/db-apply.mjs",
     "db:reset": "node --env-file=.env.local scripts/db-reset.mjs",
-    "stellar:setup": "node --dns-result-order=ipv4first --import tsx scripts/stellar-setup.ts"
+    "stellar:setup": "node --dns-result-order=ipv4first --import tsx scripts/stellar-setup.ts",
+    "seed:demo": "node --dns-result-order=ipv4first --env-file=.env.local --import tsx scripts/seed-demo-users.ts"
   },
   "dependencies": {
     "@stellar/stellar-sdk": "^17.2.1",

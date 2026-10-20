@@ -37,7 +37,7 @@ export default async function InicioPage() {
 
   return (
     <MobileShell
-      left={<Logo href="/inicio" size="sm" />}
+      left={<Logo href="/inicio" size="md" />}
       right={
         <form action={logout}>
           <button type="submit" className="cursor-pointer text-xs font-semibold text-ink-muted hover:text-blue">
@@ -72,7 +72,7 @@ export default async function InicioPage() {
       ) : null}
 
       <Card className="mt-6 p-5">
-        <p className="text-xs font-semibold text-ink-muted">Saldo Orilla (wallet)</p>
+        <p className="text-xs font-semibold text-ink-muted">Tu saldo en Orilla</p>
         <p className="mt-1 font-display text-3xl font-bold text-ink">
           {balance.cop === null ? formatBalance(null) : `≈ ${formatBalance(balance.cop)}`}
         </p>
@@ -87,7 +87,7 @@ export default async function InicioPage() {
         </LinkButton>
         <TopUpForm />
         <LinkButton href="/lotes" variant="ghost" className="w-full">
-          Panel hotel / lotes
+          Panel empresa / lotes
         </LinkButton>
         {isProdMode() ? null : (
           <a
@@ -128,7 +128,7 @@ export default async function InicioPage() {
       <h2 className="mt-8 text-sm font-bold text-ink">Movimientos</h2>
       {movements.length === 0 && notifications.length === 0 ? (
         <p className="mt-2 text-[13px] text-ink-muted">
-          Cuando un hotel cierre la noche con tu @usuario, verás Te pagaron aquí.
+          Cuando una empresa cierre la noche con tu @usuario, verás Te pagaron aquí.
         </p>
       ) : (
         <ul className="mt-2 divide-y divide-line">
