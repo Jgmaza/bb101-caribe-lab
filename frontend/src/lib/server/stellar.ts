@@ -539,3 +539,25 @@ export async function payMany(opts: {
     opts.onSigned,
   );
 }
+
+/** Memo de dispersión de lote (máx. 28 chars en Memo.text). */
+export function loteDisburseMemo(loteId: string) {
+  return `orilla lote ${loteId.slice(0, 8)}`;
+}
+
+/**
+ * Busca si ya hubo un pago exitoso de este lote (evita doble pago si el server cortó
+ * tras enviar a Horizon pero antes de marcar el lote closed en DB).
+ */
+export async function findLoteDisburseTx(payerPublicKey: string, loteId: string): Promise<string | null> {
+  const memo = loteDisburseMemo(loteId);
+  try {
+    const page = await horizon().transactions().forAccount(payerPublicKey).order("desc").limit(40).call();
+    for (const tx of page.records) {
+      if (tx.successful && tx.memo_type === "text" && tx.memo === memo) return tx.hash;
+    }
+  } catch (err) {
+    console.error("findLoteDisburseTx:", err);
+  }
+  return null;
+}

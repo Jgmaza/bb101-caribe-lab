@@ -9,6 +9,9 @@ import { requireUser } from "@/lib/server/session";
 import { bpsToPercent } from "@/lib/split";
 import { LoteActions } from "./LoteActions";
 
+/** Top-up USDC + pagos pueden superar el default de 10s en Hobby. */
+export const maxDuration = 60;
+
 const STATUS: Record<string, string> = {
   draft: "Borrador",
   scheduled: "Programado",
@@ -37,7 +40,11 @@ export default async function LoteDetailPage({
     .eq("lote_id", id)
     .order("created_at", { ascending: true });
 
-  const canAct = lote.status === "draft" || lote.status === "scheduled" || lote.status === "failed";
+  const canAct =
+    lote.status === "draft" ||
+    lote.status === "scheduled" ||
+    lote.status === "failed" ||
+    lote.status === "closing";
   const unmatched = (items ?? []).filter((i) => !i.user_id);
   const mode = lote.mode === "percent" ? "percent" : "amounts";
   const previewRows = (items ?? []).map((i) => ({
@@ -62,7 +69,7 @@ export default async function LoteDetailPage({
         {lote.notes ? ` · ${lote.notes}` : ""}
       </p>
 
-      {sp.cerrado ? (
+      {lote.status === "closed" || sp.cerrado ? (
         <p role="status" className="mt-4 rounded-[10px] bg-[#E6F6EF] px-3.5 py-3 text-sm text-success">
           Noche cerrada. Cada persona ve <strong>Te pagaron</strong> en su wallet.
           {lote.distribution_tx_hash ? (
@@ -71,6 +78,14 @@ export default async function LoteDetailPage({
               Comprobante: <TxLink hash={lote.distribution_tx_hash} />
             </>
           ) : null}
+        </p>
+      ) : null}
+
+      {lote.status === "closing" ? (
+        <p role="status" className="mt-4 rounded-[10px] bg-[#EEF4FA] px-3.5 py-3 text-sm text-ink">
+          Cerrando la noche: puede tardar 1–2 minutos (recarga USDC en testnet). Si la pantalla se
+          queda cargando, recarga esta página o pulsa de nuevo <strong>Cerrar la noche</strong> —
+          no se duplica el pago si ya salió en Stellar.
         </p>
       ) : null}
 

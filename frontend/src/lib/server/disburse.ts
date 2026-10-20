@@ -4,7 +4,36 @@ import { splitAmount } from "@/lib/split";
 import { decryptSecret } from "./crypto";
 import { db } from "./db";
 import { getCopPerXlm } from "./price";
-import { ensureUsdcTrustline, getAvailableStroops, payMany, usdcTopUp } from "./stellar";
+import {
+  ensureUsdcTrustline,
+  findLoteDisburseTx,
+  getAvailableStroops,
+  loteDisburseMemo,
+  payMany,
+  usdcTopUp,
+} from "./stellar";
+
+async function markLotePaid(
+  loteId: string,
+  txHash: string,
+  splits: { itemId: string; amountCop: number }[],
+) {
+  for (const s of splits) {
+    await db()
+      .from("lote_items")
+      .update({ status: "paid", amount_cop: s.amountCop, error: null })
+      .eq("id", s.itemId);
+  }
+  await db()
+    .from("lotes")
+    .update({
+      status: "closed",
+      closed_at: new Date().toISOString(),
+      distribution_tx_hash: txHash,
+      error: null,
+    })
+    .eq("id", loteId);
+}
 
 /**
  * Interfaz de dispersión de un lote.
@@ -14,8 +43,11 @@ export async function disburseLote(loteId: string, ownerId: string): Promise<{ o
   const { data: lote, error: loteErr } = await db().from("lotes").select("*").eq("id", loteId).maybeSingle();
   if (loteErr || !lote) return { ok: false, error: "El lote no existe." };
   if (lote.owner_id !== ownerId) return { ok: false, error: "Solo quien creó el lote puede cerrarlo." };
-  if (lote.status === "closed") return { ok: false, error: "Este lote ya está cerrado." };
-  if (lote.status === "closing") return { ok: false, error: "Ya se está cerrando este lote." };
+  if (lote.status === "closed") {
+    if (lote.distribution_tx_hash) return { ok: true, txHash: lote.distribution_tx_hash };
+    return { ok: false, error: "Este lote ya está cerrado." };
+  }
+  // "closing" puede quedar colgado si Vercel corta tras pagar on-chain: reconciliar abajo.
 
   const { data: items, error: itemsErr } = await db()
     .from("lote_items")
@@ -93,6 +125,19 @@ export async function disburseLote(loteId: string, ownerId: string): Promise<{ o
     .single();
   if (ownerErr || !owner) return { ok: false, error: "No encontramos tu cuenta." };
 
+  // Si ya se pagó on-chain (timeout previo), solo sincroniza DB — no vuelve a pagar.
+  const existingTx =
+    lote.distribution_tx_hash ||
+    (await findLoteDisburseTx(owner.stellar_public_key, loteId));
+  if (existingTx) {
+    await markLotePaid(
+      loteId,
+      existingTx,
+      splits.map((s) => ({ itemId: s.itemId, amountCop: s.amountCop })),
+    );
+    return { ok: true, txHash: existingTx };
+  }
+
   await db().from("lotes").update({ status: "closing", error: null }).eq("id", loteId);
 
   try {
@@ -109,30 +154,46 @@ export async function disburseLote(loteId: string, ownerId: string): Promise<{ o
       await usdcTopUp(secret, need - (available ?? 0n) + 1_000_000n);
     }
 
+    // Re-check: otro intento pudo pagar mientras hacíamos top-up.
+    const raced = await findLoteDisburseTx(owner.stellar_public_key, loteId);
+    if (raced) {
+      await markLotePaid(
+        loteId,
+        raced,
+        splits.map((s) => ({ itemId: s.itemId, amountCop: s.amountCop })),
+      );
+      return { ok: true, txHash: raced };
+    }
+
+    const memo = loteDisburseMemo(loteId);
     const txHash = await payMany({
       payerSecret: secret,
       splits: splits.map((s) => ({ publicKey: s.publicKey, amountStroops: s.amountStroops })),
-      memo: `orilla lote ${loteId.slice(0, 8)}`,
+      memo,
+      onSigned: async ({ hash }) => {
+        // Guarda el hash apenas se firma, por si el proceso corta tras el submit.
+        await db().from("lotes").update({ distribution_tx_hash: hash }).eq("id", loteId);
+      },
     });
 
-    for (const s of splits) {
-      await db()
-        .from("lote_items")
-        .update({ status: "paid", amount_cop: s.amountCop, error: null })
-        .eq("id", s.itemId);
-    }
-    await db()
-      .from("lotes")
-      .update({
-        status: "closed",
-        closed_at: new Date().toISOString(),
-        distribution_tx_hash: txHash,
-        error: null,
-      })
-      .eq("id", loteId);
+    await markLotePaid(
+      loteId,
+      txHash,
+      splits.map((s) => ({ itemId: s.itemId, amountCop: s.amountCop })),
+    );
 
     return { ok: true, txHash };
   } catch (err) {
+    // Si el pago igual entró, no marques failed.
+    const recovered = await findLoteDisburseTx(owner.stellar_public_key, loteId);
+    if (recovered) {
+      await markLotePaid(
+        loteId,
+        recovered,
+        splits.map((s) => ({ itemId: s.itemId, amountCop: s.amountCop })),
+      );
+      return { ok: true, txHash: recovered };
+    }
     const message = (err as Error).message || "No se pudo cerrar la noche.";
     await db().from("lotes").update({ status: "failed", error: message }).eq("id", loteId);
     await db().from("lote_items").update({ status: "failed", error: message }).eq("lote_id", loteId);
