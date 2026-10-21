@@ -4,6 +4,7 @@ import { ShareBar, shareColor } from "./ui";
 
 export type LotePreviewRow = {
   key: string;
+  row?: number;
   username: string;
   displayName: string;
   role: string;
@@ -34,7 +35,7 @@ export function LoteInterpretacion({
 
   const receives =
     mode === "amounts"
-      ? rows.map((r) => ({ key: r.key, amount: r.amountCop ?? 0 }))
+      ? rows.filter((r) => r.amountCop !== null).map((r) => ({ key: r.key, amount: r.amountCop! }))
       : percentReady
         ? splitAmount(
             BigInt(totalCop!),
@@ -99,7 +100,8 @@ export function LoteInterpretacion({
                     {r.displayName || "—"}
                   </p>
                 </div>
-                <p className="mt-0.5 pl-[18px] text-xs text-ink-muted">
+                <p className="mt-0.5 break-words pl-[18px] text-xs text-ink-muted">
+                  {r.row != null ? `Fila ${r.row} · ` : ""}
                   {r.username ? (
                     <span className={r.matched === false ? "text-warn" : undefined}>@{r.username}</span>
                   ) : (
@@ -108,8 +110,15 @@ export function LoteInterpretacion({
                   {r.role ? ` · ${r.role}` : ""}
                   {mode === "percent" ? ` · ${pagoLabel}` : ""}
                 </p>
+                {r.matched === false ? (
+                  <p className="mt-0.5 pl-[18px] text-xs text-danger">
+                    Sin cuenta Orilla. Corrige el usuario o pide que se registre.
+                  </p>
+                ) : r.matched === true ? (
+                  <p className="mt-0.5 pl-[18px] text-xs text-success">Cuenta Orilla verificada</p>
+                ) : null}
                 {r.errors?.length ? (
-                  <p className="mt-0.5 pl-[18px] text-xs text-danger">{r.errors.join(" · ")}</p>
+                  <p className="mt-0.5 break-words pl-[18px] text-xs text-danger">{r.errors.join(" · ")}</p>
                 ) : null}
               </div>
               <div className="shrink-0 text-right">
@@ -118,7 +127,7 @@ export function LoteInterpretacion({
                 </p>
                 {mode === "percent" && amount != null ? (
                   <p className="text-[11px] text-ink-muted">recibe</p>
-                ) : mode === "amounts" ? (
+                ) : mode === "amounts" && amount != null ? (
                   <p className="text-[11px] text-ink-muted">recibe</p>
                 ) : null}
               </div>
@@ -129,8 +138,12 @@ export function LoteInterpretacion({
 
       {total != null && total > 0 ? (
         <div className="rounded-[14px] bg-ink px-5 py-4 text-white">
-          <p className="text-[13px] text-[#A8C0CC]">Total a dispersar</p>
-          <p className="font-display text-3xl font-bold">{formatCop(total)}</p>
+          <p className="text-[13px] text-[#A8C0CC]">
+            {rows.some((r) => r.errors?.length) || (mode === "percent" && !percentReady)
+              ? "Total provisional · corrige los errores"
+              : "Total a pagar"}
+          </p>
+          <p className="font-display text-3xl font-bold break-words">{formatCop(total)}</p>
           <p className="mt-1 text-xs text-[#A8C0CC]">
             {rows.length} persona{rows.length === 1 ? "" : "s"}
             {mode === "percent" ? " · por %" : " · montos exactos"}

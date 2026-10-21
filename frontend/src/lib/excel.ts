@@ -1,9 +1,16 @@
 import * as XLSX from "xlsx";
 import { normalizeRole } from "./roles";
 import { parseCop } from "./money";
-import { percentToBps, TOTAL_BPS } from "./split";
+import { percentToBps, splitAmount, TOTAL_BPS } from "./split";
 
 export type LoteMode = "amounts" | "percent";
+
+export function spreadsheetFileError(file: { name: string; size: number }): string | null {
+  if (!/\.(xlsx?|csv)$/i.test(file.name)) return "Usa un archivo Excel (.xlsx o .xls) o CSV UTF-8.";
+  if (file.size === 0) return "El archivo está vacío.";
+  if (file.size > 1_500_000) return "El archivo es demasiado grande (máx. 1,5 MB).";
+  return null;
+}
 
 export type ParsedRow = {
   row: number;
@@ -64,7 +71,9 @@ export function detectColumns(headers: string[]): ColumnMap {
   const map: ColumnMap = {};
   const normalized = headers.map((h) => ({ raw: h, n: normHeader(h) }));
   for (const [field, aliases] of Object.entries(HEADER_ALIASES) as [keyof ColumnMap, string[]][]) {
-    const hit = normalized.find(({ n }) => aliases.some((a) => n === a || n.includes(a)));
+    const names = aliases.map(normHeader);
+    const hit = normalized.find(({ n }) => names.includes(n)) ??
+      normalized.find(({ n }) => names.some((a) => ` ${n} `.includes(` ${a} `)));
     if (hit) map[field] = hit.raw;
   }
   return map;
@@ -119,8 +128,8 @@ function detectDelimiter(firstLine: string): "," | ";" | "\t" {
 /** Parsea CSV/TSV (Excel → Guardar como CSV). */
 export function parseSpreadsheetText(text: string): { headers: string[]; rows: Record<string, string>[] } {
   const cleaned = text.replace(/^\uFEFF/, "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
-  const lines = cleaned.split("\n").filter((l) => l.trim().length > 0);
-  if (lines.length === 0) return { headers: [], rows: [] };
+  const lines = cleaned.split("\n");
+  if (!lines.some((l) => l.trim())) return { headers: [], rows: [] };
   const delim = detectDelimiter(lines[0]);
   const split = (line: string) => {
     if (delim === ",") return splitCsvLine(line);
@@ -150,10 +159,9 @@ export function parseSpreadsheetBinary(data: ArrayBuffer): { headers: string[]; 
     defval: "",
     raw: false,
   }) as (string | number | boolean | null)[][];
-  const nonEmpty = matrix.filter((row) => row.some((c) => String(c ?? "").trim() !== ""));
-  if (nonEmpty.length === 0) return { headers: [], rows: [] };
-  const headers = nonEmpty[0].map((h, i) => String(h ?? "").trim() || `col${i + 1}`);
-  const rows = nonEmpty.slice(1).map((cells) => {
+  if (!matrix.length) return { headers: [], rows: [] };
+  const headers = matrix[0].map((h, i) => String(h ?? "").trim() || `col${i + 1}`);
+  const rows = matrix.slice(1).map((cells) => {
     const row: Record<string, string> = {};
     headers.forEach((h, i) => {
       row[h] = String(cells[i] ?? "").trim();
@@ -187,12 +195,11 @@ export function mapRows(
   map: ColumnMap,
   mode: LoteMode,
 ): ParsedRow[] {
-  return rows.map((raw, i) => {
+  const parsed = rows.map((raw, i) => {
     const errors: string[] = [];
-    let username = cell(raw, map.username).replace(/^@/, "").toLowerCase();
+    const username = cell(raw, map.username).replace(/^@/, "").toLowerCase();
     if (username && !/^[a-z0-9_]{3,20}$/.test(username)) {
       errors.push("Usuario inválido (3–20: a-z, 0-9, _)");
-      username = username.slice(0, 20);
     }
     const displayName = cell(raw, map.displayName) || username;
     const phone = cell(raw, map.phone).replace(/\s+/g, "");
@@ -225,19 +232,53 @@ export function mapRows(
       raw,
       errors,
     };
-  });
+  }).filter((r) => Object.values(r.raw).some((value) => value.trim()));
+  const byUsername = new Map<string, number[]>();
+  for (const r of parsed) {
+    if (r.username) byUsername.set(r.username, [...(byUsername.get(r.username) ?? []), r.row]);
+  }
+  for (const r of parsed) {
+    const duplicates = byUsername.get(r.username);
+    if (duplicates && duplicates.length > 1) {
+      r.errors.push(`@${r.username} está repetido en las filas ${duplicates.join(", ")}. Deja una sola fila por persona.`);
+    }
+  }
+  return parsed;
+}
+
+/** La vista previa y el guardado aplican las mismas reglas al archivo completo. */
+export function reviewLote(
+  headers: string[],
+  raw: Record<string, string>[],
+  mode: LoteMode,
+  totalCop: number | null,
+) {
+  const map = detectColumns(headers);
+  const rows = mapRows(raw, map, mode);
+  const errors = validateLote(rows, mode, totalCop);
+  if (!map.username) errors.unshift("Falta la columna usuario. Agrega el @usuario Orilla de cada persona.");
+  if (mode === "amounts" && !map.amount) errors.unshift("Falta la columna monto_cop con el pago en pesos de cada persona.");
+  if (mode === "percent" && !map.percent) errors.unshift("Falta la columna porcentaje (%) de cada persona.");
+  return { rows, errors };
 }
 
 export function validateLote(rows: ParsedRow[], mode: LoteMode, totalCop: number | null) {
   const errors: string[] = [];
   if (rows.length === 0) errors.push("No hay filas.");
-  if (rows.length > 40) errors.push("Máximo 40 personas por lote en este MVP (Horizon).");
+  if (rows.length > 40) errors.push("Máximo 40 personas por lote. Divide el archivo en lotes más pequeños.");
   const withErr = rows.filter((r) => r.errors.length);
   if (withErr.length) errors.push(`${withErr.length} fila(s) con errores.`);
   if (mode === "percent") {
     const sum = rows.reduce((a, r) => a + (r.shareBps ?? 0), 0);
     if (sum !== TOTAL_BPS) errors.push(`Los % suman ${(sum / 100).toFixed(2)}%, deben ser 100%.`);
     if (totalCop === null || totalCop <= 0) errors.push("Indica el total del lote en pesos.");
+    if (sum === TOTAL_BPS && !withErr.length && totalCop !== null && totalCop > 0 &&
+        splitAmount(BigInt(totalCop), rows.map((r) => ({ id: String(r.row), shareBps: r.shareBps! })))
+          .some((part) => part.amount === 0n)) {
+      errors.push("El total deja personas con $0. Aumenta el total o ajusta los porcentajes.");
+    }
+  } else if (!Number.isSafeInteger(rows.reduce((sum, r) => sum + (r.amountCop ?? 0), 0))) {
+    errors.push("El total es demasiado grande. Divide el archivo en lotes más pequeños.");
   }
   return errors;
 }

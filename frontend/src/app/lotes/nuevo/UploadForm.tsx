@@ -1,94 +1,116 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { startTransition, useActionState, useMemo, useRef, useState } from "react";
 import { LoteInterpretacion, type LotePreviewRow } from "@/components/LoteInterpretacion";
-import { Field, FormError, Input, SubmitButton } from "@/components/ui";
+import { Button, Field, FormError, Input, SubmitButton } from "@/components/ui";
 import {
   detectColumns,
   detectMode,
-  mapRows,
   parseSpreadsheetFile,
+  reviewLote,
+  spreadsheetFileError,
   type LoteMode,
+  type ParsedRow,
 } from "@/lib/excel";
 import { parseCop } from "@/lib/money";
-import { createLoteFromUpload } from "@/lib/server/lote-actions";
-
-function toPreview(
-  headers: string[],
-  raw: Record<string, string>[],
-  mode: LoteMode,
-): LotePreviewRow[] {
-  if (!headers.length) return [];
-  const map = detectColumns(headers);
-  return mapRows(raw, map, mode)
-    .filter((r) => r.username || r.displayName || r.phone)
-    .map((r, i) => ({
-      key: `r-${i}`,
-      username: r.username,
-      displayName: r.displayName,
-      role: r.role,
-      amountCop: r.amountCop,
-      shareBps: r.shareBps,
-      errors: r.errors,
-    }));
-}
+import { checkLoteRecipients, createLoteFromUpload } from "@/lib/server/lote-actions";
 
 export function UploadForm() {
   const [state, action, pending] = useActionState(createLoteFromUpload, { error: null });
   const [mode, setMode] = useState<LoteMode>("amounts");
-  const [totalText, setTotalText] = useState("1300000");
+  const [totalText, setTotalText] = useState("");
   const [fileLabel, setFileLabel] = useState<string | null>(null);
   const [sheet, setSheet] = useState<{ headers: string[]; rows: Record<string, string>[] } | null>(
     null,
   );
   const [parseHint, setParseHint] = useState<string | null>(null);
+  const [reading, setReading] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [recipients, setRecipients] = useState<Awaited<ReturnType<typeof checkLoteRecipients>> | null>(null);
+  const fileVersion = useRef(0);
 
   const totalCop = useMemo(() => parseCop(totalText), [totalText]);
-  const rows = useMemo(
-    () => (sheet ? toPreview(sheet.headers, sheet.rows, mode) : null),
-    [sheet, mode],
+  const review = useMemo(
+    () => (sheet ? reviewLote(sheet.headers, sheet.rows, mode, totalCop) : null),
+    [sheet, mode, totalCop],
   );
+  const rows: LotePreviewRow[] | null = review?.rows.map((r) => ({
+    ...r,
+    key: `r-${r.row}`,
+    matched: recipients && !recipients.error ? recipients.registered.includes(r.username) : undefined,
+  })) ?? null;
+  const missing = rows?.filter((r) => r.matched === false) ?? [];
+  const canSave = !!review && !review.errors.length && !!recipients && !recipients.error &&
+    !missing.length && !reading && !checking;
+
+  function verifyRecipients(parsed: ParsedRow[], version: number) {
+    if (!parsed.length || parsed.length > 40 || parsed.some((r) => !/^[a-z0-9_]{3,20}$/.test(r.username))) return;
+    setChecking(true);
+    setRecipients(null);
+    startTransition(async () => {
+      try {
+        const result = await checkLoteRecipients(parsed.map((r) => r.username));
+        if (fileVersion.current === version) setRecipients(result);
+      } catch {
+        if (fileVersion.current === version) {
+          setRecipients({ error: "No pudimos comprobar las cuentas Orilla. Intenta de nuevo.", registered: [] });
+        }
+      } finally {
+        if (fileVersion.current === version) setChecking(false);
+      }
+    });
+  }
 
   async function onFileChange(file: File | null) {
+    const version = ++fileVersion.current;
+    setSheet(null);
+    setRecipients(null);
+    setChecking(false);
+    setParseHint(null);
+    setReading(false);
+    setFileLabel(file?.name ?? null);
     if (!file) {
-      setSheet(null);
-      setFileLabel(null);
-      setParseHint(null);
       return;
     }
-    setFileLabel(file.name);
+    const fileError = spreadsheetFileError(file);
+    if (fileError) {
+      setParseHint(fileError);
+      return;
+    }
+    setReading(true);
     try {
       const parsed = await parseSpreadsheetFile(file);
+      if (fileVersion.current !== version) return;
       if (!parsed.headers.length) {
-        setSheet(null);
         setParseHint("No encontramos columnas en ese archivo.");
         return;
       }
       const detected = detectMode(detectColumns(parsed.headers));
       setMode(detected);
       setSheet(parsed);
-      const n = toPreview(parsed.headers, parsed.rows, detected).length;
-      setParseHint(
-        n
-          ? `Leímos ${n} fila${n === 1 ? "" : "s"}. Revisa a la derecha quién recibe cuánto.`
-          : "El archivo no tiene filas de personas.",
-      );
+      verifyRecipients(reviewLote(parsed.headers, parsed.rows, detected, null).rows, version);
     } catch {
-      setSheet(null);
-      setParseHint("No pudimos leer ese archivo. Usa el Excel del Entregable 4 o CSV UTF-8.");
+      if (fileVersion.current === version) setParseHint("No pudimos leer ese archivo. Usa la plantilla Excel o CSV UTF-8.");
+    } finally {
+      if (fileVersion.current === version) setReading(false);
     }
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-      <form action={action} className="flex flex-col gap-5">
+    <form
+      action={action}
+      onSubmit={(e) => { if (!canSave) e.preventDefault(); }}
+      onReset={() => void onFileChange(null)}
+      className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]"
+    >
+      <fieldset disabled={pending} className="flex min-w-0 flex-col gap-5">
         <Field label="Nombre del lote">
           <Input name="name" placeholder="Lobby Dann · viernes 19" required minLength={2} maxLength={120} />
         </Field>
 
         <Field
           label="Excel o CSV"
-          hint="Plantilla (.xlsx/CSV). Montos en pesos colombianos: columnas nombre, usuario, celular, rol, monto_cop (o %). No uses dólares."
+          hint="Excel o CSV, máximo 1,5 MB y 40 personas. Incluye usuario y monto_cop (o %). Una fila por persona, con montos en pesos colombianos."
         >
           <input
             type="file"
@@ -99,7 +121,8 @@ export function UploadForm() {
             className="block w-full cursor-pointer text-sm text-ink file:mr-3 file:cursor-pointer file:rounded-[10px] file:border-0 file:bg-blue file:px-4 file:py-2.5 file:text-sm file:font-semibold file:text-white"
           />
           {fileLabel ? <p className="mt-1.5 text-xs text-ink-muted">{fileLabel}</p> : null}
-          {parseHint ? <p className="mt-1 text-xs text-blue">{parseHint}</p> : null}
+          {reading ? <p role="status" className="mt-1 text-xs text-blue">Leyendo archivo…</p> : null}
+          {parseHint ? <p role="alert" className="mt-1 text-xs text-danger">{parseHint}</p> : null}
         </Field>
 
         <fieldset className="rounded-xl border border-line p-4">
@@ -136,7 +159,7 @@ export function UploadForm() {
               <Field label="Total del lote en pesos">
                 <Input
                   name="total_cop"
-                  placeholder="1300000"
+                  placeholder="Ej. 1300000"
                   inputMode="numeric"
                   value={totalText}
                   onChange={(e) => setTotalText(e.target.value)}
@@ -153,12 +176,30 @@ export function UploadForm() {
           <Input name="notes" placeholder="Show lobby, 22:00" maxLength={500} />
         </Field>
 
-        <FormError message={state.error} />
+        {review ? (
+          <div role={review.errors.length ? "alert" : "status"} className="rounded-xl border border-line bg-bg-soft p-4 text-sm">
+            {review.errors.length ? (
+              <>
+                <p className="font-semibold text-danger">Corrige el archivo antes de continuar</p>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-danger">
+                  {review.errors.map((error) => <li key={error}>{error}</li>)}
+                </ul>
+                <p className="mt-2 text-xs text-ink-muted">Revisa el detalle por fila en la vista previa y vuelve a subir el archivo corregido.</p>
+              </>
+            ) : <p className="font-semibold text-ink">{review.rows.length} destinatarios · montos revisados</p>}
+            {checking ? <p className="mt-2 text-ink-muted">Comprobando cuentas Orilla…</p> : null}
+            {missing.length ? <p className="mt-2 text-danger">{missing.length} destinatario(s) sin cuenta Orilla. Corrige su @usuario o pide que se registre antes de guardar.</p> : null}
+            {canSave ? <p className="mt-2 text-success">Todas las cuentas están verificadas. Revisa quién recibe cuánto antes de guardar.</p> : null}
+            <FormError message={recipients?.error ?? null} />
+            {(missing.length > 0 || recipients?.error) && !checking ? (
+              <Button type="button" variant="ghost" className="mt-3" onClick={() => verifyRecipients(review.rows, fileVersion.current)}>
+                Volver a comprobar cuentas
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
 
-        <SubmitButton variant="cta" pending={pending} pendingLabel="Guardando interpretación…">
-          Confirmar y guardar lote
-        </SubmitButton>
-      </form>
+      </fieldset>
 
       <aside className="rounded-xl border border-line bg-white p-5 lg:sticky lg:top-6 lg:self-start">
         {rows?.length ? (
@@ -172,12 +213,12 @@ export function UploadForm() {
           <div className="text-sm text-ink-muted">
             <p className="font-semibold text-ink">Interpretación del Excel</p>
             <p className="mt-2">
-              Sube el CSV y aquí verás cada <strong className="text-ink">@usuario</strong> frente a{" "}
+              Sube el Excel o CSV y aquí verás cada <strong className="text-ink">@usuario</strong> frente a{" "}
               <strong className="text-ink">cuánto recibe</strong> — en pesos o en % convertido al
               total.
             </p>
             <p className="mt-4 text-xs">
-              Descargar Excel (Entregable 4):{" "}
+              Descargar plantilla Excel:{" "}
               <a
                 href="/Lote-pagos-Orilla-demo.xlsx"
                 className="font-semibold text-blue hover:underline"
@@ -197,6 +238,14 @@ export function UploadForm() {
           </div>
         )}
       </aside>
-    </div>
+
+      <div className="flex flex-col gap-3 lg:col-span-2">
+        <FormError message={state.error} />
+        <p className="text-xs text-ink-muted">Guardar crea un borrador. Los pagos se envían después, al cerrar la noche.</p>
+        <SubmitButton variant="cta" pending={pending} disabled={!canSave} pendingLabel="Guardando borrador…" className="w-full lg:w-fit">
+          Confirmar y guardar borrador
+        </SubmitButton>
+      </div>
+    </form>
   );
 }

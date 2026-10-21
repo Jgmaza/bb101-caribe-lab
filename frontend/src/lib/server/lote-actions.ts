@@ -5,9 +5,9 @@ import { redirect } from "next/navigation";
 import {
   detectColumns,
   detectMode,
-  mapRows,
   parseSpreadsheetFile,
-  validateLote,
+  reviewLote,
+  spreadsheetFileError,
   type LoteMode,
   type ParsedRow,
 } from "@/lib/excel";
@@ -17,6 +17,21 @@ import { db } from "./db";
 import { requireUser } from "./session";
 
 export type FormState = { error: string | null };
+
+/** Solo consulta destinatarios; nunca crea cuentas ni envía pagos. */
+export async function checkLoteRecipients(usernames: string[]): Promise<{
+  error: string | null;
+  registered: string[];
+}> {
+  await requireUser("/lotes/nuevo");
+  if (!Array.isArray(usernames) || !usernames.length || usernames.length > 40 ||
+      usernames.some((name) => typeof name !== "string" || !/^[a-z0-9_]{3,20}$/.test(name))) {
+    return { error: "Corrige los usuarios del archivo antes de comprobar sus cuentas.", registered: [] };
+  }
+  const { data, error } = await db().from("users").select("username").in("username", usernames);
+  if (error) return { error: "No pudimos comprobar las cuentas Orilla. Intenta de nuevo.", registered: [] };
+  return { error: null, registered: (data ?? []).map((u) => u.username) };
+}
 
 function text(v: unknown, max = 120) {
   return typeof v === "string" ? v.trim().slice(0, max) : "";
@@ -48,7 +63,8 @@ export async function createLoteFromUpload(
   if (!(file instanceof File) || file.size === 0) {
     return { error: "Sube el Excel (.xlsx) o un CSV UTF-8." };
   }
-  if (file.size > 1_500_000) return { error: "El archivo es demasiado grande (máx. 1,5 MB)." };
+  const fileError = spreadsheetFileError(file);
+  if (fileError) return { error: fileError };
 
   let headers: string[];
   let rows: Record<string, string>[];
@@ -62,11 +78,19 @@ export async function createLoteFromUpload(
   const map = detectColumns(headers);
   const mode: LoteMode = modeRaw === "percent" || modeRaw === "amounts" ? modeRaw : detectMode(map);
   const totalCop = mode === "percent" ? parseCop(totalRaw) : null;
-  const parsed = mapRows(rows, map, mode).filter((r) => r.username || r.displayName || r.phone);
-  const errors = validateLote(parsed, mode, totalCop);
-  if (errors.length) return { error: errors.join(" ") };
+  const { rows: parsed, errors } = reviewLote(headers, rows, mode, totalCop);
+  if (errors.length) {
+    const details = parsed.filter((r) => r.errors.length)
+      .map((r) => `Fila ${r.row}: ${r.errors.join(" · ")}`);
+    return { error: [...errors, ...details].join(" ") };
+  }
 
   const matched = await attachUsers(parsed);
+  if (matched.error) return { error: matched.error };
+  const missing = matched.rows.filter((r) => !r.userId);
+  if (missing.length) {
+    return { error: `Sin cuenta Orilla: ${missing.map((r) => `@${r.username} (fila ${r.row})`).join(", ")}. Corrige el usuario o pide que se registre y vuelve a comprobar.` };
+  }
 
   const { data: lote, error } = await db()
     .from("lotes")
@@ -83,7 +107,7 @@ export async function createLoteFromUpload(
   if (error || !lote) return { error: "No pudimos crear el lote." };
 
   const { error: itemsErr } = await db().from("lote_items").insert(
-    matched.map((r) => ({
+    matched.rows.map((r) => ({
       lote_id: lote.id,
       user_id: r.userId,
       username: r.username || null,
@@ -105,11 +129,14 @@ export async function createLoteFromUpload(
 
 async function attachUsers(rows: ParsedRow[]) {
   const names = [...new Set(rows.map((r) => r.username).filter(Boolean))];
-  const { data: users } = names.length
+  const { data: users, error } = names.length
     ? await db().from("users").select("id, username").in("username", names)
-    : { data: [] as { id: string; username: string }[] };
+    : { data: [] as { id: string; username: string }[], error: null };
   const by = new Map((users ?? []).map((u) => [u.username, u.id]));
-  return rows.map((r) => ({ ...r, userId: r.username ? by.get(r.username) ?? null : null }));
+  return {
+    error: error ? "No pudimos comprobar las cuentas Orilla. Intenta de nuevo." : null,
+    rows: rows.map((r) => ({ ...r, userId: r.username ? by.get(r.username) ?? null : null })),
+  };
 }
 
 export async function scheduleLote(loteId: string): Promise<FormState> {
