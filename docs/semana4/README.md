@@ -1,9 +1,10 @@
-# Semana 4
+# Semana 4 — Entregable Apex
 
 | Pieza | Enlace |
 |---|---|
 | Documentación Apex | [`MVPFunctional.md`](./MVPFunctional.md) |
 | Producto | https://orilla-dusky.vercel.app |
 | Excel demo | https://orilla-dusky.vercel.app/Lote-pagos-Orilla-demo.xlsx |
-| Challenge #4 (redes) | [`Challenge-4-Make-It-Happen.md`](./Challenge-4-Make-It-Happen.md) |
-| Guion IG ≤60s | [`Guion-video-60s.md`](./Guion-video-60s.md) |
+| Video MVP (público) | https://youtu.be/eJXm5zq-Qfw |
+
+Material de challenges IG / guiones de redes → carpeta local `Entregables/` (fuera de este repo).

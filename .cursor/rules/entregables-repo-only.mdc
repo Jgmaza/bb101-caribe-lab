@@ -1,0 +1,62 @@
+---
+description: El repo bb101-caribe-lab solo contiene entregables Apex/bootcamp; no guiones ni contenido IG.
+alwaysApply: true
+---
+
+# Repo = solo entregables (organizadores)
+
+Este repositorio (`bb101-caribe-lab` / GitHub) lo revisan **organizadores del bootcamp**.  
+**No** guardar aquí material de challenges de Instagram, guiones de video, captions, secuencias de feed, borradores de edición ni notas internas de marketing.
+
+Ese material vive **fuera del repo**, en:
+
+`Ruta N Builders 101/Entregables/`  
+(p. ej. `Entregable 4/docs/Recursos video/`, `Entregable 5/docs/`, `Contenido-IG/`).
+
+## Qué SÍ va en `docs/` del repo (por semana)
+
+| Semana | Entregable Apex / bootcamp | Archivos esperados en repo |
+|--------|----------------------------|----------------------------|
+| **1** | Problem Brief | `docs/semana1/ProblemBrief.md` (+ aportes individuales del equipo si el formato lo pide) |
+| **2** | Product Blueprint / diseño MVP | `docs/semana2/ProductBlueprint.md`, `LeanCanvas.md`, `Kanban.md` (+ aportes individuales) |
+| **3** | Functional Proof (front + doc) | `docs/semana3/Documentacion.md`, `capturas/`, código en `frontend/` |
+| **4** | MVP Functional (producto + doc + video público) | `docs/semana4/MVPFunctional.md`, app en `frontend/`, enlace a video **público** (YouTube etc.) en el doc — **no** guion IG |
+| **5** | Demo Day / cierre (repo + demo + roadmap 30 días según Apex) | Solo lo que pida el formulario/Apex de esa semana (p. ej. roadmap, doc final). **No** guion del Challenge IG #5 |
+
+Complementos de producto OK si los enlaza un entregable: `docs/producto/*` (MVP, planes técnicos).
+
+## Qué NO va en el repo
+
+- Challenges de redes (`Challenge-4`, `Challenge-5`, forms de IG)
+- Guiones, shot lists, captions, `Secuencia-IG-*`, trailers edit notes
+- `Contenido-IG/`, assets de carrusel, exports Kinocut/ffmpeg
+- Métricas internas de puntos / checklists de difusión
+- Instrucciones solo de equipo (commits, onboarding interno)
+- Placeholders vacíos del template (`NombreApellido1.md`, etc.)
+
+Eso vive en:
+
+`Ruta N Builders 101/Entregables/interno-equipo/`  
+o `Entregables/Entregable N/docs/` / `Contenido-IG/`.
+
+Challenges IG se entregan en **Instagram + Google Form**, no en el repo.
+
+## Comportamiento del agente
+
+1. Al crear docs de guion, caption, challenge IG o secuencia de feed → escribirlos bajo `Entregables/`, **nunca** bajo `bb101-caribe-lab/docs/`.
+2. Al editar `bb101-caribe-lab/docs/semanaN/` → solo contenido del entregable de esa semana (tabla arriba).
+3. No hacer commit de videos de reto IG ni carpetas `Recursos video` dentro del repo.
+4. Si hace falta referenciar un video de Apex, poner la **URL pública** en el `.md` del entregable.
+5. No dejar placeholders vacíos (`NombreApellido1.md`) ni docs solo-equipo en `docs/`.
+
+## Ejemplo
+
+```text
+❌ bb101-caribe-lab/docs/semana5/Guion-trailer-Challenge-5.md
+✅ Entregables/Entregable 5/docs/Guion-trailer-Challenge-5.md
+
+❌ bb101-caribe-lab/docs/semana4/Challenge-4-Make-It-Happen.md
+✅ Entregables/Entregable 4/docs/Challenge-4-Make-It-Happen.md
+
+✅ bb101-caribe-lab/docs/semana4/MVPFunctional.md
+```

@@ -129,7 +129,7 @@ La próxima semana se conectará testnet / SDP (o equivalente) detrás del front
 | Jesús Borrero | [jesubohr](https://github.com/jesubohr) | Contexto de campo y casos Caribe (hotel / Carnaval); validación del tono “Te pagaron” y onboarding sin jerga; commit individual en docs o pantallas asignadas. |
 | Sergio Mancilla | [athomserx](https://github.com/athomserx) | Pulido UI mobile / accesibilidad: focus visible en botones e inputs (`ui.tsx`), autocompletado de OTP y mensaje de error con `aria-live` en el flujo de cobro del staff (`OtpForm.tsx`). |
 
-Cada integrante debe dejar **al menos un commit propio** en el repositorio durante esta entrega (ver `Instrucciones-commits-equipo.md`).
+Cada integrante debe dejar **al menos un commit propio** en el repositorio durante esta entrega.
 
 ---
 
